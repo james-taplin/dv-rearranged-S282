@@ -1,4 +1,4 @@
-## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release, NOT installed, 20 Oct 2026
+## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release v1.12.0 (tag 7d11e81), NOT installed, 20 Oct 2026
 
 James's requests on 20 Oct: space out and enlarge the 2-6-0/2-4-0 (his answer:
 "both", wider pitch and bigger drivers; NOT DONE YET, next build), a 2-6-2 Prairie
