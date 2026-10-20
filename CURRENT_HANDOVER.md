@@ -1,4 +1,7 @@
-## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release v1.12.0 (tag 7d11e81), NOT installed, 20 Oct 2026
+## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release v1.12.0 (tag 7d11e81), INSTALLED, 20 Oct 2026
+
+Installed from the released ZIP (380AA5B2...4755; DLL 3D6094AE...F7FC from the final rebuild, Info.json 1.12.0).
+1.11.0 backup: build/runtime-trial-1.12.0/installed-backup-20261020-212334 (1.11.1 was never installed). Settings kept.
 
 James's requests on 20 Oct: space out and enlarge the 2-6-0/2-4-0 (his answer:
 "both", wider pitch and bigger drivers; NOT DONE YET, next build), a 2-6-2 Prairie
