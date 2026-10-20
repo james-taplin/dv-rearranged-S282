@@ -648,6 +648,9 @@ namespace RearrangedS282
 
         private void SuspendArticulatedGeometry()
         {
+            // Rod retargeting saved the articulated LOD layout when it was bound;
+            // undo it before that layout is restored, or it would be put back after.
+            foreach (var drive in TriplexDrives()) DriveRetarget.Unbind(drive);
             if (articulatedPosition != null) articulatedPosition.constraintActive=false;
             if (articulatedAim != null) articulatedAim.constraintActive=false;
             if (articulatedRotation != null && articulatedOriginalAnimators != null)

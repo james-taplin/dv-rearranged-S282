@@ -1,3 +1,26 @@
+## 1.11.1 hotfix (Claude), RELEASED pre-release, NOT installed (game running), 20 Oct 2026
+
+James's 1.11.0 structural test failed: 41 of 44 failed with "Native six-cup
+oiling setup is missing" (Stage2RuntimeChecks.CaptureOilcups required exactly six
+OilingPointsPortController entries). The 3 that passed had no big-end cups. The
+cups themselves were created on every layout (57 log lines).
+Player.log also showed 18,638 NullReferenceExceptions from SimController.Update,
+starting just after an external-interactables reload (repeated "Big-end oiling"
+lines with no switch in between). Cause: the cups were appended to the native
+controllers before those controllers ran Start/Awake, so the controllers
+initialised them again (double port subscription). Clearing them unsubscribed
+once, and the leftover IndicatorPortReader/OilingPointPortFeederReader handlers
+pointed at destroyed cups, firing on every sim tick.
+Fixes:
+- Cups are built in BuildBigEndCupsLater: 3 frames later, after
+  InteractablePortFeedersController finishes; cancelled by a generation counter.
+- Every Init is preceded by Deinit.
+- The self-test checks only the native six.
+- Triplex cleanup order: DriveRetarget is unbound first in
+  SuspendArticulatedGeometry.
+Tests: all suites pass (big-end 18, catalogue 1,399, integration 144).
+ZIP SHA256 97152bb0d2589d99e9a263dea906ffd644f2e12ae563bad10573098fe8a68d45.
+
 ## 1.11.0 oil cups on every driven big end (Claude), RELEASED pre-release v1.11.0 (tag d18e386), INSTALLED, 20 Oct 2026
 
 Installed from the released ZIP (715B9260...333E; DLL 2697A630...12A2 == build, Info.json 1.11.0).

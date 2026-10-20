@@ -276,7 +276,9 @@ namespace RearrangedS282
             var providers = car.GetComponent<DV.Util.PositionSyncProviderController>()?.entries;
             var external = car.loadedExternalInteractables;
             if (external == null) return new JObject { ["externalLoaded"] = false };
-            var cups = external.GetComponent<DV.Simulation.Controllers.OilingPointsPortController>()?.entries;
+            // The native six only; big-end cups added by this mod are checked separately.
+            var all = external.GetComponent<DV.Simulation.Controllers.OilingPointsPortController>()?.entries;
+            var cups = all?.Where(c => c != null && !WheelRearranger.IsBigEndCup(c.transform)).ToArray();
             if (providers == null || cups == null || cups.Length != 6)
                 throw new InvalidOperationException("Native six-cup oiling setup is missing.");
             return new JObject { ["externalLoaded"] = true, ["cups"] = new JArray(cups.Select(c => {

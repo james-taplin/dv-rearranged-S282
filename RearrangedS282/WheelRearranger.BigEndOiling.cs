@@ -40,43 +40,75 @@ namespace RearrangedS282
             internal Vector3 PinWorld;
         }
 
+        private int bigEndGeneration;
+
         // Called after every switch and whenever the external interactables load.
+        // The simulation side applies at once; the cups are built a few frames
+        // later, after the native controllers have run their own start-up. (Built
+        // earlier, those controllers initialise our cups a second time, leaving a
+        // port subscription to a destroyed cup once it is cleared.)
         private void RefreshBigEndOiling(GameObject external)
         {
             var car = loco;
             if (car == null || car.SimController == null || car.SimController.simFlow == null) return;
             ClearBigEndCups();
+            int generation = ++bigEndGeneration;
             var flow = car.SimController.simFlow;
             var points = BigEndOiling.Points(flow);
             if (points == null || points.oilingPoints.Length != BigEndOilingPlan.TotalPoints) return;
+            var plan = PlanBigEnds(car, out int dropped);
+            if (dropped > 0) Main.Logger.Warning($"Big-end oiling: {dropped} big ends have no spare oiling point on {currentWA}.");
+            BigEndOiling.SetActive(flow, BigEndOilingPlan.ActivePoints(plan.allocation));
+            if (external != null && plan.allocation.Any(a => a >= 0)) StartCoroutine(BuildBigEndCupsLater(car, external, generation));
+        }
+
+        private (List<BigEndSite> sites, int[] allocation) PlanBigEnds(TrainCar car, out int dropped)
+        {
             bool enabled = Main.settings == null || Main.settings.bigEndOiling;
             var sites = enabled ? BigEndSites() : new List<BigEndSite>();
             var allocation = BigEndOilingPlan.Allocate(sites.Select(s => new BigEndOilingPlan.BigEnd(s.Left,
-                car.transform.InverseTransformPoint(s.PinWorld).z, s.NativeCup)).ToList(), out int dropped);
-            if (dropped > 0) Main.Logger.Warning($"Big-end oiling: {dropped} big ends have no spare oiling point on {currentWA}.");
-            BigEndOiling.SetActive(flow, BigEndOilingPlan.ActivePoints(allocation));
-            if (external == null) return;
+                car.transform.InverseTransformPoint(s.PinWorld).z, s.NativeCup)).ToList(), out dropped);
+            return (sites, allocation);
+        }
+
+        private IEnumerator BuildBigEndCupsLater(TrainCar car, GameObject external, int generation)
+        {
+            yield return null; yield return null; yield return null;
+            var feeders = external != null ? external.GetComponentInChildren<InteractablePortFeedersController>(true) : null;
+            while (feeders != null && feeders.IsCurrentlySettingInitialValues && generation == bigEndGeneration) yield return null;
+            if (generation != bigEndGeneration || car == null || external == null || car.SimController?.simFlow == null) yield break;
+            var points = BigEndOiling.Points(car.SimController.simFlow);
+            var created = new List<(GameObject cup, InteractablePortFeeder[] feeders)>();
             try
             {
-                var created = new List<(GameObject cup, InteractablePortFeeder[] feeders)>();
-                for (int i = 0; i < sites.Count; i++)
+                var plan = PlanBigEnds(car, out _);
+                for (int i = 0; i < plan.sites.Count; i++)
                 {
-                    if (allocation[i] < 0) continue;
-                    var cup = CreateBigEndCup(car, external, points, sites[i], allocation[i]);
+                    if (plan.allocation[i] < 0) continue;
+                    var cup = CreateBigEndCup(car, external, points, plan.sites[i], plan.allocation[i]);
                     if (cup.cup != null) created.Add(cup);
                 }
-                if (created.Count > 0)
-                {
-                    StartCoroutine(InitBigEndControls(car, external, created));
-                    Main.Logger.Log($"Big-end oiling: {created.Count} extra cups on {currentWA} " +
-                        $"({allocation.Count(a => a >= 0 && a < BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} left, " +
-                        $"{allocation.Count(a => a >= BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} right).");
-                }
+                Main.Logger.Log($"Big-end oiling: {created.Count} extra cups on {currentWA} " +
+                    $"({plan.allocation.Count(a => a >= 0 && a < BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} left, " +
+                    $"{plan.allocation.Count(a => a >= BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} right).");
             }
             catch (Exception ex)
             {
                 Main.Logger.Error("Big-end oil cups could not be created; native cups only: " + ex);
                 ClearBigEndCups();
+                yield break;
+            }
+            // Lids bind once their controls have finished spawning, as natively.
+            yield return null; yield return null;
+            if (generation != bigEndGeneration) yield break;
+            var flow = car != null ? car.SimController?.simFlow : null;
+            if (flow == null) yield break;
+            foreach (var (cup, cupFeeders) in created)
+            {
+                if (cup == null) continue;
+                foreach (var feeder in cupFeeders)
+                    if (feeder != null && flow.TryGetPort(feeder.portId, out var port))
+                    { feeder.Deinit(); feeder.Init(port, null); feeder.SetupControlChangedListeners(); Append(feeders, feeder); }
             }
         }
 
@@ -162,12 +194,12 @@ namespace RearrangedS282
             }
             foreach (var reader in cup.GetComponentsInChildren<OilingPointPortFeederReader>(true))
                 if (flow.TryGetPort(reader.refillPortId, out var refill) && flow.TryGetPort(reader.refillingFlowNormalizedPortId, out var refillFlow))
-                { reader.Init(refill, refillFlow); Append(external.GetComponentInChildren<OilingPointsPortController>(true), reader); }
+                { reader.Deinit(); reader.Init(refill, refillFlow); Append(external.GetComponentInChildren<OilingPointsPortController>(true), reader); }
             foreach (var indicator in cup.GetComponentsInChildren<IndicatorPortReader>(true))
                 if (flow.TryGetPort(indicator.portId, out var level))
                 {
                     flow.TryGetPort(indicator.indicatorRangeScalerPortId, out var scaler, canBeNullOrEmpty: true);
-                    indicator.Init(level, null, scaler);
+                    indicator.Deinit(); indicator.Init(level, null, scaler);
                     Append(external.GetComponentInChildren<IndicatorPortReadersController>(true), indicator);
                 }
             return (cup, cup.GetComponentsInChildren<InteractablePortFeeder>(true));
@@ -175,24 +207,9 @@ namespace RearrangedS282
             ManualOilingPointsDefinition.OilingPointDefinition Definition(int i) => BigEndOiling.Definition(car).oilingPoints[i];
         }
 
-        // Native feeders wait for the controls to finish spawning before binding.
-        private IEnumerator InitBigEndControls(TrainCar car, GameObject external, List<(GameObject cup, InteractablePortFeeder[] feeders)> created)
-        {
-            yield return null; yield return null;
-            var flow = car != null ? car.SimController?.simFlow : null;
-            var controller = external != null ? external.GetComponentInChildren<InteractablePortFeedersController>(true) : null;
-            if (flow == null) yield break;
-            foreach (var (cup, feeders) in created)
-            {
-                if (cup == null) continue;
-                foreach (var feeder in feeders)
-                    if (feeder != null && flow.TryGetPort(feeder.portId, out var port))
-                    { feeder.Init(port, null); feeder.SetupControlChangedListeners(); Append(controller, feeder); }
-            }
-        }
-
         private void ClearBigEndCups()
         {
+            bigEndGeneration++;
             foreach (var cup in bigEndCups.Where(c => c != null))
             {
                 foreach (var reader in cup.GetComponentsInChildren<OilingPointPortFeederReader>(true)) reader.Deinit();
