@@ -1,4 +1,4 @@
-## 1.11.1 hotfix (Claude), RELEASED pre-release, NOT installed (game running), 20 Oct 2026
+## 1.11.1 hotfix (Claude), RELEASED pre-release v1.11.1 (tag bad2503), NOT installed (game running), 20 Oct 2026
 
 James's 1.11.0 structural test failed: 41 of 44 failed with "Native six-cup
 oiling setup is missing" (Stage2RuntimeChecks.CaptureOilcups required exactly six
