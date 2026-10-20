@@ -1,4 +1,7 @@
-## 1.11.0 oil cups on every driven big end (Claude), RELEASED pre-release v1.11.0 (tag d18e386), NOT installed, 20 Oct 2026
+## 1.11.0 oil cups on every driven big end (Claude), RELEASED pre-release v1.11.0 (tag d18e386), INSTALLED, 20 Oct 2026
+
+Installed from the released ZIP (715B9260...333E; DLL 2697A630...12A2 == build, Info.json 1.11.0).
+1.10.1 backup: build/runtime-trial-1.11.0/installed-backup-20261020-203020. Settings kept.
 
 James asked for an oiling point on every driven big end. He chose live cups
 that drain and can cause damage, build only.
