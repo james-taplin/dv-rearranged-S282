@@ -58,6 +58,8 @@ namespace RearrangedS282
 		[Header("Curving (wheelbase): long rigid driver groups drag and squeal more on tight curves")]
 		[Draw("Extra curve drag for long rigid wheelbases:", Height = HEIGHT)] public bool curveDrag = true;
 		[Draw("Extra flange squeal for long rigid wheelbases:", Height = HEIGHT)] public bool curveSqueal = true;
+		[Header("Oiling: an oil cup on every driven big end (reapply the arrangement to update)")]
+		[Draw("Oil cups on every driven big end:", Height = HEIGHT)] public bool bigEndOiling = true;
 
 		[Header("Experimental 2-2-2: non-colliding clearance prototype")]
 		[Header("Reapply the arrangement after changing its driver diameter")]

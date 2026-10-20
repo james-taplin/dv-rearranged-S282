@@ -128,6 +128,7 @@ namespace RearrangedS282
                 }
                 UpdateExternalControlPositions();
                 B99Oilcups.Bind(loco, loco.loadedExternalInteractables);
+                RefreshBigEndOiling(loco.loadedExternalInteractables);
                 ArticulatedEffects.Refresh(loco, WheelArrangement.IsArticulatedId(id));
                 // Includes inactive conventional LODs and lazily created rear
                 // engines. Exclude other integrations' separately owned effects.

@@ -365,6 +365,7 @@ namespace RearrangedS282
 			UpdateExternalControlPositions();
 #if B99_ALL_STANDARD
 			B99Oilcups.Bind(loco, externalInteractables);
+			RefreshBigEndOiling(externalInteractables);
 #endif
 		}
 

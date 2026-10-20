@@ -41,6 +41,7 @@ namespace RearrangedS282
 				modEntry.OnSaveGUI = OnSaveGUI;
 				stage2Harmony.CreateClassProcessor(typeof(PowerDiagnosticsTick)).Patch();
 				ArticulatedSimulation.Register(stage2Harmony);
+				BigEndOiling.Register(stage2Harmony);
 				ArticulatedEffects.Register(stage2Harmony);
 				DeltaTrailingTruckCompatibility.Register(stage2Harmony);
 				ConventionalSpawn.RegisterPatches(stage2Harmony);

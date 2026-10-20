@@ -1,3 +1,44 @@
+## 1.11.0 oil cups on every driven big end (Claude), RELEASED pre-release, NOT installed, 20 Oct 2026
+
+James asked for an oiling point on every driven big end. He chose live cups
+that drain and can cause damage, build only.
+- Native layout per side (resources.assets): Oiling0 fixed on the drivetrain
+  (z 7.80), Oiling1 on the crosshead, Oiling2 on the main-rod big end. The
+  native ManualOilingPoints component ticks every point; any point at or below
+  5% causes damage. Its save loads only if the point count matches exactly.
+- BigEndOiling.cs (Harmony):
+  - SimController.Initialize prefix: on S282s, the ManualOilingPointsDefinition
+    grows from 6 to 20 points (indices 6-12 left, 13-19 right). Port IDs are
+    point 0's plus "_RSBIG<i>".
+  - ManualOilingPoints.Tick postfix: points that aren't active for this flow
+    are held full and closed.
+  - SimulationFlow.SetSaveStateData prefix: the saved array is fitted to the
+    point count (native six kept, the rest start full).
+- BigEndOilingPlan.cs (pure): Allocate fills slots front to back per side,
+  skipping big ends with a native cup. ActivePoints, FitSavedPoints.
+- WheelRearranger.BigEndOiling.cs, run after both B99Oilcups.Bind calls:
+  - Sites = every active driving wheel on every engine animator under
+    MovingParts_LOD0. The crank is that engine's main rod position minus its
+    main wheel. The front engine's main wheel keeps the native cup.
+  - Each extra cup has a marker (PositionSyncProvider) on that engine's
+    coupling rod, 0.14 m above the pin.
+  - Cups are instantiated from the externalInteractablesPrefab (exploded
+    prefab when exploded), using the side's native Oiling2 cup path. Port-ID
+    strings are rewritten; the cups are appended to the PositionSyncConsumer,
+    OilingPointsPort and IndicatorPortReaders controllers and initialised.
+    InteractablePortFeeder (the lid) is initialised two frames later, as the
+    native code does.
+  - Cleared on every refresh.
+  - Stock 2-8-2, 4-0-4 and 2-2-2 keep the native cups only.
+  - New setting bigEndOiling (default on).
+  - B99Oilcups ignores our cups.
+- Not covered: the Erie tender engine (another car).
+- UNVERIFIED in game: lid and oil-can interaction on the cloned cups, the
+  oil-level indicator, the refill audio, cup placement on the pins, and cups
+  rebuilt after unload/reload.
+- Tests: Validate.BigEndOiling.ps1 has 18 checks; the other suites pass
+  (catalogue 1,399, integration 144). ZIP SHA256 715b9260ec1994985e58e89b64e07ea9b2c2d66ca5bb961902b71649e401333e, DLL 2697A630...12A2.
+
 ## 1.10.1 = 1.10.0 + merged release-1.9.2 (Claude), RELEASED pre-release v1.10.1 (tag 6bbf45b), INSTALLED, 19 Oct 2026
 
 Installed from the released ZIP (5516FF23...7A83; DLL 9EFF86FB...DBDC9E == build, Info.json 1.10.1).

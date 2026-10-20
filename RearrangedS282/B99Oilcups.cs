@@ -17,7 +17,9 @@ namespace RearrangedS282
             if (external == null) return;
             var providers = car.GetComponent<PositionSyncProviderController>()?.entries;
             var consumers = external.GetComponent<PositionSyncConsumerController>()?.entries;
-            var oiling = external.GetComponent<OilingPointsPortController>()?.entries;
+            // Big-end cups added by this mod are excluded; only the native six are bound here.
+            var oiling = external.GetComponent<OilingPointsPortController>()?.entries?
+                .Where(e => e != null && !WheelRearranger.IsBigEndCup(e.transform)).ToArray();
             if (providers == null || consumers == null || oiling == null || oiling.Length != 6)
                 throw new InvalidOperationException("S282 native six-cup oiling controllers are not initialized.");
             foreach (var cup in oiling)
