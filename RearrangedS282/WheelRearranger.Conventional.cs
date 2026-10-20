@@ -95,7 +95,7 @@ namespace RearrangedS282
                         else
                         {
                             ApplyLegacyGeometry(id);
-                            if ((id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464) &&
+                            if ((id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s262) &&
                                 Main.settings.polishedPacificHudsonValveGear)
                                 ApplyPacificHudsonValveGear();
                             AlignAdditionalPoweredAxles(id);

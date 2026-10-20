@@ -91,7 +91,7 @@ namespace RearrangedS282
 
         private void AlignAdditionalPoweredAxles(int id)
         {
-            if (id == (int)WheelArrangementType.s260)
+            if (id == (int)WheelArrangementType.s260 || id == (int)WheelArrangementType.s262)
             {
                 AlignAdditionalAxle(driveAxle2, secondRightDriveWheel);
                 AlignAdditionalAxle(driveAxle3, thirdRightDriveWheel);

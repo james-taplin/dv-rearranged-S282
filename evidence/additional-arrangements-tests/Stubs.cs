@@ -189,7 +189,7 @@ namespace UnityEngine {
     public sealed class Animator : Behaviour { }
 }
 namespace RearrangedS282 {
-    internal enum WheelArrangementType { s260=34,s240=35,s222=36 }
+    internal enum WheelArrangementType { s260=34,s240=35,s222=36,s262=44 }
     internal sealed class Settings { public float giant222DriverDiameterMetres=2.8f; }
     internal static class Main { public static readonly Settings settings=new(); public static readonly TestLogger Logger=new(); }
     internal sealed class TestLogger { public readonly List<string> Messages=new(); public void Log(string v)=>Messages.Add(v); }

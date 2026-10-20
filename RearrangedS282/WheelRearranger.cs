@@ -1291,6 +1291,7 @@ namespace RearrangedS282
 					frontHandrail.gameObject.SetActive(false);
 					break;
 				case WheelArrangementType.s260:
+				case WheelArrangementType.s262:
 				case WheelArrangementType.s240:
 				case WheelArrangementType.s222:
 				case WheelArrangementType.s280:
@@ -1349,6 +1350,7 @@ namespace RearrangedS282
 					Show4Drivers();
 					break;
 				case WheelArrangementType.s260:
+				case WheelArrangementType.s262:
 				case WheelArrangementType.s460:
 				case WheelArrangementType.s462:
 				case WheelArrangementType.s464:
@@ -1420,6 +1422,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s262:
 					switch (Main.settings.x62Options)
 					{
 						case Settings.X102Options.vanilla:

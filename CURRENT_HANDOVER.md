@@ -1,3 +1,28 @@
+## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release, NOT installed, 20 Oct 2026
+
+James's requests on 20 Oct: space out and enlarge the 2-6-0/2-4-0 (his answer:
+"both", wider pitch and bigger drivers; NOT DONE YET, next build), a 2-6-2 Prairie
+with Pacific-size drivers, a 2-10-10-2 with ~0.85 m drivers, and a 2-6-6-0
+Mallet. Includes 1.11.1.
+- s262 = 44 "2-6-2 Prairie", on the legacy path: ShowTwoLeadingWheels,
+  Show6Drivers (1.83 m drivers as 4-6-x) and the 4-6-2's x62 trailing truck.
+  It also gets the polished Pacific/Hudson valve gear and 2-6-0-style axle
+  alignment, and is in the default random pool.
+- WheelRearranger.BigMallet.cs is now table-driven (SpecFor): engines of 3, 4
+  or 5 coupled drivers, optional leading/trailing trucks, FrontExtra, and a
+  solved scale. 3-coupled rears use malletRearL/R; 4 use bigMalletRearL/R
+  (the Erie tender engine source); 5 use tenCoupledRearL/R (ConfigureLongEngine
+  re-enables the five-axle rod segment by sibling index; the fifth caliper sits
+  at -3.08 as in Show10Drivers). Extra powered axles are now lists (up to 2
+  front, 2 rear).
+  - s2660 = 45 "2-6-6-0 Articulated Mallet": 3+3, leading truck; estimate
+    s about 0.89, 1.26 m drivers (UNVERIFIED).
+  - s210102 = 46 "2-10-10-2 Articulated Mallet": 5+5, both trucks,
+    FrontExtra 0.6; estimate s about 0.58, 0.83 m drivers (UNVERIFIED).
+- Tests: catalogue 1,421 (47 IDs, default pool 31), integration 152 (legacy
+  switch tables now 0-44), additional 1,891; the rest pass.
+- ZIP SHA256 380aa5b24f7f759368b564819539d2fe723077efe388273653cd1dd949174755.
+
 ## 1.11.1 hotfix (Claude), RELEASED pre-release v1.11.1 (tag bad2503), NOT installed (game running), 20 Oct 2026
 
 James's 1.11.0 structural test failed: 41 of 44 failed with "Native six-cup

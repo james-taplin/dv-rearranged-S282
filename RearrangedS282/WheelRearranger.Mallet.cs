@@ -357,8 +357,10 @@ namespace RearrangedS282
                 case WheelArrangementType.s08880:
                 case WheelArrangementType.s2680:
                 case WheelArrangementType.s28882:
+                case WheelArrangementType.s2660:
+                case WheelArrangementType.s210102:
                     yield return Make("front engine", driveL, articulatedFrontRoot, articulatedPin);
-                    yield return Make("rear engine", bigMalletRearL, articulatedRearRoot, null);
+                    yield return Make("rear engine", CurrentBigMalletRearDrive(true), articulatedRearRoot, null);
                     break;
                 case WheelArrangementType.s22222:
                 case WheelArrangementType.s02220:

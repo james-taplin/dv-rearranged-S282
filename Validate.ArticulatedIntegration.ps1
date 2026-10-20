@@ -62,7 +62,7 @@ try {
         }
     }
     $catalogue = TypeOf $candidate 'RearrangedS282.WheelArrangement'
-    Check (($catalogue.Fields | Where-Object Name -EQ 'SupportedCount').Constant -eq 44) 'Compiled catalogue contains 34 normal conventional (incl. 4-14-4), eight articulated (incl. 2-6-6-2, 2-2-2-2-2, 0-2-2-2-0, 0-8-8-0, 2-6-8-0 and 2-8-8-8-2), the zero-driver novelty and the giant-driver prototype'
+    Check (($catalogue.Fields | Where-Object Name -EQ 'SupportedCount').Constant -eq 47) 'Compiled catalogue contains 35 normal conventional (incl. 4-14-4 and 2-6-2), ten articulated (incl. 2-6-6-2, 2-2-2-2-2, 0-2-2-2-0, 0-8-8-0, 2-6-8-0, 2-8-8-8-2, 2-6-6-0 and 2-10-10-2), the zero-driver novelty and the giant-driver prototype'
     $oldEnum = TypeOf $baseline 'RearrangedS282.WheelArrangementType'
     $newEnum = TypeOf $candidate 'RearrangedS282.WheelArrangementType'
     $oldIds = @($oldEnum.Fields | Where-Object HasConstant)
@@ -71,12 +71,12 @@ try {
         $newId = @($newEnum.Fields | Where-Object Name -CEQ $oldId.Name)
         Check ($newId.Count -eq 1 -and $newId[0].Constant -eq $oldId.Constant) ("Saved arrangement ID remains unchanged: $($oldId.Name)=$($oldId.Constant)")
     }
-    foreach ($addedId in @(@('s260',34),@('s240',35),@('s222',36),@('s2662',37),@('s22222',38),@('s4144',39),@('s02220',40),@('s08880',41),@('s2680',42),@('s28882',43))) {
+    foreach ($addedId in @(@('s260',34),@('s240',35),@('s222',36),@('s2662',37),@('s22222',38),@('s4144',39),@('s02220',40),@('s08880',41),@('s2680',42),@('s28882',43),@('s262',44),@('s2660',45),@('s210102',46))) {
         Check (($newEnum.Fields | Where-Object Name -CEQ $addedId[0]).Constant -eq $addedId[1]) ("New arrangement appends its stable ID: $($addedId[0])=$($addedId[1])")
     }
     $compiledNames = @((MethodOf $catalogue '.cctor').Body.Instructions | Where-Object { $_.OpCode.Name -eq 'ldstr' } | ForEach-Object Operand)
-    Check ($compiledNames.Count -eq 44) 'Compiled name table contains exactly 44 arrangements'
-    foreach ($entry in @(@(34,'2-6-0 Mogul'),@(35,'2-4-0'),@(36,'2-2-2 Giant-driver clearance prototype'),@(37,'2-6-6-2 Articulated Mallet'),@(38,'2-2-2-2-2 Articulated Triplex'),@(39,'4-14-4'),@(40,'0-2-2-2-0 Articulated Triplex'),@(41,'0-8-8-0 Angus'),@(42,'2-6-8-0 Gt. Northern'),@(43,'2-8-8-8-2 Erie Triplex'))) {
+    Check ($compiledNames.Count -eq 47) 'Compiled name table contains exactly 47 arrangements'
+    foreach ($entry in @(@(34,'2-6-0 Mogul'),@(35,'2-4-0'),@(36,'2-2-2 Giant-driver clearance prototype'),@(37,'2-6-6-2 Articulated Mallet'),@(38,'2-2-2-2-2 Articulated Triplex'),@(39,'4-14-4'),@(40,'0-2-2-2-0 Articulated Triplex'),@(41,'0-8-8-0 Angus'),@(42,'2-6-8-0 Gt. Northern'),@(43,'2-8-8-8-2 Erie Triplex'),@(44,'2-6-2 Prairie'),@(45,'2-6-6-0 Articulated Mallet'),@(46,'2-10-10-2 Articulated Mallet'))) {
         Check ($compiledNames[$entry[0]] -ceq $entry[1]) ("New catalogue name remains parseable at ID $($entry[0]): $($entry[1])")
     }
     Check ($null -ne (TypeOf $candidate 'RearrangedS282.B99ExplosionMaterials')) 'Added gear integrates with native explosion material swaps'
@@ -114,19 +114,19 @@ try {
 
     $legacy = MethodOf $wheel 'ApplyLegacyGeometry'
     $driverTables = @($legacy.Body.Instructions | Where-Object {
-        $_.OpCode.Name -eq 'switch' -and $_.Operand.Count -eq 37 -and
+        $_.OpCode.Name -eq 'switch' -and $_.Operand.Count -eq 45 -and
         (FirstArmCall $_.Operand[36]) -ceq 'ApplyGiantSingleDriverPrototype'
     })
-    Check ($driverTables.Count -eq 1) 'Compiled legacy switch has one unambiguous 0-36 driver dispatch table'
-    foreach ($route in @(@(33,'ShowNoDrivers'),@(34,'Show6Drivers'),@(35,'Show4Drivers'),@(36,'ApplyGiantSingleDriverPrototype'))) {
+    Check ($driverTables.Count -eq 1) 'Compiled legacy switch has one unambiguous 0-44 driver dispatch table'
+    foreach ($route in @(@(33,'ShowNoDrivers'),@(34,'Show6Drivers'),@(35,'Show4Drivers'),@(36,'ApplyGiantSingleDriverPrototype'),@(44,'Show6Drivers'))) {
         Check ((FirstArmCall $driverTables[0].Operand[$route[0]]) -ceq $route[1]) ("Compiled driver dispatch ID $($route[0]) selects $($route[1])")
     }
     $leadingTables = @($legacy.Body.Instructions | Where-Object {
-        $_.OpCode.Name -eq 'switch' -and $_.Operand.Count -eq 37 -and
+        $_.OpCode.Name -eq 'switch' -and $_.Operand.Count -eq 45 -and
         (FirstArmCall $_.Operand[36]) -ceq 'ShowTwoLeadingWheels'
     })
-    Check ($leadingTables.Count -eq 1) 'Compiled legacy switch has one unambiguous 0-36 leading-wheel dispatch table'
-    foreach ($id in @(34,35,36)) {
+    Check ($leadingTables.Count -eq 1) 'Compiled legacy switch has one unambiguous 0-44 leading-wheel dispatch table'
+    foreach ($id in @(34,35,36,44)) {
         Check ((FirstArmCall $leadingTables[0].Operand[$id]) -ceq 'ShowTwoLeadingWheels') ("New conventional ID $id retains its native two-wheel leading truck")
     }
 
