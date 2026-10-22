@@ -217,6 +217,7 @@ namespace RearrangedS282
             ["driverRadiusM"] = bigMallet != null ? .712f * bigMallet.Scale : (float?)null,
             ["tender"] = tenderEngineCar != null ? tenderEngineCar.ID : null, ["attached"] = tenderEngineRoot != null,
             ["exhaustOutlet"] = TenderExhaustOutlet != null, ["visualEffects"] = ArticulatedEffects.TenderParticlesReady(GetComponent<TrainCar>()),
+            ["audioEffects"] = ArticulatedEffects.TenderAudioReady(GetComponent<TrainCar>()),
             ["demandN"] = tenderDemandN, ["limitN"] = tenderLimitN, ["appliedN"] = tenderForceN, ["slipping"] = tenderSlipping,
             ["tenderMassKg"] = tenderEngineCar != null && tenderEngineCar.massController != null ? tenderEngineCar.massController.TotalMass : (float?)null
         };

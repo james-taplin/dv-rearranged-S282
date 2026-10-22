@@ -512,3 +512,8 @@ evidence/steam-duct-tests/*
 !evidence/steam-duct-tests/*.cs
 !evidence/steam-duct-tests/*.py
 !evidence/steam-duct-tests/README.md
+
+!evidence/tender-audio-tests/
+evidence/tender-audio-tests/*
+!evidence/tender-audio-tests/*.cs
+!evidence/tender-audio-tests/README.md

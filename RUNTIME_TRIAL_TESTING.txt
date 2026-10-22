@@ -1,3 +1,10 @@
+1.22.4 ERIE TENDER AUDIO TEST - PHYSICS RETAINED
+Tender chuffs/loops now follow the rear exhaust; cock audio follows cylinders.
+Native per-engine ports, existing clips/mixers and LP sound profile reused.
+Audio rebuilds on tender coupling changes. See AUDIO_STEAM_TEST_STATUS.txt.
+Compound physics is still an offline prototype; native driving/boiler unchanged.
+Test coupling, loops, cocks and switching; inspect measurements.tender.audioEffects (structural JSON) or tractive.tender.audioEffects (power JSONL).
+
 1.22.3 GEOMETRY AND STEAM DUCT TEST
 See GEOMETRY_TEST_STATUS.txt for changes, checked coverage and open limits.
 Extends original pipe pieces/profile/materials; no new arrangements or physics.

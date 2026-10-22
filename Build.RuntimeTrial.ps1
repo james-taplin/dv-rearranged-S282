@@ -30,6 +30,7 @@ Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destinatio
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination (Join-Path $mod 'MANUAL_TEST_CHECKLIST.txt') -Force
 Copy-Item -LiteralPath (Join-Path $root 'ARTICULATED_TEST_STATUS.txt') -Destination $mod
 if ([version]$Version -ge [version]'1.22.3') { Copy-Item -LiteralPath (Join-Path $root 'GEOMETRY_TEST_STATUS.txt') -Destination $mod }
+if ([version]$Version -ge [version]'1.22.4') { Copy-Item -LiteralPath (Join-Path $root 'AUDIO_STEAM_TEST_STATUS.txt') -Destination $mod }
 Copy-Item -LiteralPath (Join-Path $root 'TRACTIVE_DIAGNOSTICS.txt') -Destination $mod
 if ([version]$Version -ge [version]'1.21.0') {
     Copy-Item -LiteralPath (Join-Path $root 'PHYSICS_BASELINE.md') -Destination $mod
@@ -66,6 +67,7 @@ $receipt = [ordered]@{
     sourceHashes=@(Get-ChildItem (Join-Path $root 'RearrangedS282') -Recurse -File -Filter '*.cs' | Where-Object FullName -NotMatch '\\(bin|obj)\\' | Get-FileHash | Select-Object Path,Hash)
 }
 if ([version]$Version -ge [version]'1.22.3') { $receipt.features = @('Source-derived steam duct extensions with circular elbows, original collars/UV/materials, seated rigid branches, compact lower collars, Prairie offset casting and measured articulated side ports; protected physics unchanged','Common motion-frame casing and guide alignment for resized rigid families, including twelve-driver layouts; live acceptance pending') + $receipt.features }
+if ([version]$Version -ge [version]'1.22.4') { $receipt.features = @('Erie tender native chuff/loop and cylinder-cock audio, rear-exhaust seating, LP presentation profile, coupling-driven audio cleanup/rebind and diagnostic readiness; driving/boiler physics preserved') + $receipt.features }
 if ($Install) {
     if (Get-Process -Name DerailValley -ErrorAction SilentlyContinue) { throw 'Close Derail Valley before installing the prepared test ZIP.' }
     $destination = Join-Path $GamePath 'Mods\RearrangedS282'

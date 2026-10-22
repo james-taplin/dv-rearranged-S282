@@ -1,3 +1,49 @@
+## Presentation-first1.22.4 test - 22 Oct 2026
+
+James prioritised audio/visuals/steam and requested existing driving physics be
+preserved, or unavoidable realistic differences explained. Implemented an Erie
+presentation gap: tender was omitted from extra chuff/cock audio while particles
+already included it. Now one shared active stage list includes the tender once,
+with own native ports. Chuff individual sources/loops are seated at tender rear
+exhaust with original mixer/clips/curves/distances; LP profile reused. Cock audio
+uses existing tender cylinder mapping. Coupling changes remove old audio before
+refresh. Existing audio clone/reader cleanup retained. Tender diagnostic now
+has audioEffects under measurements.tender (structural)/tractive.tender (power).
+
+No driving/boiler/consumption code changed. All734 protected compiled simulation,
+calibration and WheelRearranger methods except TenderEngineReport unchanged from
+installed1.22.3. Existing105-method/279assertion check also passes. Native gates40
+and graph/lifecycle48 checks confirm current PARALLEL fresh-steam aggregation,
+including tender intake; tender torque/exhaust stay out of loco output sums.
+No true compound physics enabled. Changing only boiler draw toHP while keeping
+existing parallel torque would invent efficiency and is explicitly rejected.
+AUDIO_STEAM_TEST_STATUS.txt explains starting pull, receiver buildup, steam use,
+boiler recovery and blast changes unavoidable in a proper compound calculation;
+adhesion/mass/curving/sanding/brakes are outside that future change.
+
+IMPORTANT ROLE CORRECTION: MainEngine/native steamEngine is FRONT (LP position
+on Mallets/Erie); added RearEngine is REAR (HP). MiddleEngine is Erie tender LP.
+Earlier prototype README inverted the native names; corrected before integration.
+Original physical LP/HP area ratio~2.066, preserved by common area reductions;
+tender calibration separate. Existing accepted cylinders were not rescaled.
+Prototype still offline, not part of shipping project. Simple31/32 and fictional
+38/40 remain parallel; no implicit conversion based only on multiple engines.
+
+Validation:2551 actual extracted seating/selection/reset checks,9014 discovery/
+identity,91 profile checks,1483 compiled wiring/preservation assertions. Native
+serialized S282 prefab: all3individual emitter parents and10loop refs are inside
+owned SteamChuff subtree, full2424byte read; evidence under build/stage-audio-
+inspection (no native data ships). Managed tests do not run Unity clone semantics,
+audio playback, native Init/Deinit scene lifecycle or live coupler/LOD behaviour.
+Tender clock remains loco-linked; independent slip RPM/handling unchanged.
+
+Clean1.22.4 build0warnings/errors. DLL E196238C81145893FEAE29898DF1C64D3D784BFFEDF9EF936F04E1CE4245B147.
+Desktop1.22.4-Test ZIP prepared; final hash in build receipt. NOT installed or
+published. Installed1.22.3 DLL stillD48E09D26260626444CB7EEDA8C8A35840FF9A85A1FEE49FC858302F1E0AF4E1.
+No backups, source/audio assets untouched, no new dependency. Next: game Erie
+chuffs/loops/cocks, coupling and switching test; subsequent compound calibration
+and native lifecycle integration only with explicit performance comparison.
+
 ## Compound work started - 22 Oct 2026
 
 James asked to start from the compound study handoff. First implementation slice

@@ -19,9 +19,12 @@ independent LP RPM is supported, full independent LP controls/damage are deferre
 
 Reference calibration is S060's .42/.594m bores and .6707097m stroke, not S282
 balance targets. No HP/LP sizing decisions for any S282 arrangement made yet.
-S282 currently uses a larger main pair plus smaller auxiliary pair; these cannot
-be assumed to form a credible HP/LP expansion ratio without recalibration. Keep
-original-size upper limits; consider reduction of HP rather than enlarged LP.
+S282 physical role correction: native MainEngine is the FRONT LP position; the
+smaller added RearEngine is the REAR HP position. The original LP/HP piston-area
+ratio is about2.066, not the reverse. Existing common area reductions preserve
+that ratio; Erie tender calibration is separate. Current bores are usable starting
+inputs for a comparison, not a proven compound calibration. Keep original-size
+upper limits and assess real per-arrangement dimensions before any changes.
 
 Validation covers reference equivalence, mass/energy, finite states, supply
 budget, unfed spinning stages, reverse, timestep variation, stopped LP, rundown,
@@ -48,8 +51,8 @@ cannot make HP work against a receiver or enforce interstage mass conservation.
 Use an owned per-instance stage extension following S060's supported subclass
 pattern if/when integration is ready; do not globally replace engine behaviour.
 
-S282 roles to preserve:37/41/42/45/46 rear main HP/front auxiliary LP;43 Erie
-rear main HP feeding front loco and tender LP in parallel. LP tender exhaust and
+S282 roles to preserve:37/41/42/45/46 RearEngine=rear HP, MainEngine=front LP;
+43 Erie RearEngine HP feeds MainEngine front LP plus MiddleEngine tender LP. LP tender exhaust and
 pull stay on tender; only final venting stages feed atmosphere, internal HP flow
 must not feed the chimney.31/32 simple duplex and38/40 fictional triplex retain
 current simple expansion unless explicitly designed otherwise; stock unchanged.
@@ -58,3 +61,9 @@ receiver volumes from existing calibration, then native instance/save/damage/
 consumption integration and comparison. No Verde graph copied: study identified
 pressure/quality and missing flow-demand connections; not independently reaudited
 in this slice. Existing stage sound tuning is already installed in1.22.3.
+
+Presentation-first follow-up:1.22.4 test adds missing Erie tender native chuff/
+loop/cock audio, but keeps parallel steam physics. See AUDIO_STEAM_TEST_STATUS.txt.
+True compounding must use final LP atmospheric exhaust for chimney/tender pulses;
+HP transfer is internal, not another atmospheric chuff voice. Independent simple
+expansion duplexes still legitimately retain multiple atmospheric exhaust groups.

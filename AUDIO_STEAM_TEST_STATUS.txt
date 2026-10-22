@@ -1,0 +1,72 @@
+# Steam and presentation work - 1.22.4 test
+
+User priority: finish audio/visuals and correct steam accounting; retain current
+driving physics. This candidate changes presentation only. Native boiler, engine
+torque, consumption, cylinder sizing, grip, handling, wheel animation and brakes
+are untouched. CompoundCyclePrototype stays outside the shipping project.
+
+## Fixed now
+
+Erie tender was included in particles but omitted from the extra native audio
+readers. The common active-engine list now includes it exactly once for both.
+The tender chuff reader uses its OWN engine events, pressure, frequency, water
+and ash ports. Its regular/water/ash/loop subtree follows the rear tender exhaust;
+native mixer groups, pooled one-shot playback, clips, distances and relative
+source positions are retained. The modest existing LP sound profile also applies
+to the tender. Cylinder-cock audio follows its own cylinder outlet map and lever.
+Detach/reconnect rebuilds audio before adding replacement readers, restoring
+native primary settings and removing old subscriptions/clones. Audio readiness
+is exposed alongside existing tender visualEffects in the diagnostic JSON.
+
+## Verified current steam accounting
+
+The current multi-engine circuit is still PARALLEL/simple expansion. That is
+explicit, not a compound simulation hidden behind sound changes. All active
+fresh intake rates already feed one boiler consumption sum, including the tender.
+Dormant engines draw nothing. Tender torque/exhaust are removed from locomotive
+output sums while tender fresh-steam consumption remains charged to the boiler.
+Native-gate40 and graph/lifecycle48 checks pass. A compiled comparison with1.22.3
+finds734 protected methods unchanged, including all WheelRearranger methods
+except its diagnostic report. The existing105-method motion/physics check passes.
+
+## What genuine compound steam would change
+
+Native B99 mean torque assumes a fixed1bar atmospheric backpressure. Wires alone
+cannot make HP work against a receiver. Future true compound operation needs an
+owned per-car stage calculation, preserving native crank timing, lubrication,
+condensate/damage and saved state. Stage ownership must follow actual geometry:
+MainEngine=FRONT LP, RearEngine=REAR HP, MiddleEngine=Erie TENDER LP. Earlier
+prototype notes calling the main engine rear HP were incorrect and are corrected.
+
+At the same pressure/cutoff/RPM, HP backpressure reduces HP work, and LP inlet
+pressure comes from the receiver rather than another boiler feed. Starting pull
+and wheel-rim torque therefore change; a cold empty receiver delays LP assistance.
+A deliberate starting-valve design may be needed, rather than free LP steam.
+Fresh boiler demand becomes HP intake plus any actual direct starting supply;
+LP transfer is internal and must not be charged again. Regulator response, water
+use, boiler-pressure recovery and sustained power consequently change together.
+Only atmospheric exhaust feeds the chimney: HP transfer is internal; Erie tender
+LP exhaust stays at the tender. This also changes locomotive exhaust draught and
+can affect firing/steaming. It cannot be treated as a harmless sound-only change.
+
+These are steam-drive changes, not permission to retune adhesion, mass, wheel
+radius, curving, sanding or brakes. Existing grip settings can remain, but slip
+onset still changes when delivered torque changes. Before enabling compounds,
+compare actual existing calibrated bores/chest volumes/flow limits, chosen
+receiver volumes and independent speeds; establish starting behaviour and native
+save/pooling restoration. No promises of extra power or quantified economy yet.
+
+## Validation limits
+
+2551 managed actual-source seating/selection/reset checks;9014 discovery/identity
+checks;91 sound-profile checks;1483 compiled wiring/preservation assertions.
+All three native individual emitters and all ten loop references were inspected:
+inside SteamChuff reader subtree. Full2424-byte serialized layout consumed.
+No Unity clone serialization, audible playback, in-game coupler lifecycle or new
+visual acceptance claim. Test on Erie at rest, under power and at loop speeds;
+open/close cocks; detach/reconnect twice; switch to stock and back; check second
+loco isolation. Structural JSON now reports measurements.tender.audioEffects (structural JSON) or tractive.tender.audioEffects (power JSONL).
+Tender uses its existing loco-linked native crank/animation stream. Independent
+tender slip RPM and handling were not introduced.
+Previous1.22.3 pipe/guide fixes and their documented curve limits are retained.
+Candidate not installed or published. No backups created.
