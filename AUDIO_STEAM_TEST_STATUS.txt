@@ -18,6 +18,14 @@ Detach/reconnect rebuilds audio before adding replacement readers, restoring
 native primary settings and removing old subscriptions/clones. Audio readiness
 is exposed alongside existing tender visualEffects in the diagnostic JSON.
 
+## Known mechanical-audio gap - checked 22 October
+
+This candidate does not yet add the native ValveGearMechanism/Mechanism_Layered
+clanks at the tender drivers. audioEffects checks chuff/cock bindings only.
+Native normal mechanism playback uses engine CHUFF_FREQUENCY and can be reused
+without changing physics. Standard tender rolling/joint audio remains separate.
+See evidence/erie-tender-mechanism-audit-2026-10-22.md. Static audit, not playback.
+
 ## Verified current steam accounting
 
 The current multi-engine circuit is still PARALLEL/simple expansion. That is

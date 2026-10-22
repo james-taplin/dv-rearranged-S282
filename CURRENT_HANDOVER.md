@@ -1,3 +1,15 @@
+## Erie tender mechanical clanks audit - 22 Oct 2026
+
+James asked specifically about driving-gear clanks. Confirmed gap:1.22.4 adds
+chuffs/cocks but does not clone native ValveGearMechanism/Mechanism_Layered to
+tender. Its native LayeredAudioPortReader uses steamEngine.CHUFF_FREQUENCY;
+normal tender rolling/joint audio does not supply this. Existing audioEffects
+boolean checks chuffs/cocks only. Next reuse that native subtree at tender
+running gear, bind MiddleEngine frequency and existing cleanup; no physics
+change needed. Do not blindly copy damaged/low-oil readers. Static audit only,
+no runtime listening, source/build/package/install change. See evidence/erie-
+tender-mechanism-audit-2026-10-22.md. Installed1.22.3;1.22.4 candidate unchanged.
+
 ## Presentation-first1.22.4 test - 22 Oct 2026
 
 James prioritised audio/visuals/steam and requested existing driving physics be
