@@ -1,3 +1,24 @@
+## Compound work started - 22 Oct 2026
+
+James asked to start from the compound study handoff. First implementation slice
+is OFFLINE in experiments/compound, not compiled into runtime. Uses existing
+S060 receiver model as read-only reference; no changes to S060 or installedS282.
+See experiments/compound/README.md for current roles, native gap and next work.
+Prototype adds independent HP/LP speeds, shared receiver supply for Erie's two LP
+consumers, no priority by iteration, fresh-steam budget and conservation ledgers.
+Validate.CompoundPrototype.ps1:102027 arithmetic/conservation/pressure checks;
+4000legacy-reference steps. Initial blocked-LP pressure overshoot16.03871bar was
+found and corrected by bounding transferred parcels, not deleting energy. Default
+bounded mode now reaches15.999862bar on16bar supply; all transfers checked for
+pressure-gradient reversal. Legacy-reference mode disables only that correction
+to verify provenance; never propose it as a gameplay setting. readyForRuntime=false
+until native binding/calibration/lifecycle/performance work. Parameters are S060 test
+values, not arrangement calibration; reduction-only cylinder limits retained.
+Confirmed native torque subtracts fixed1bar; no backpressure input. Rewiring alone
+is insufficient; owned native stage subclass is the existing local precedent.
+No game build/install/release or change to1.22.3. No backups. User did not request
+agents for this new compound slice; none spawned.
+
 ## 1.22.3 test installed at James's request - 22 Oct 2026
 
 User confirmed game closed; process check also found no DerailValley process.
