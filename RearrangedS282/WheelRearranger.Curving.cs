@@ -55,7 +55,7 @@ namespace RearrangedS282
                     if (!float.IsNaN(k) && !float.IsInfinity(k)) { sum += Mathf.Abs(k); count++; }
                 }
                 curveCurvature = count > 0 ? sum / count : 0f;
-                curveModel = CurveDragModel.Groups(curveGroups, curveCurvature, car.massController.WeightPerAxle);
+                curveModel = CurveDragModel.Groups(curveGroups, curveCurvature, EffectiveDriverWeightPerAxleN);
                 curveStock = CurveDragModel.Stock(curveCurvature, locoWeight);
                 curveTargetN = (float)Math.Max(0, curveModel.TotalN - curveStock.TotalN);
                 curveSquealTarget = squeal ? (float)CurveDragModel.SquealLevel(curveTargetN, locoWeight, car.GetAbsSpeed()) : 0f;
@@ -101,7 +101,7 @@ namespace RearrangedS282
 
         private void LogCurveGroups(TrainCar car)
         {
-            double weight = car.massController.TotalMass * -Physics.gravity.y, perAxle = car.massController.WeightPerAxle;
+            double weight = car.massController.TotalMass * -Physics.gravity.y, perAxle = EffectiveDriverWeightPerAxleN;
             string groups = string.Join(" + ", curveGroups.Select(g => $"{g.Length} drivers ({g.Count(a => a.Flanged)} flanged)"));
             Main.Logger.Log($"Curve drag {currentWA}: {(groups.Length > 0 ? groups : "no rigid driver groups")}; extra over stock " +
                 $"R100 {CurveDragModel.ExtraN(curveGroups, .01, perAxle, weight) / 1000:F1} kN, R50 {CurveDragModel.ExtraN(curveGroups, .02, perAxle, weight) / 1000:F1} kN.");

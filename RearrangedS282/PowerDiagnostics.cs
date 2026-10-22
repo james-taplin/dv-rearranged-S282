@@ -63,7 +63,7 @@ namespace RearrangedS282
                 foreach (var mod in UnityModManager.modEntries)
                     if (mod.Active) mods.Add(new JObject { ["id"] = mod.Info.Id, ["version"] = mod.Info.Version });
                 var session = new JObject {
-                    ["record"] = "session", ["schema"] = 2, ["startedUtc"] = DateTime.UtcNow.ToString("O"),
+                    ["record"] = "session", ["schema"] = 3, ["startedUtc"] = DateTime.UtcNow.ToString("O"),
                     ["modVersion"] = typeof(Main).Assembly.GetName().Version.ToString(), ["sampleHzPerCar"] = 10,
                     ["maximumRows"] = MaximumRows, ["maximumSeconds"] = MaximumSeconds, ["maximumBytes"] = MaximumBytes, ["mods"] = mods,
                     ["phase"] = "SimController.Update finalizer snapshot on normal completion or fault; a normal return can skip the simulation tick during native pauses",
@@ -74,6 +74,7 @@ namespace RearrangedS282
                     ["units"] = "signed km/h, RPM, metres, newtons, Nm, kg/s, kg; all pressures bar absolute; controls/slip normalized",
                     ["missingValues"] = "null means unavailable/non-finite, never an assumed zero"
                 };
+                session["tractiveReference"] = TractiveDiagnostics.ReferenceInfo();
                 if (CurveSessionInfo != null) session["curve"] = CurveSessionInfo();
                 Write(session);
                 writer.Flush();
@@ -175,6 +176,7 @@ namespace RearrangedS282
                     ["cylinderCocks"] = F(engine.cylinderCockControl.Value), ["derailed"] = car.derailed,
                     ["trackSlopeApprox"] = F(car.transform.forward.y)
                 };
+                sample["tractive"] = TractiveDiagnostics.Capture(car);
                 if (CurveSampler != null) sample["curve"] = CurveSampler(car);
                 Write(sample);
                 rows++;

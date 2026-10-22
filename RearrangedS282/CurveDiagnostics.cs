@@ -74,7 +74,8 @@ namespace RearrangedS282
                     ["rollingResistanceN"] = new JArray(bogies.Select(b => F(coefficient * (1f + 25f * Mathf.Clamp01(slow)) * b.rb.mass * -Physics.gravity.y))),
                     ["wheelslip"] = car.SimController?.wheelslipController != null ? new JValue(car.SimController.wheelslipController.IsWheelslipping) : JValue.CreateNull()
                 };
-                float weight = car.massController != null ? car.massController.WeightPerAxle : float.NaN;
+                float weight = rearranger != null ? rearranger.EffectiveDriverWeightPerAxleN
+                    : car.massController != null ? car.massController.WeightPerAxle : float.NaN;
                 float meanCurvature = bogies.Average(b => Mathf.Abs(SampledCurvature(b, up)));
                 result["reference"] = new JObject {
                     ["radiusM"] = meanCurvature > 1e-6f ? F(1f / meanCurvature) : JValue.CreateNull(),

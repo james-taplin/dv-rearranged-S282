@@ -1,0 +1,16 @@
+PHYSICS NOTES
+
+Existing effective driver-load adjustments translate intended adhesive weight
+into DV's native friction calculation. Actual vehicle mass and native weather,
+sanding, braking, curving and wheel-radius systems are retained.
+
+Cylinder sizing is reduction-only against each engine's original specification.
+The machinery-sensitive nominal FoA ceiling may fall above or below stock.
+Stock is a reference, not a minimum FoA. Naturally weak original capacity is not
+boosted. Rated mass is fixed for repeatable sizing when arrangements are selected;
+actual native grip still follows current mass and rail conditions.
+
+The 2-2-2 is excluded from calibration and practical balance conclusions.
+Erie tender cylinders are calibrated separately; its simplified grip clamp remains.
+One S282 boiler is retained. Nominal cylinder TE is not sustained power, drawbar
+pull, top speed or a guaranteed tonnage rating. See FOA_BALANCE.md for calculations.

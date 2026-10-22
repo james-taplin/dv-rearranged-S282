@@ -201,8 +201,12 @@ namespace RearrangedS282
             // Presentation only: copied oil providers/port readers must not create
             // duplicate native circuits. The native Animator itself is retained.
             foreach (var behaviour in clone.GetComponentsInChildren<MonoBehaviour>(true))
-            { behaviour.enabled = false; Object.Destroy(behaviour); }
+            {
+                if (behaviour is PoweredWheelRotater) continue;
+                behaviour.enabled = false; Object.Destroy(behaviour);
+            }
             configure(clone);
+            PoweredWheelRotater.BindClonedDrive(clone);
             var mirror = clone.gameObject.AddComponent<MalletAnimatorMirror>();
             mirror.Source = sourceAnimator; mirror.Target = clone.GetComponent<Animator>();
             return clone;
@@ -341,6 +345,7 @@ namespace RearrangedS282
                 Pivot = pin != null ? body.InverseTransformPoint(pin.position) : (Vector3?)null,
                 Wheels = drive == null ? Array.Empty<(Transform, bool)>() : drive.GetComponentsInChildren<Transform>(false)
                     .Where(t => t.name.StartsWith("s282_wheels_driving_", StringComparison.Ordinal) && !t.name.Contains("LOD") && t.gameObject.activeInHierarchy)
+                    .Select(ResolvePresentedWheel).Distinct()
                     .Select(t => (t, t.GetComponent<MeshFilter>()?.sharedMesh == flangedDriver)).ToArray()
             };
             switch (currentWA)

@@ -53,6 +53,12 @@ namespace RearrangedS282
                 added.affectedRenderers.Add((renderer, renderer.sharedMaterial));
             }
         }
+
+        internal void Forget(IEnumerable<Renderer> renderers)
+        {
+            var removed = new HashSet<Renderer>(renderers);
+            added.affectedRenderers.RemoveAll(pair => pair.renderer == null || removed.Contains(pair.renderer));
+        }
     }
 }
 #endif

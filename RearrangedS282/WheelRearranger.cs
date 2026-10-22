@@ -364,6 +364,7 @@ namespace RearrangedS282
 			originalAirControlPosition = airControl.localPosition;
 			UpdateExternalControlPositions();
 #if B99_ALL_STANDARD
+			ApplyOilCupMounts();
 			B99Oilcups.Bind(loco, externalInteractables);
 			RefreshBigEndOiling(externalInteractables);
 #endif
@@ -383,6 +384,9 @@ namespace RearrangedS282
 
 		private void UnloadExternalInteractables(GameObject externalInteractables)
 		{
+#if B99_ALL_STANDARD
+			ClearBigEndCups(externalInteractables);
+#endif
 			lubricatorLabel = null; lubricatorOilLevel = null; lubricatorControlPivot = null;
 			airValveLabel = null; airValveControl = null;
 		}

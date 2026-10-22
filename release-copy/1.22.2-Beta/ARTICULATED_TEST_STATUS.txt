@@ -1,0 +1,15 @@
+1.22.2 BETA VALIDATION STATUS - 22 OCTOBER 2026
+Erie visual effects and exhaust placement tested and confirmed by JimTaplin.
+This is visual acceptance; do not infer every save/pooling/tender lifecycle case.
+
+New stage sound tuning: 91 actual helper checks with managed curve metadata
+stand-ins; 9014 existing audio discovery assertions; 152 compiled articulation
+checks; 279 protected checks confirm105 physics/retarget methods unchanged from
+1.22.1. Production Release build zero warnings/errors. Exact native sound profile
+restored by the existing arrangement teardown. New sound balance awaits listening.
+Native Unity interpolation and audio playback were not run in these offline tests.
+
+Erie geometry/cleanup66 checks and native coal/hatch/ladder clearance passed in
+1.22.1. Earlier 1.20 live all47 structural pass and power captures retained.
+True compound expansion mass/energy routing and feedwater recovery are deferred.
+Runtime DLL SHA256 224CB62AD0583B406EC2DA452D1FD3BE5C6A6E8F10F92CC027A9E3B9F3751D90

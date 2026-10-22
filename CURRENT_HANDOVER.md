@@ -1,3 +1,1586 @@
+## Twelve-driver valve report investigated - 22 Oct 2026
+
+User requested latest logs/diagnostics review and supplied dark screenshot of
+short valve rod and guide/support overlap on twelve wheel sets. Investigation
+only; no runtime source, installed build or release ZIP changed. Installed1.22.2
+is published on Nexus per James. Credit spelling correction from James:
+discorddraconequus (packaged credit still needs correcting in next build).
+
+Latest Player/Player-prev load1.22.2; no exception stack references S282. Other
+exceptions: AI Traffic radio registration, native HUD coupling/deletion during
+unload, native shop/Bolt destruction, DoubleTrack saving. No evidence tying these
+to the reported rod defect. Latest structuralJSON1.22.0 all47pass including4
+x-12-x and oilcup counts; file22Oct01:08BST. No newer power files than21Oct.
+
+Shared Show12SmallDrivers: driveYZ.84,Z+1.1; static guides onlyY-.1;
+cylinders movedY-.11 without corresponding Y/Z frame normalization. Existing
+Pacific/Hudson/Prairie common-frame fitting alignment not applied here. Native
+mesh/clip samples show valve axis approx.1055m below native casing valve bore;
+spindle forward tip approx.178-.202m behind unchanged rear-face datum8.84 at
+sampled extremes. Static guide differs from drive map by -.077..+.154m Y and
++.031..+.327m Z over its mesh. This supports the image mechanically; no live
+reproduction or continuous-motion clearance validation yet. Four shared cases:
+0-12-0,2-12-0,2-12-2,4-12-2. Do not hide gear or blindly stretch whole rods.
+Use existing fitting affine/retarget tools for targeted presentation fix; maintain
+physics/driver layout and test both sides, LODs, cutoff/reverse/rotation plus
+restore/isolation. BUG-12-GEAR recorded in TODO.md. Native-data findings saved
+build/twelve-driver-valve-review/findings.json.
+
+---
+## Stage sound tuning 1.22.2 installed and Nexus Beta prepared - 22 Oct 2026
+
+James explicitly confirmed Erie visuals in game, then requested stage sound tuning
+for this release; defer other Verde/compound work. Correct acceptance notes: Erie
+visuals/placement accepted; new audio has offline checks, not a listening run.
+
+ChuffStageTuning applies a modest .85 above-atmosphere pressure-span transform to
+front primary reader thresholds and individual-chuff volume curve for IDs37,41,
+42,43,45,46 (Mallets/Erie). Authored sample values/weights/wraps retained; tangent
+slopes adjusted. Rear native HP-style profile unchanged; simple duplexes and
+fictional triplexes untouched. Original front thresholds/curve reference restored
+in ChuffBinding.Remove on arrangement change/deinit. Uses authored prefab curve,
+so no cumulative transformations. No chuff indexing, event clock, cylinder count,
+native high-speed-loop, steam/traction or other physics changes. No new UI.
+Erie tender audio remains on existing path; this is not true series compounding.
+
+Credit reaconequus for Verde stage-sound reference in release-copy/CREDITS.txt;
+Build.RuntimeTrial now copies current credits to packages. No Verde assets/code
+bundled. Read-only Verde evidence build/verde-inspection: four native engines
+HP4/MP4/LP8 cylinders plus booster2; pressure incorrectly linked to quality in
+supplied graph, downstream pressure feeds and boiler ENGINE demand absent; no
+runtime verdict. Reuse stage concepts, do not transplant graph. Native receiver/
+flow/backpressure limits, final-stage blast and bounded feedwater heating deferred.
+
+Release build0warnings/errors;91 actual profile helper checks with managed curve
+metadata stand-ins;9014 audio-discovery assertions;152 compiled articulation;
+279 protected checks/105 physics-retarget methods unchanged from1.22.1.
+Installed with game closed;42 package files hash verified, no backups.
+DLL224CB62AD0583B406EC2DA452D1FD3BE5C6A6E8F10F92CC027A9E3B9F3751D90.
+Nexus ZIP Desktop/Derail Valley Mods/RearrangedS282-B99-1.22.2-Beta/
+RearrangedS282-B99-1.22.2-Beta.zip SHA256:
+0F4B9F3FC99DDDBB0FB567D32F54BB125E1125592E576D8CA1A71653B075696E.
+44 files; archived runtime matches installed/test; licence/notices retained and
+technique credit added. Clean docs release-copy/1.22.2-Beta record confirmation
+and new sound-listening caveat. No settings/diagnostic captures/PDB or new
+arrangements. Not published. Old release ZIPs remain unchanged.
+
+---
+## Nexus-ready 1.22.1 Beta ZIP prepared - 22 Oct 2026
+User requested release ZIP. Desktop/Derail Valley Mods/RearrangedS282-B99-1.22.1-Beta/
+RearrangedS282-B99-1.22.1-Beta.zip. 44 files; archived DLL matches installed/test
+7DB617848F714D67B88B36B71509E18CC93E290E18390F37C9A2B30420920311.
+ZIP SHA256 A66A46C4246DDFAFD7D149EE24CA3812319C4A15D2AF35E997DE6E56A8206221.
+Clean release docs include new Erie visuals and explicit unconfirmed live1.22.1
+acceptance; licences/credits/notices retained. Info display name B99 Beta only;
+version1.22.1/ID/dependencies unchanged. No settings/diagnostic captures/PDB.
+Docs and receipt release-copy/1.22.1-Beta. No publishing or installed-file changes.
+
+---
+## Erie clearance correction 1.22.1 installed - 22 Oct 2026
+
+User asked to check coal/hatch clearance and, if needed, relocate exhaust to rear
+side wall with bands and lower elbow. Native geometry showed old deck position
+crossed upper rear ladder/rung area. Relocated x-1.72/z-6.95 outside rear left tank
+wall, forward of ladder. Upright y2.65..4.05, inlet starts inside tank x-1.05/y1.8.
+Broad lower elbow uses existing sweep and fold-radius rejection. Two original
+transfer-pipe collar sections at y2.85/3.4 act as mounting bands. Original mesh,
+UV and native shared material reused, all pieces combined into one owned mesh/
+renderer retaining tender LOD cleanup. Outlet/white plume follows new mouth.
+No simulation, audio, other layouts or existing effect-reader changes this turn.
+
+Native mesh evidence now explicitly includes coal5 (full pile), tender body and
+water hatch transformed through authored prefab hierarchy. Conservative checks:
+coal rearward separation1.813m; pipe AABB clear of whole hatch rotation sphere
+by.310m; rear ladder forward-rail gap.216m with5cm rail thickness allowance.
+Intended lower inlet penetration and mounting band/tank contact are excluded.
+Local evidence: build/runtime-trial-1.22.1/erie-validation/native-clearance.json,
+clearance-preview.png and exhaust-mesh.json; extraction script under
+ evidence/steam-pipe-tests/inspect_erie_clearance.py. Native mesh data not shipped.
+
+Validation:66 presentation geometry/ownership checks/5cleanup cycles; production
+Release build0warnings0errors;279 protected checks/105physics-retarget compiled
+methods unchanged from1.22.0. Offline only; game appearance still pending.
+Installed with game closed;42 package files verified, settings/diagnostics retained,
+no backups. DLL7DB617848F714D67B88B36B71509E18CC93E290E18390F37C9A2B30420920311.
+TestZIP Desktop/Derail Valley Mods/RearrangedS282-B99-1.22.1-Test/
+RearrangedS282-B99-1.22.1-Test.zip
+SHA2566BDA141A479A6B194EA97EB40A46CB33260264F4B4150FEB2732635011878A2E.
+Build/install receipts under build/runtime-trial-1.22.1. Not published.
+
+---
+## Erie visuals 1.22.0 installed - 22 Oct 2026
+
+James prioritized tender visual effects; keep current physics/audio and temporary
+proportion controls. Added ErieTenderPresentation: rear-left .32 m shaft uses the
+original steam_transfer mesh/profile/UV and native steam-pipe shared material.
+Measured native S282B geometry (local evidence build/erie-native-geometry.txt):
+body x +/-1.56, rear z -8.09, max y3.52; pipe x-.95/z-7.45, y2.25..4.05.
+Native tender LOD entries retain their settings/foreign renderers during cleanup.
+
+ArticulatedEffects now adds tender only to particle secondaries (existing audio
+path unchanged). Native cylinder-cock reader and water/crack particle readers use
+middle-engine ports and mapped tender cylinder positions/orientation. Separate
+native SteamSmokeParticlePortReader drives white SteamSafetyRelease/SteamExhaust
+particles at pipe mouth from middle engine chuff/pressure. Empty ember parent;
+normal-zero broken-boiler state also used for native fire gate to prevent idle
+coal smoke without adding or changing simulation ports. No tender pulses sent
+to loco chimney. Pressure remains native; tender exhaust mass flow still excluded
+from locomotive blast as before. Water drips are conditional, not decorative.
+
+Attach/detach resets native particle readers; tender disable/delete callbacks
+remove event subscriptions before leaves vanish. Re-enable is detected by existing
+half-second effect refresh. Fixed destroyed-tender wrapper vs real-null transition.
+Owned mesh/LOD cleanup idempotent; no per-frame geometry generation.
+
+Validation: Release build zero warnings/errors; 56 actual presentation geometry/
+ownership checks across five cycles using existing managed fixture and original
+mesh; 9014 existing audio discovery checks; 152 compiled articulation integration;
+279 protected integration checks confirm105 compiled physics/retarget methods
+unchanged from1.21.2. Unity native Init/rendering/particle behaviour not executed.
+Live placement, plume strength, cylinder cocks/drips, near/far, uncouple/reconnect,
+save/reload still need James. Slip sparks/brake heat and grip/sanding deferred.
+Tender tractive/curve report now has exhaustOutlet and visualEffects readiness.
+
+Installed while game closed;42 package files hash verified,40 non-package files
+preserved; no backups. DLL SHA256:
+C7AB065425BEC4E7491CC44B127370D34D79A7DF18343715FBCB7DF1876C9B66
+Test ZIP Desktop/Derail Valley Mods/RearrangedS282-B99-1.22.0-Test/
+RearrangedS282-B99-1.22.0-Test.zip SHA256:
+C27FA48A18F2990C9941BC5D9D55A41EE10D9890196B637CA17F46C2A0E66EF8
+Receipts/manifests build/runtime-trial-1.22.0. Previous Nexus-ready1.21.2 Beta
+archive remains unchanged;1.22 is a test build, not published. No new arrangements.
+
+---
+## Nexus-ready 1.21.2 Beta archive prepared - 22 Oct 2026
+
+User requested Nexus-ready ZIP and feature/arrangement summary. Created Desktop/
+Derail Valley Mods/RearrangedS282-B99-1.21.2-Beta/RearrangedS282-B99-1.21.2-Beta.zip.
+SHA256 AA65DB7014E7D060B6ADB49C93C80D7097696A069B47169E5CBFD5779A030ED3.
+44files;32runtime/assets/licence/credit files verified byte-identical to testZIP.
+DLL matches installed1.21.2 exactly. Info DisplayName changed toB99 Beta only;
+version/ID/requirements/loadorder retained. No settings/diagnostics/PDB/source.
+Clean release README/manual/status/UMM options/changelog/physics notes replace
+historical trial-note stacks. Older FOA_REFINEMENT/PHYSICS_BASELINE reports omitted
+from release archive; current FOA_BALANCE retained. Original licence/notices/credits
+untouched. Documentation/receipt copies release-copy/1.21.2-Beta.
+
+No new arrangements since1.13.6: still47. New capabilities: temporary rod pitch/
+reach tuning, UMM reapply/reset, expanded power/TE diagnostics. Other changes are
+pipe polish, rear fifth-driver fix, grip/cylinder/FoA balancing and structuraltest
+correction. Missing frontcrank still unconfirmed; independent tenderfeature absent.
+Latest balance offline validated only; current liveall47 evidence1.20. Package is
+Beta, not newly proven in game. No publishing or installedfile change this turn.
+
+---
+
+## 1.21.2 BALANCE CORRECTION INSTALLED - 22 Oct 2026
+
+User challenged graph showing every calibrated FoA above stock, then explicitly
+requested new balancing pass with2-2-2 kept on special measures. Corrected code:
+remove stockRatio clamp from CylinderCalibration.Apply, not just change labels.
+Original-cylinder reduction-only maximum remains. Existing smooth target changed
+base4.2->3.9, driven-axle term .1*(n-4)[-.2,.3] -> .2*(n-4)[-.4,.6], total bounds
+3.85-4.55 ->3.3-4.65. Diameter/load/cylinder allowances unchanged. No per-ID tier.
+Actual calibrated outcomes8locomotive layouts below stock,36above. Stock3.668
+unchanged.4-4-0 actual3.427/108.8kN;4-6-0 3.657/160.9kN;2-12-2 4.297/206.7kN.
+2-2-2 dimensions, non-colliding prototype and calibration bypass untouched;
+exclude it from balance success/usability, not the sole slippery example.
+
+Existing native tests4142checks/132layoutmasscases/1400nativeTicks pass, now
+including assertions that calibrated results exist on BOTH sides of stock.
+Compiled279checks confirm105protectedmethodsunchanged; physics wiring11pass;
+production build0warnings/errors. No boiler/flow/adhesion/sand/brake/curve/wheel/
+geometry changes. Scope remains small calibration correction, no valve-gear fix
+or independent tender feature. FOA_BALANCE.md and build/runtime-trial-1.21.2/
+foa-comparison.csv/json have all47 plus tender, stock deltas and change flags.
+
+Installed while game closed,42packagefiles verified,14settings/diagnostic files
+unchanged, no backup. ActualDLL1.21.2.0. InstalledUTC2026-10-21T23:16:10.160403
+(local22Oct). Receipt build/runtime-trial-1.21.2/installation-receipt.json;
+package-files.json beside it. DLL:
+2E0C783E38BF2DC773C37B1D67AC4A55D5B01D343701EDC51909D18E94D6BEA5
+ZIP91558E920F7EEC7C76ED4CF700574FF4BD4D4FE7C4177054DF15702B5B76266B
+Desktop/Derail Valley Mods/RearrangedS282-B99-1.21.2-Test. No publish/push/commit.
+No live1.21.2 claim; originalcandidate documents inside ZIP are build-time notes.
+
+---
+
+## 1.21.1 INSTALLED at user request - 21 Oct 2026
+
+User explicitly requested installation and changelog since public1.13.6.
+Game process absent before copying. Installed exact prepared1.21.1 ZIP, no rebuild
+or backup. All41 packaged files hash-verified;14 existing settings/diagnostic files
+preserved exactly. Actual installed assembly1.21.1.0. Receipt:
+build/runtime-trial-1.21.1/installation-receipt.json and package-files.json.
+Installed UTC2026-10-21T22:57:00.235003+00:00.
+DLL2BA2572DAF4687C9A78D8FB874424712D06E7E3F5D2DC04B156E234CAAEC3573
+ZIP8FE309719D7FCB64CA0857CBF79EB581B11085698F4150D7595921DD2059F17A
+ZIP Desktop/Derail Valley Mods/RearrangedS282-B99-1.21.1-Test.
+No live1.21.1 claim; current all47/power acceptance is1.20. Original candidate
+reports inside immutable ZIP are build-time records, superseded by this receipt.
+
+Prepared laconic unpunctuated changelog:
+release-copy/1.21.1-Test/CHANGELOG.txt and beside desktopZIP. Since1.13.6 only:
+rod/spacing tuning+reapply, pipes, rear Mallet follower, calculated grip/cylinders,
+FoA individuality, tender cylinder sizing and diagnostics/test correction.
+Does NOT claim missing front crank fixed, independent powered tenders implemented,
+new arrangements since1.13.6 or new chuff support. Those features either remain
+pending or were already in1.13.6. No publish/push/release made.
+
+---
+
+## 1.21.1 TARGETED FoA REFINEMENT - BUILT, NOT INSTALLED
+
+Latest request explicitly limits scope to modest machinery-sensitive FoA
+variation. Do not pursue unrelated crank/tender-feature/geometry work here.
+Universal4.4 replaced with pure bounded rule in existing TractiveEffortModel:
+4.2 + .1*(poweredAxles-4) bounded[-.2,.3]
+ - .15*(diameter/1.424-1) bounded[-.1,.1]
+ + .1*(effectiveAxleLoad/20000-1) bounded[-.05,.05]
+ + .025*(cylinders-2) bounded[0,.1], result bounded[3.85,4.55].
+These are explicit modest design allowances, not historical measurements or
+performance tiers. No per-arrangement bonus/ID table. Multiple cylinders retain
+shared phase/slip, with no assumed smoothing advantage. Ceiling only; naturally
+weaker original engines stay weak. Reduction-only original dimensions retained.
+Stock bypass completely unchanged. 124t shares and every boiler/flow/geometry/
+curving/adhesion/sand/brake system unchanged. Erie tender uses same rule with its
+own four driven axles/two cylinders/40t adhesive mass; clamp untouched.
+
+4-4-0 actual FoA4.40->3.927, nominal84.7->94.9kN(+12%). 2-12-2 FoA4.397,
+201.8->202.0kN(+.1%). Mogul+8.4%,4-14-4-2.3%,larger Mallet/Erie bodies-3.3%.
+Tender4.4->4.194,89.2->93.6kN(+4.9%). Actual calibrated FoA range3.927-5.502;
+upper actual values are unboosted original capacity, not forced targets.
+Only4-4-0/4-4-2/4-4-4/2-4-0 exceed10% change; flagged. No conventional layout
+below40% stock nominal TE in simple usability screen; NOT tonnage guarantee.
+Prototype and unpowered novelty remain explicitly excluded from usability claims.
+
+FOA_REFINEMENT.md has concise all47 plus tender before/after table, formulas,
+flags and limitations. CSV/JSON under build/runtime-trial-1.21.1. Prior1.21.0
+validation/table preserved as comparison input. No new extensive tooling/graphs.
+Existing native fixture reused:4140checks/132layoutmasscases/1400nativeTicks pass;
+build0warnings/errors; compiled279checks/105protectedmethodsunchanged vs1.21.0;
+physics wiring11pass. Stock/resource independence/restore/isolation remain tested.
+DLL2BA2572DAF4687C9A78D8FB874424712D06E7E3F5D2DC04B156E234CAAEC3573
+No installation, no publishing, no backups. Installed1.20 remains untouched.
+
+---
+
+## Public 1.13.6 reports and options documentation - 21 Oct 2026
+
+Latest user wants missing front duplex valve-gear crank investigated, asks whether
+UMM settings explain it, will obtain screenshot, and requests mod-page options
+section. No arrangement/screenshot supplied. Do NOT mark the crank fixed without
+reproduction. No production changes for these reports yet. 1.21 candidate remains
+built but uninstalled, 1.20 installed.
+
+Settings are confirmed from compiled 1.13.6 metadata, not merely current labels.
+Rigid x-4-x and x-6-x visibility defaults off; polished Pacific/Hudson override
+on; x-8/10/12 on; high-speed option off. High-speed label says2-8-2 but affects all
+three high-speed2-8-x layouts. Prairie uses polishing switch. These are appearance
+settings, not power toggles. Articulated methods do not read these family flags;
+ResetToFourCoupled explicitly shows native gear, Franklin config enables its
+return-crank base. This does not prove correct visual placement/rendering. Shared
+ConfigureEngineDrive, ApplyArticulatedGeometry, ConfigureLongEngine and reset
+compiled identical between1.13.6 and1.21; cannot claim later builds fixed report.
+
+Prepared release-copy/1.13.6-Beta/UMM_OPTIONS_FOR_NEXUS.md for page. Distinguishes
+public controls from later private tuning/reapply buttons. No page publication,
+archive replacement, install or code workaround. Need reporter layout/side/near-
+far/switch history and screenshot before specific missing-crank cause/fix.
+
+Second report is feature request, not defect: independent powered tender with
+2-6-6-0 host is feasible using third existing engine. Current gating/geometry is
+Erie-only. Requires host-independent tender mesh construction/activation, saved
+choice, calibration and cleanup; three-engine locomotive triplexes have no spare
+engine. Not implemented; no new option promised as already available. TODO entries
+BUG-CRANK and FEATURE-TENDER record scope.
+
+---
+
+## 1.21.0 CALCULATED PHYSICS CANDIDATE - NOT INSTALLED
+
+James requested a stronger deterministic/historical-informed physics pass now,
+without requiring further game tests first, followed by TE metric comparison.
+Implemented and built 1.21.0; installed mod remains 1.20.0. No backups/publish/push.
+No agents requested for this physics turn; none spawned.
+
+Current adhesion weights reviewed and retained as explicit effective-load
+assumptions (not reconstructed historical axle weights). Selection now evaluates
+shares at fixed 124 t working design mass, so water at selection cannot alter
+rated shares/cylinder dimensions. Native actual mass, slip/weather/sanding remain.
+New reduction-only cylinder ceiling: nominal TE at .85 of14bar gauge pressure,
+minimum nominal factor of adhesion4.4. Convert to actual B99 reference mean force
+at15bar absolute/.75cutoff/300C (~1.133 nominal-to-mean ratio), giving dry pull/grip
+reference ceiling~1.073 rather than old stock1.287. Stock unchanged. Original
+cylinder capacities are upper bounds; no boost, no forced speed cap, no flow/
+chest/boiler/mass/geometry changes. Exact instance restore retained.
+Erie tender cylinders calibrated independently at50t/.8 driven share; nominal TE
+150.9 ->89.2kN. Existing tender force clamp remains. It ALREADY reads TotalMass;
+prior wording implying resource mass was wholly absent was too broad. Need future
+rail/sand consistency and mass-refresh checks, not a duplicate mass system.
+
+Most ceiling-limited arrangements reduce nominal cylinder TE16.6%; nine nonstock
+arrangements change less than5%. These are cylinder nominal figures, not a claim
+usable drawbar force drops the same amount. One boiler means extra cylinders do
+not create extra sustained power. Historical-style FA4.4 is a stated design
+choice, not unique truth derived from Whyte notation. Short layouts on124t body
+still use virtual adhesive weight; cannot claim realistic physical spring loads.
+
+Evidence: PHYSICS_BASELINE.md includes source citations and explicit assumptions.
+Native fixture4140checks,132layout/masscases,1400nativeTicks; independent nominal
+formula, resource-independent dimensions, tender calibration, isolation and exact
+restore pass. Build0warnings/errors. Protected integration279checks/105methods
+unchanged vs1.20; articulated152, pipe19, steamvalidator12, tractive74, physics11.
+Source changed only calibration, rated-share selection, diagnostic/structural
+reference comparison and report tooling/docs. New legacy stockReferenceRatioCeiling
+field aliases designReferencePullGripCeiling; referenceGripN now at ratedmass,
+not currentmass. Structural compares measured reference force to rated designgrip.
+
+Comparison generator Tools/PhysicsBaseline.py consumes actual native validation
+and1.20 structural input. build/runtime-trial-1.21.0/baseline contains all47 plus
+separateErie tender row in CSV/JSON/Markdown and all/selected PNGplots. Giant
+prototype excluded from plots. Uses Pillow fallback because matplotlib absent;
+workspace-only pip attempt failed DNS, no dependency installed. Plot inspected.
+Nominal/mean/drygrip explicitly separated; not speed curves or sustained ratings.
+
+Candidate DLL01556EEBC037201FB45AB7BAA403B977653B9B7C36C7B59583F25F313AAA4135
+ZIP on Desktop/Derail Valley Mods/RearrangedS282-B99-1.21.0-Test.
+ZIP SHA256 08416BB3C5D74645AD1A6DEE3DEE8BB45DF61A07F6804B5B312B121CDACA0C4F
+Package 40 files verified; package-verification.json beside build receipt. Build receipt
+beside ZIP and build/runtime-trial-1.21.0. NOT installed. Next install when requested;
+no need another power-test round to generate the calculated baseline. Later normal
+smoke/balance verification remains distinct from deterministic calculation.
+
+---
+
+## 1.20.0 LIVE REVIEW - 21 Oct 2026, after power tests
+
+Latest structural report: actual 1.20.0.0, L-022/control L-063, all 47 PASS.
+Oilcup counts/calibration consistent; pipe maximum gap .0354 mm. Rear Mallet
+followers bound on both sides with zero structural rotation gap. Five new power
+files contain 9,698 rows, actual 1.20; powered stock/Prairie/Mallet/4-14-4/Erie.
+No simulation faults or wheel/crank RPM discrepancy. Both Mallet engines and all
+three Erie engines contribute, Erie tender classified separately and applies up
+to its 96 kN clamp. Background derailed L-050 is not tested Erie L-023. Sanding
+explains increased native grip; do not rebalance using instantaneous peaks.
+Captures are 66-92 seconds, powered spans 36-60 seconds, not sustained-load ratings.
+No powered 2-4-0 capture found. No S282 error entries or rolling-audio exception
+flood in current log; S060 saved selection/AI Traffic/scene errors separate.
+
+James accepts visible wheels/layouts, rods/reversers, oilcups and almost-perfect
+pipes. Record visual acceptance without claiming explicit LOD/refill/pool/save
+coverage. TODO updated. Full review and machine summaries:
+build/runtime-review-1.20.0/REVIEW.md, power-summary.json, powered-detail.json.
+Next substantive work: Erie presentation/resource/grip consistency; bake accepted
+positions/remove granular tuning; sustained loaded/high-speed balance and targeted
+lifecycle checks. Curve derail risk and giant prototype remain deferred.
+No runtime code/install changed during review. Existing 1.20 remains installed.
+
+---
+
+## 1.20.0 INSTALLED - pipe polish and structural test correction, 21 Oct 2026
+
+Request: review short 4-14-4 power/logs; smooth pipes, compact two-cylinder routes,
+minimum width, internal Erie tender LP supply. Accepted wheels/layouts retained.
+Three agents used as explicitly requested. No publishing, push, commit or backups.
+
+Install: game absent at install guard. All 39 packaged files match installed;
+six existing settings/diagnostic files unchanged. Actual assembly 1.20.0.0.
+Receipt: build/runtime-trial-1.20.0/installation-receipt.json; package-files.json.
+DLL F2C3F7633ADEFED810F72EE6BED1DA45DD5BF9FC47A7565D39A3052DBB78040D
+ZIP EF11D30CE8B37D7CE4D47304F4A22B49423877B1303025657DC60A677D4DF2CB
+ZIP: Desktop/Derail Valley Mods/RearrangedS282-B99-1.20.0-Test.
+Installed UTC 2026-10-21T20:09:25.3215317Z. Live 1.20 NOT yet tested.
+
+Pipe cause: original transfer shaft had four rings. Bending its long triangles
+produced angular wedges; extra sweep samples alone cannot fix that. New 193-ring
+shaft retains original 13-sided profile, source seam/UV island/collars. Radius-aware
+bend rejection prevents inner folds. Compact rigid routes replace long-header
+fallback. Original inclined boiler fittings retained exactly, lower neck clipped
+and capped with measured joint. Safe curve or plain sleeve in cramped space.
+Articulated feed retains same fitting. Last manifold faces forward; header ends
+at its inlet, front bore capped. Width >= widest side manifold, floor .8 native
+(shaft 162.56 mm, transfer flange 223.52 mm). Erie exterior routing locomotive-only;
+tender LP internal. Native articulation/LOD retained. Owned meshes released,
+original sources/LOD arrays restored. Zero new colliders. No accepted wheel,
+layout, cylinder position or physics changes. Original MIT meshes/materials reused.
+
+Diagnostics: actual latest session 1.18.0.0, although disk had 1.19 installed.
+Reason unconfirmed. UMM now shows actual RUNNING version; restart and confirm 1.20.
+Latest structural all 47 stopped at false pipe-error predicate: Newtonsoft typed
+string null has Type.String although it serializes null. Fixed actual value test
+and explicit null emission. Real errors, counts/colliders/nonfinite/negative/>3 mm
+still rejected. Existing socket counts/gaps consistent; stock restore matched.
+Later checks did NOT run; do not claim all-47 or PHYS acceptance. Regression with
+actual Newtonsoft: 12 checks pass.
+
+Power: power-20261021-190721-749.jsonl, 239 samples/31.305 s, L-074 4-14-4 on 1.18.
+Powered 82 samples, 3.08-14.49 s, 46.84-63.16 km/h, peak 101.609 kN. Wheel/crank RPM
+agree, slip 0, no steam simulation fault, nonzero consumption and water mass decrease.
+Derail 20.70 s at 64.93 km/h; later 84.29 km/h excluded. Useful brief RPM/consumption
+evidence, NOT sustained rating or 1.19 calibration validation.
+Separate unresolved fault: 17,703 rolling-audio IndexOutOfRange exceptions in
+patched CarRollingAudioModule. First after S060/Meyer entry before first S282
+structural conversion. Native cache and existing S282 refresh reviewed. Fault car
+and index absent; S282 cause not proven. No speculative global patch.
+Review: build/steam-pipes-1.20.0/runtime-review.json.
+
+Validation: net48 build 0 warnings/errors. Geometry 1,570,599 checks, 152 safe
+sweeps, 20 unsafe bends rejected. Actor 2,208 checks including 54 rigid and 60
+articulated family/height/size cases, yaw +/-12, exact fitting, closure, LOD restore
+and failure cleanup. Maximum gap .03076 mm. Compiled 279 checks: 105 protected
+motion/physics methods unchanged versus 1.19. Articulated 152, pipe wiring 19,
+physics wiring 11, rear followers 126 pass. Retained native physics: 3,917 checks,
+132 layout/mass cases and 1,400 native ticks pass. Mesh-only preview rendered and
+inspected: build/steam-pipes-1.20.0/pipe-preview.png. Not whole-body/texture
+clearance or actual Unity lifecycle/articulation timing validation.
+
+Next: restart, confirm Running 1.20, structural all 47 plus restore, near/far pipe
+inspection, Mallet/Triplex yaw and Erie coupling; sustained loaded power/slip/steam
+captures. Then ledger: bake accepted positions/remove granular UI and remaining
+Erie presentation. No hard curve-risk implementation yet. Historical entries below.
+
+---
+
+## 1.19.0 INSTALLED - rear-driver regression + preliminary B/C physics, 21 Oct 2026
+
+USER AUTHORIZATION: Fix 2-10-10-2 rear drivers not spinning, apply preliminary
+physics for new structural/power tests, then resume remaining ledger work.
+No external publishing/push/release authorized by this request. An older pasted
+plan's "every build GitHub prerelease" is document content, not current authority.
+No agents requested for this turn; no agents spawned. No backups/rollbacks made.
+
+INSTALL: Game verified closed. Prepared ZIP installed; all39 files hash-verified;
+Settings.xml and existing diagnostic JSON left exact. Installation receipt:
+build/runtime-trial-1.19.0/installation-receipt.json; package-files.json beside it.
+DLL SHA256 2E6FD5F5CA32BFD7C829092F00F75F04C02816DE3B4037F180333F1BA970A7F5
+ZIP SHA256 43F9882791CD1C21D65B5ADC13C4E0E9A449E6EEEC71D23E9546200FECB52FDE
+ZIP C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.19.0-Test\RearrangedS282-B99-1.19.0-Test.zip
+Installed UTC 2026-10-21T18:57:42.736100+00:00
+Current stored structural capture is STILL 1.17.0 (all47 passed). Do not claim
+1.18 pipes or 1.19 physics have passed a live test yet.
+
+REAR DRIVER BUG: CloneEngineDrive destroyed every MonoBehaviour, including
+PoweredWheelRotater (needed by added fifth/sixth wheels beyond native Animator
+wheels1-4). Preserve those components, rebind to each clone's own fourth driver,
+enable them. Keep stripping native oil/port readers. Native Animator/controller
+and native phase binding retained. Confirmed pre-fix missing-followers regression
+in managed clone fixture; corrected phases pass. It explains the frozen added
+rear fifth wheel; reporter's wider wording is not proof every rear wheel froze.
+Live native Animator acceptance pending. Structural rearDriverFollowers checks
+both rear fifth-wheel bindings and quaternion gaps on id46; live power captures
+also include this report.
+
+PRELIMINARY PHYSICS DECISIONS: Reduction-only DV-feel first pass, not historical
+bore design, speed cap or final balancing. Stock S282 exact; 4-0-4 remains zero
+traction; giant2-2-2 stays a prototype. No actual mass/CoM/brake/coupler change.
+B: Existing native friction conversion receives family-driven share target:
+no trailing .85 short/.88 larger, 4-6-0 .75; one trailing axle .73; two .63;
+0-x-0 1; articulated axle-count share. Short-group caps18/19/20t and larger32t
+absolute override targets. Use TotalMass, not CarMass, at selection. Selected
+fraction follows native resource-mass changes afterwards (caps not continuously
+recomputed). Physical axle load distribution stays DV-native. Curve driver-load
+input matches effective driven-load assumption; stock comparison unchanged.
+
+C: CylinderCalibration owns only per-car native engine snapshots. Common ref
+15bar absolute/.75cutoff/300C, target stock pull/grip ratio from native baseline
+radius/coefficient/dimensions at same mass. Scale active LOCOMOTIVE engine area
+by min(1,target pull/current pull), preserve aux/main capacity ratios and stroke/
+count. Main bore updated with cached pistonArea and cylinderVolume (native litres)
+using two narrowly scoped FieldInfos for private readonly caches. Main/aux original
+bore/area/volume restore exactly before each conversion, stock, failure rollback,
+pool and destroy. Shared definitions, native graph/ports, chest state/volume,
+throttle limits, event counters, min/max cutoff not rewritten. No universal0.40m
+minimum: id46 main~.426m/aux~.297m preserves original ratio. Erie TENDER engine
+not included/recalibrated; its previous separate grip/force clamp remains.
+No boosting capacity where original pull already below stock reference ratio.
+Actual smaller cylinder volume changes consumption natively; sustained economy,
+maximum usable speed and actual drawbar performance require loaded captures.
+
+NATIVE ADHESION FINDING: Installed B99 AdhesionControllerSystem queries BOTH
+Copy_TrainCar_Data and Calculate_Adhesion only for moving, wheel-sliding or
+wheelslipping tags. Resting stationary structural live grip can therefore retain
+previous arrangement output, not just numerical mismatch. TractiveDiagnostics
+adds adhesionEcsEligible using actual tag presence. Do NOT force native tags,
+step physics manually or synthesize observed grip to hide stale samples.
+
+TEST CHANGES: Stage2 converted snapshot permits only owned bore changes, still
+checks stroke/count/cutoff/shared type/base mass, per-car cached consistency,
+stock-reference force ceiling, second-car isolation. Snapshot now includes engine
+cached area/volume so exact restored comparison catches cache leakage. Separate
+physicsCalibration/rearDriverFollowers blocks added to structural; observational
+live tractive samples include same metadata. Existing power diagnostic behavior
+retained; no native state changes in observer/model.
+
+OFFLINE VALIDATION:
+- Production Stage3 net48 build0 warnings/errors.
+- Validate.RearDriverFollowers:126 managed checks; actual cloning/follower code;
+  pre-fix variant fails with destroyed followers as expected. Not Unity playback.
+- Validate.PreliminaryPhysics:3917 checks,132 eligible layout/mass cases at
+  111000/124079/135000kg,1400 actual native engine Tick smoke steps; exact cached
+  restore, aux ratio, no capacity boost, per-car isolation, cap bounds passed.
+- Validate.PreliminaryPhysicsIntegration:11 ownership/wiring checks.
+- Validate.CylinderCasingIntegration -AllowPreliminaryPhysics against1.18:
+ 275 checks,103 EXISTING protected methods unchanged. New pure target-share
+ method and original-friction getter allowed explicitly. Kept native methods,
+ ArticulatedSimulation and DriveRetarget IL comparisons. Getter appended to
+ B99PhysicsState so compiler-generated lambda names remain stable.
+- Articulated integration152, steam pipe wiring19, curve model150, tractive
+ observer/table74 checks. PowerDiagnostics harness passes (116 including new
+ stationary/eligible ECS annotation checks; source capture unchanged).
+- Baseline table generated from actual1.17 capture at
+ build/runtime-trial-1.17.0/tractive-before-physics.{md,bbcode.txt}.
+- Predicted1.19 table (not new live measurements) in native validation.json table.
+
+NEXT: James runs1.19 all-standard structural first, then power/load/slip/endurance
+captures and checks id46 rear wheels forward/reverse/slip. Pipes/manifolds from
+1.18 still need game appearance/clearance/LOD/Erie tender lifecycle acceptance.
+Power comparison: repaired stock vs4-4-0, Prairie,4-14-4, Angus,id46 using same
+train/rail/weather/resources; START POWER DIAGNOSTICS, close UMM, stop after.
+No infinite steam/unsupported cylinder mods for a usable native comparison.
+Once evidence reviewed, next ledger presentation item is ERIE-01 tender exhaust/
+cocks/sparks/LOD. Temporary tuning UI removal/baking proportions waits on final
+geometry acceptance (American values still pending). Hard curve derailment risk
+is a separate future feature; don't fold it into this power-test candidate.
+TODO ledger updated. Installed1.19 is test-only; no publication/commit/push.
+
+Previous history follows:
+
+## 1.18.0 INSTALLED and previous 1.17.0 run reviewed - 21 Oct 2026
+
+James explicitly requested installation and review of the previous run.
+Verified game closed, installed prepared/hash-checked 1.18 ZIP, verified all39
+package files. DLL DC18E4F639DE34F1654B3E36B62C679519E2170F8F62CC342D9DBD43FDCAD224.
+Settings.xml and stage2-runtime-checks.json hashes unchanged. No backups made.
+Receipt: build/runtime-trial-1.18.0/installation-receipt.json.
+1.18 pipe appearance/live structural validation still pending.
+
+Previous diagnostics version1.17.0.0: all47 passed, subjectL-007/controlL-011.
+All oilcup counts matched; zero duplicate ports/overlap pairs, maximum provider
+and guide gaps both0. Accepted tuning recorded exactly: Mogul .18/.12,
+2-4-0 .20/.14, Prairie .22/.12. Tractive CSV error null.
+Review: build/runtime-trial-1.17.0/runtime-review-20261021.json.
+Player.log confirms all47 passed. Startup AItraffic WorkerRadio registration
+error; shutdown CouplerInterfacer, CargoReactionToDamage, Bolt.SceneVariables,
+GlobalShopController exceptions and SetActive-during-destroy warnings observed.
+No Rearranged structural failure shown; shutdown stack traces do not establish
+causation or absolve mod interactions. Manual driving/visual/unload still needed.
+
+Historical candidate notes below (the not-installed statements are superseded):
+
+## 1.18.0 steam-pipe candidate BUILT, NOT INSTALLED � 21 Oct 2026
+
+ACTIVE USER REQUEST: While James runs the installed 1.17 structural test, start
+repairing missing/odd steam pipes and manifolds. Installed files deliberately
+untouched; game may still be running. Do not describe the current structural
+run as testing these new pipes. Do not install until the test is finished and
+James wants the new candidate. No backups/rollback copies created.
+
+IMPLEMENTED: WheelRearranger.SteamConnections caches native boiler fittings and
+barycentric surface sockets on actual casing triangles, including normalized
+meshes. Modified rigids reshape native pipes only between rigid end collars.
+Insufficient short-pipe room uses a routed manifold branch. Articulated engine
+chests (including Erie tender engine) use the original MIT rear Franklin inlet
+manifold and flanged long pipe meshes, with adaptive branches to a side header.
+Source manifold is an L, not a tee: do not assume original prefab alone can chain
+triplex engines. Native articulation/tender poses remain authoritative. Stable
+native lateral axes determine sides; visual updates run at order 30000.
+
+SteamPipeShape pure geometry and SteamPipePresentation per-car visual owner.
+No custom joints/physics, and no compound/exhaust steam-routing implementation.
+Stock S282, novelty 4-0-4 and giant 2-2-2 retain existing pipe presentation.
+Per-car owned pipe meshes only; original authored meshes shared immutable.
+Native LOD membership/fades/cull level retained and exact arrays/bounds restored
+before casing/retarget cleanup. Owned renderers removed from explosion list.
+Late failure hides stale pipes, restores previous source renderer states and
+retains an error for diagnostics. Erie attach/detach rebuilds connections.
+Structural JSON steamConnections validates counts, gap <=3mm, zero colliders,
+and no presentation errors. Full body/gear clearance is NOT established by it.
+
+ASSETS: models/steam_manifold.obj + steam_transfer.obj are original MIT bundle
+geometry exports, no native game mesh shipped. Build script verifies their
+hashes. Original bundle/credits/licence unchanged. Reproducible source/fixture
+check: evidence/steam-pipe-tests/extract_original.py (UnityPy).
+
+VALIDATION:
+- net48 Stage3 production build: 0 warnings/errors.
+- Validate.SteamPipes.ps1: 102056 actual-source pure geometry checks, 172 sweeps,
+  28 native cases plus 4 routed-fallback cases; max endpoint gap 0.0000011m.
+- Managed production actor fixture: 153 lifecycle/pose/LOD/ownership checks;
+  max gap 0.000031m. Includes tender yaw and failed-source hiding. It uses
+  managed scene/mesh stand-ins, not a live Unity player.
+- Validate.SteamPipeIntegration.ps1: 19 compiled wiring checks passed.
+- Validate.CylinderCasingIntegration.ps1 against installed 1.17: 275 checks,
+  103 protected compiled simulation/motion methods unchanged.
+- Articulated integration 152 checks; oilcup lifecycle wiring 21 checks passed.
+- ZIP39 entries: both authored pipe assets, legal notices retained, no native
+  fixture meshes shipped. Installed 1.17 DLL SHA verified unchanged.
+
+REMAINING: actual in-game structural run on 1.18, all layout appearance/clearance,
+LOD distance, reapply/stock restore, Erie coupling/uncoupling, tight curves,
+multiple loco isolation and save/reload/delete. Side header branch routing is
+an intake supply visual, not historical compound plumbing. Do not claim all
+screenshots fixed or native rendering verified before James checks it.
+
+Candidate ZIP: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.18.0-Test\RearrangedS282-B99-1.18.0-Test.zip
+DLL SHA256: DC18E4F639DE34F1654B3E36B62C679519E2170F8F62CC342D9DBD43FDCAD224
+ZIP SHA256: B37D09B1B02073E59A451E7604D6200796746CF40C1766A81D3A189583DAEB9F
+Receipts: build/runtime-trial-1.18.0/build-receipt.json
+Evidence: build/steam-pipes-1.18.0/{geometry-validation,physics-validation}
+
+Previous installed baseline follows:
+
+## 1.17.0 requested proportions + PHYS-A BUILT AND INSTALLED, 21 Oct 2026
+
+ACTIVE USER REQUEST: Resume ledger while James tests. Selected PHYS-A measurement
+work, independent of geometry acceptance. During that work James supplied preferred
+pitch/rearward metres: Mogul 2-6-0 .18/.12, 2-4-0 .20/.14, Prairie 2-6-2 .22/.12.
+Asked explicitly about Prairie .22 exceeding existing .20 cap; James confirmed
+"I want 0.22 m — extend the range and test it". Treat first two as accepted
+preferences, Prairie .22 as requested next in-game check. American still pending.
+Granular controls remain TEMPORARY; fixed layout definitions/remove tuning UI
+still required after positions accepted. Steam pipes follow AFTER positions,
+using original Franklin meshes first. PHYS-B/C decisions remain deferred.
+
+GEOMETRY: Prairie-only pitch maximum .22 m (DriverLayout.ClampExtraPitch now
+accepts layout ID; Create and structural check both use it). Other pitch caps
+remain .20. Settings defaults updated to the three exact pairs, plus installed
+Settings.xml six matching fields; all other XML setting elements verified intact.
+No backup created. Existing stored positions .13/.15 were older; explicit user
+values .12/.14 are authoritative. American independent controls retained.
+
+PHYS-A IMPLEMENTATION: new pure TractiveEffortModel.cs and observational
+TractiveDiagnostics.cs. Existing structural RunAll writes result.measurements
+SEPARATE from immutable converted/restored snapshots, plus
+stage2-tractive-measurements.csv during progress. Capture exact native TotalMass,
+CarMass/CargoMass/ResourcesMass, native resource quantities, boiler pressure/water,
+ECS live grip per axle/total, separate controller slip-drop limit, read-back friction,
+engine IDs/activation/bore/stroke/cached area/volume/cutoff/pressures/controls/RPM.
+Dormant aux engines disclosed but excluded; zero drivers have zero loco pull;
+Erie tender engine/reference force/actual demand-limit-applied figures separate.
+TenderEngineReport only gains observed radius, no tender traction changes.
+Existing live PowerDiagnostics JSONL schema3 also includes tractive and reference
+metadata. Original engine exceptions, rate/size/time limits and recording-off
+behavior retained. Helper failures stay diagnostic-only, missing/nonfinite=null.
+No new hook, port writes, simulation ticks or gameplay calibration.
+
+REFERENCE METHOD: same explicit 15 bar ABS / .75 cutoff / 300 C for every active
+engine. Mirror native MeanEffectivePressureRatio including condensation and
+cutoff, cached piston area, stroke/cylinders/radius. Not instantaneous starting
+pull, delivered power or a steam-supply simulation. Sampled-steam mean is a
+magnitude before smoothing/drivetrain health; neutral=zero, cock/crack losses
+included. Dry reference grip=read-back coefficient*captured TotalMass/axles*9.81
+*powered. Native live grip differs with rail/sand and may be stale while stopped.
+Tools/TractiveTable.ps1 outputs Markdown/BBCode from a NEW structural capture.
+Stock force index=100*min(reference pull,dry grip)/same stock2-8-2 value.
+No fabricated 1000t scaling / 2% grade claims. Invalid rows/missing stock stay n/a;
+experimental 2-2-2 flagged, Erie tender not silently summed. Synthetic preview
+under build/ is TEST DATA ONLY; no real performance table published.
+TRACTIVE_DIAGNOSTICS.txt and Tools script are packaged in the mod folder.
+
+NATIVE EVIDENCE: current installed DV.Simulation.dll/Assembly-CSharp native types
+inspected via Cecil/ilspy (SimComponent.id, TrainMassController mass/resource and
+weight-per-axle accessors, Boiler/ResourceContainer ports). Existing B99 native
+engine and ECS source inspections verify the mean-torque/condensation and grip
+formula. Existing PowerDiagnostics/CurveDiagnostics/native adapters were reused;
+shared vehicle definitions and sim state remain untouched.
+
+VALIDATION: Release/net48 build 0 warnings/errors. Geometry 83,747 coupling checks
+(52 cases, includes Prairie .22), 1,801,664 connecting checks (30 cases, includes
+all three requested pairs, 2,880 quartered native poses). Native main/crosshead
+error <.365mm; no added LOD escape vs native reference. New/retained capture suite
+114 checks incl faults, no-write samples, dormant/tender separation, missing ECS,
+CSV quoting/culture. Table/compiled observer/wiring/default checks65. Existing
+compiled integration275 confirms103 unchanged protected methods vs1.16 (native
+steam/traction/articulated simulation/DriveRetarget); articulated152; oil lifecycle21.
+All use managed or compiled fixtures: live visuals, ECS timing, structural capture
+and loaded pull remain with James. Latest confirmed all47 live structural pass
+remains1.14, not this candidate. No claims of live1.17 acceptance.
+
+INSTALL: 2026-10-21T16:55:24Z, game checked CLOSED.37 installed package files hash
+verified; no backup/rollback copies. Six explicit geometry settings updated;
+remaining XML elements verified unchanged. Installed1.17.0.
+DLL SHA256:173CA0393BC2BF92330A276294AC99B0736EB50C1A0BD516FC3509A125373965
+ZIP SHA256:5A0EEB3BD47E7513A602F97F7620A6B3AF12C60785F60DA2156FA422EC029542
+Desktop ZIP:Derail Valley Mods/RearrangedS282-B99-1.17.0-Test/
+RearrangedS282-B99-1.17.0-Test.zip
+Receipts:build/runtime-trial-1.17.0/{build-receipt,installation-receipt,package-files}.json
+Tests:build/physics-a-1.17.0/{connecting-validation,pitch-validation,capture-validation,
+table-validation,physics-validation,articulated-integration.json}.
+No commit/push/publication or game/save writes performed.
+
+NEXT: James finishes geometry and American; bake accepted layout dimensions and
+remove trial controls for release. When ready run the existing structural test
+for real PHYS-A JSON/CSV; use packaged Tools/TractiveTable.ps1 on that new capture.
+Then measured current table informs B cap/share choices and C calibration.
+Do not invent a report from older captures or begin B/C without those decisions.
+
+## 1.16.0 Prairie / American tuning trial BUILT AND INSTALLED, 21 Oct 2026
+
+REQUEST: Extend the same temporary tuning controls to Prairie Express 2-6-2
+(ID44) and American 4-4-0 (ID0), build/install. Granular controls remain temporary:
+accepted values must become fixed layout proportions, with trial UI removed for
+release. Steam pipes are the NEXT phase AFTER layout positions are accepted:
+cover Triplex/Erie, Mallets and long rigid layouts; inspect/reuse original Franklin
+style meshes first. No steam-pipe implementation or new physics in this build.
+
+IMPLEMENTATION: shared DriverLayout now supports 34,35,44,0 only. Three-driver
+and two-driver topology reuse existing measured rod pin data and presentation
+owners. New Prairie/American pitch controls 0..0.20 m extra per gap and rearward
+controls 0..0.25 m group displacement default ZERO; Mogul/2-4-0 settings retained.
+New settings are independent. Accepted Prairie wheel diameter/cylinder positions
+retained. Prairie first applies existing clearance/base group shift WITHOUT
+binding its former retarget, then pitch, then ONE precision retarget combining
+base cylinder-side offset with rearward adjustment. Valve polish runs afterward
+and reads that final CylinderDriveFrame. Original optional default Prairie binder
+remains for retained fixture coverage; production explicitly passes false.
+American physical axles now follow the same presented-wheel resolver as 2-4-0.
+Brakes/springs/sparks, oil ownership, reverse-order LOD and translation cleanup
+reuse existing implementation. Structural expectations extended to all four.
+No new dependencies, native extracted assets shipped, game/save edits or publish.
+
+VALIDATION: Release/net48 build 0 warnings/errors. Connecting integration:
+1,357,928 checks /24 cases /2,304 native poses /6,912 cup samples; all four layouts,
+0/.15/.25 m rearward, .15 pitch, rotated/shared LOD variants; independent settings
+binding and zero defaults. Actual production Prairie clearance/base preparation
+and cylinder frame compiled; optional Prairie fitting list is a stand-in in that
+harness, not full in-game static geometry validation. Coupling fixture 76,139
+checks /48 cases covers all four layouts at 0/.15/.20 pitch, repeated lifecycle,
+initial native phase mismatch, switching, cache disposal and another-car isolation.
+No added LOD escape vs native baseline; main/crosshead <0.365 mm, radius <0.319 mm.
+275 compiled integration checks /103 unchanged methods vs installed 1.15.0,
+including steam/traction/articulated simulation and DriveRetarget. Articulated
+metadata 152, oil lifecycle wiring 21. Stand-ins do not prove live renderer,
+physics registration, visual clearance or save/pool behavior. James tests those.
+
+INSTALL: game confirmed closed, 21 Oct 2026 14:38:56 UTC (15:38 London).
+35 installed files verified against audited ZIP/candidate. Settings preserved
+byte-for-byte. No backup or rollback copy created, as requested.
+DLL SHA256: 770A445E12467E4328FF53F4A7B3C0DFF8E186BD4CFDFF04C91A0B8A7CD5B1DB
+ZIP SHA256: 9F0DFA789C980BD4AAF416E4D644242146B3A41D7EF5CCCB62472235BEBE5BE5
+Desktop ZIP: Derail Valley Mods/RearrangedS282-B99-1.16.0-Test/
+RearrangedS282-B99-1.16.0-Test.zip
+Receipts: build/runtime-trial-1.16.0/{build-receipt,package-audit,installation-receipt}.json
+Live 1.16.0 acceptance pending. Latest confirmed full structural47 pass is1.14.0.
+
+USE: highlight/select with radio -> UMM named arrangement pitch/rearward sliders ->
+REAPPLY CURRENT ARRANGEMENT; inspect success/refusal/target. Re-select if cleared.
+Stop/repair, regulator closed, force/slip settled. Report layout + BOTH values
+and preferably side-on screenshot; can read saved Settings.xml after tuning.
+Test whole rotations/reverse/slip, both sides/LODs, oil cups, brakes, switching,
+second-car isolation and save/reload. No new slider applies to Pacific/Hudson etc.
+
+## 1.15.0 main connecting rod trial INSTALLED, 21 Oct 2026
+
+RELEASE INTENT, clarified by James: granular geometry sliders are temporary
+development/tuning tools, not intended release features. Goal is realistic fixed
+proportions for every arrangement. Record accepted values per named layout,
+then bake those values into layout definitions and remove these trial controls
+from the release UI. Sharing driver count does not imply sharing geometry:
+current precision/pitch controls affect only 2-6-0 and 2-4-0, not Prairie,
+Pacific, Hudson, American or other x-4-x/x-6-x layouts. Extend deliberately using
+per-layout geometry; do not automatically propagate offsets by wheel count.
+
+James explicitly requested no further full backups and deletion of this project's
+backup/rollback copies. Cleanup removed 37 folders (1,520,790,759 bytes), with no
+remaining matching backup/rollback paths in this repository. Other projects were
+outside this cleanup. Build.RuntimeTrial.ps1 no longer creates install backups.
+Historical receipts and handover entries describe backups that have now been deleted.
+Do not recreate those copies or run historical backup-making installation scripts.
+
+Installed 1.15.0 DLL SHA256:
+C6FB69301FE8527A0961E40AD3AF125B5591D67DE72000E9AFB8FE920BF8C936
+Desktop ZIP: Derail Valley Mods/RearrangedS282-B99-1.15.0-Test/
+RearrangedS282-B99-1.15.0-Test.zip
+Installation receipt: build/runtime-trial-1.15.0/installation-receipt.json
+Settings preserved. No game acceptance of 1.15.0 yet; no publication or commit.
+
+Main connecting rod controls are scoped to Mogul 2-6-0 (34) and 2-4-0 (35):
+0..0.25 m driver group rearward, default 0.15 m, with fixed cylinders/guides.
+Existing coupling-pitch controls remain. Precision native-clock mesh deformation
+preserves bearing bosses and stretches shafts through the existing motion cycle;
+this is visual retargeting, not a physically rigid new slider-crank simulation.
+Native unreadable LOD0 rods use the existing local mesh exporter/OBJ fallback;
+no extracted game meshes ship. Shared LOD ownership restores in reverse order.
+Retain original native LOD envelope plus translated geometry, exact restore.
+
+UMM now has direct REAPPLY CURRENT ARRANGEMENT for the highlighted/selected S282
+and RESET WHEEL-ARRANGER RADIO SELECTION, plus menu-open input guards. Reapply
+uses existing safety checks and persists only on success. Original reported radio
+cycling failure remains unconfirmed: Player-prev.log had no mod radio/conversion
+exceptions. Native hotbar/screenspace-mouse gating is a hypothesis, not a finding.
+
+Validation: Release/net48 build zero warnings/errors; connecting native motion
+609,473 assertions; actual radio/Main callbacks 267 checks; rod remesher 452,776;
+retained Prairie motion 81,873; 4-14-4 1,452; coupling integration 38,230;
+physics integration 216 checks/74 compiled physics methods unchanged;
+articulated metadata 152; oil lifecycle 21. Max main/crosshead error 0.365 mm,
+radius/hinge 0.319 mm; no added LOD envelope escape vs native baseline.
+Latest live structural pass is all 47 on 1.14.0, not 1.15.0.
+Manual acceptance: both sides/LODs, full cycles/cutoff/reverse/slip, repeated
+slider reapply/reset and arrangement switching, oil cups, pooling/save/reload,
+second-car isolation. Other 45 layouts retain prior geometry/retarget behavior.
+
+## 1.14.0 coupling-rod pitch trial BUILT AND INSTALLED, 21 Oct 2026
+
+CURRENT REQUEST / DECISION
+James wants rod control before the deferred physics ledger: safest, smallest
+first step with useful positional freedom, with agents and native checks.
+Selected coupling rods first, initially 2-6-0 (34) and 2-4-0 (35). This is not
+the main connecting-rod/piston/guide stage. Other 45 layouts retain 1.13.6 geometry;
+no new wheel enlargement, cylinder resizing or power rebalance in this trial.
+No commit, push, Nexus/GitHub publication or game/save editing performed.
+
+IMPLEMENTATION
+- New RodRemesher.cs changes Z only. Rigid 0.14 m axial boss windows preserve
+  bearings/joints; interpolate between window edges to avoid discontinuities.
+  Owned cloned meshes preserve index/submesh/UV/material data; shaft texture
+  density stretches with shaft length. Never mutate MeshFinder shared sources.
+- New DriverLayout.cs and WheelRearranger.DriverLayouts.cs support only 34/35.
+  UMM Coupled driver spacing trial: mogulExtraCoupledPitchMetres and
+  twoFortyExtraCoupledPitchMetres default 0.15 m, clamp 0..0.20 m, 0.01 m steps.
+  Reapply after changing. Main driver3 stays fixed; driver2 moves forward and
+  Mogul driver4 rearward. Each adjacent gap gains the chosen WORLD pitch.
+- Native clips bind wheel position/scale. Keep original transforms/components
+  alive and clear only their mesh filters (both LODs). Renderer-only siblings
+  use existing PoweredWheelRotater.LateUpdate, copying completed native rotation.
+  Native main connecting rod, return crank and oil-provider hierarchy untouched.
+- Two/three-axle short meshes use independently measured bore centres, with
+  separate front/rear segment mapping to correct original rounded seating.
+  Original short transforms retained. Cache at most three owned mesh slots;
+  phase-related projection tolerance 1 micrometre, with explicit phase tests.
+- Real native wheel meshes at both LODs, correct flanged coarse mesh from native
+  wheel1, correct short rods shared across both native LOD levels through far
+  cull. Restore exact prior LOD arrays/order/fades/reference point/size.
+- Brake shoes/calipers, detail springs and sparks follow matching drivers.
+  LMS has no separate coarse suspension splits; do not claim coarse spring
+  remeshing. Inactive detail springs hidden; preserve authored height/size.
+- Physical powered axles, big-end oil planning and driver-group/curve diagnostics
+  resolve presentation centres. Curve cache invalidates on apply/suspend; existing
+  curve calculations consequently see the new wheelbase. No new steam/traction
+  equations, radius, mass, cylinder bore/stroke or independent slip changes.
+- Cache after SetupDrivers, apply after legacy geometry before axle alignment;
+  suspend before stock/prepared snapshots and dispose on deletion. Scope errors
+  restore stock without blocking unrelated layouts. Structural JSON records
+  driverPitchPresentations and extraCoupledPitchM and verifies expected values.
+
+NATIVE AUDIT / IMPORTANT CORRECTIONS TO THE STARTING PROPOSAL
+- Coupling rod is not perfectly translation-only: authored rock up to 0.034491
+  degrees remains. Native wheel position/scale streams are bit-identical constants
+  across low/medium/high, but the main-rod CHILD translation is slightly animated.
+- A late audit caught live main-pin capture causing left/right cache rejection
+  when first converted at differing phases. Reproduced old failure in the fixture
+  BEFORE installation. Final code reads the UNANIMATED carLivery.prefab main pin
+  using the same native prefab API already used by ArticulatedEffects. Do not
+  revert to sampling live main.localPosition or rounded legacy -1.55 setters.
+- Actual prefab L/R datums bit-identical except drive-root X reflection; main
+  local Z -1.5533394813537598. Live High main Z varies about 0.287 mm; even normal
+  quartering exceeds a 1 micrometre mesh-cache tolerance. Fixture now phases the
+  live L/R hierarchy BEFORE initial cache and supplies a separate stable prefab.
+- Both native drivetrain Animators AlwaysAnimate, so cleared source meshes do
+  not visibility-cull the clock. PoweredWheel is data-only: redirecting its visual
+  adds no rotation clock. Sharing renderer references across LODs is native B99
+  practice (203 of 776 inspected groups), so no duplicate-rod workaround needed.
+- Preserve intended legacy wheel-centre basis before Animator resets it: native
+  reset rounds Mogul wheel2 to Z6.3/Y0.71 and wheel4 Z3.2/Y0.71; 2-4-0 wheel2 is
+  Z6.62/Y0.71. Main3 retains native centre. The fixture mirrors these actual setters.
+
+VALIDATION (OFFLINE, NOT GAME ACCEPTANCE)
+- Final Release/net48 Stage3 1.14.0: zero warnings/errors.
+- Pure real-topology remesher: 452,776 assertions, 180 cases, 57,600 triangle
+  checks, 56,880 boss samples, 34 invalid cases; max added translation error
+  1.19e-7 m, no reversed/collapsed triangles. build/rod-remesher-validation.
+- Actual owner/descriptor/remesher/rotation copier/Additional consumer with
+  managed Unity stand-ins and native clips/wheel/rod data: 38,230 assertions,
+  24 layouts/orientations/LOD-owner/pitch combinations, 576 sampled native poses,
+  72 repeat cycles, 96 phase reapplications, 152 initial-cache/later phased
+  applications, six cross-layout switches, three rollback cases. Includes cache
+  cap/disposal, source immutability, matching fittings, physical axle resolution,
+  LOD restoration, second-car isolation and missing-prefab scoped failure.
+  Receipt build/driver-layout-validation/validation.json. BeforeCanonical.cs and
+  reproduced failure retained privately under build; never installed/shipped.
+- Actual bearing longitudinal seating max 0.274658 mm. Added boss distortion 0;
+  added vertical drift 0.121593 mm, within native rocking/span bound plus float
+  precision. Existing combined YZ mismatch remains up to 5.257 mm (old short rods
+  5.851 mm): legacy wheel-height rounding/native motion, NOT perfect 3D alignment.
+- Retained production Prairie/high-speed motion: 81,873 assertions, 672 native
+  poses, 2,016 oil samples. Additional/prototype baseline: 1,934 checks.
+- Final compiled casing/native integration 269 checks; 100 physics/retarget
+  methods unchanged against 1.13.6. Articulated/native metadata 152 checks;
+  oil lifecycle wiring 21. Reports build/coupled-spacing-1.14.0.
+- Native reservoir sweep at +0.15 m pitch: Mogul approx 85 mm and 2-4-0 approx
+  374 mm minimum sampled gap. At max +0.20 m: approx 50/331 mm. Frame clearance,
+  actual Unity culling/upload/scheduling, oil interaction and live lifecycle need
+  in-game inspection; conservative native frame data already overlaps internally
+  before this change, so no clean-frame claim from that data.
+
+FINAL PACKAGE / INSTALLATION (GAME CLOSED)
+- Version 1.14.0, DLL SHA256
+  64F20173DB360F3572DEB7CA933EF49BDEE95D83EC7D875457AB00E7E7D0FD8F
+- Desktop ZIP C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.14.0-Test\RearrangedS282-B99-1.14.0-Test.zip
+- ZIP SHA256 07E675133472EBD1FE11DE96F56DB5CE89869EFEE01F69834BDA08AB55AB2259
+- 35 packaged/installed files verified; 27 seed files and all 14 legal/credit
+  notices unchanged. Original authored bundle and Franklin OBJ unchanged. All
+  production source hashes agree with build receipt. No Settings/logs/saves/native
+  fixtures/PDBs in package. Prior exploratory 1.14.0 candidate overwritten before
+  any installation; only final canonical-prefab version was installed.
+- Full previous 1.13.6 folder backup, all 66 files hash-verified:
+  build/runtime-trial-1.14.0/installed-backup-20261021-120444
+- Installed B:\SteamLibrary\steamapps\common\Derail Valley\Mods\RearrangedS282
+  at 12:04 UTC. Settings byte-identical:
+  57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB
+- Build/package/install receipts build/runtime-trial-1.14.0 and beside Desktop ZIP.
+
+NEXT
+James tests both layouts at 0/0.15/0.20 m, both sides/near/far, full rotations,
+reverse/cutoff/slip/braking, cups, repeated switching/stock/other layouts, second
+car, save/reload, pooling/deletion and explosion/repair. UMM RUN STRUCTURAL TEST
+requires TWO stationary S282s BOTH set to STOCK 2-8-2. Latest stored all-47 game
+structural pass is 1.13.5, not evidence of 1.14.0 game acceptance. Full checklist
+installed and beside ZIP. Main connecting rods, piston/guides and wider rollout
+remain later geometry stages; physics ledger deferred.
+
+---
+
+## 1.13.6 Beta changelog corrected since 1.9.2
+
+Updated the public changelog and Nexus copy to cover changes since 1.9.2, including the shipped duplex/triplex stale-part cleanup ordering fix recorded in 1.11.1. Verified that installed and packaged DLLs contain early DriveRetarget.Unbind before LOD restoration and the triplex suspension path; no claim of a dedicated in-game back-and-forth visual test. Documentation-only ZIP update; all other 35 entries unchanged and checked against the prior manifest. Updated both Desktop and repo ZIPs, manifests and checksums. New ZIP SHA256 2864600D6EB876024CBFAC8892BF58735EFECABD8653178B141859766E7E240E; runtime DLL unchanged.
+
+---
+
+## 1.13.6 Beta NEXUS RELEASE PACKAGE PREPARED, 21 Oct 2026
+
+James requested a Nexus-ready archive and release details. Prepared from the
+verified 1.13.6 trial ZIP, WITHOUT rebuilding or changing the installed runtime.
+No Nexus upload, GitHub release, commit or remote push was performed.
+
+PUBLIC DELIVERABLES
+- Desktop ZIP: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.6-Beta\RearrangedS282-B99-1.13.6-Beta.zip
+- ZIP SHA256 698327D08B4023B2868C2346A1A10BA57AB56B03A6B5C7D03792D56B8D1F50EB
+- Runtime DLL matches installed/test version exactly:
+  87752D9DE63E4567F601ED6D4DAB713F91E49F089C95BFDA9DE5DB4EA0C575EF
+- Paste-ready NEXUS_RELEASE_COPY.txt beside ZIP includes file title/version,
+  description, declared requirements, current-version laconic changelog,
+  separate recent-series highlights and requested styled credits.
+- CHECKSUMS.txt, TEST_STATUS.txt and release-manifest.json also beside ZIP.
+- Identical ZIP and receipts in repo release/1.13.6-Beta; editable public prose
+  in release-copy/1.13.6-Beta. Both destinations were created fresh.
+
+PACKAGE AUDIT
+- 36 files under canonical RearrangedS282/ folder. Info.json retains ID/version,
+  entry point and dependencies; public DisplayName is Rearranged S282 - B99.
+- Runtime DLL, exporter binaries/config, original bundle, Franklin OBJ and all
+  original licence/dependency notices byte-identical (29 protected files checked).
+- CREDITS updated from earlier 1.9.2 release text: original author/source/MIT
+  attribution retained, JimTaplin, Claude/Codex, optional integrations and other
+  bundled contributors credited. Original LICENSE is untouched.
+- Replaced trial/history README and checklist with concise public instructions;
+  removed ARTICULATED_TEST_STATUS/RUNTIME_TRIAL_TESTING history files from this
+  PUBLIC archive only. Added README.txt, CHANGELOG.txt and TEST_STATUS.txt.
+- ZIP integrity/path/hash audit passes. No Settings.xml, save/log/diagnostic data,
+  native geometry fixtures, development caches or PDBs included.
+- Installed mod files are unchanged by packaging; display-name/docs changes apply
+  only to the release ZIP. No extra installation requested or necessary.
+
+UPDATED RUNTIME EVIDENCE (supersedes prior stale latest-report notes)
+The game's current structural report is version 1.13.5.0, all 47 arrangements
+passed, subject L-006/control L-047, last write 21 Oct 2026 11:13 UTC. Snapshot
+saved privately to build/release-validation-1.13.6/structural-1.13.5-passed.json,
+with checksum audit. Do not ship that game diagnostic snapshot publicly.
+This advances the previously observed 1.13.3 baseline. It does NOT establish
+1.13.6's final 0.70 m Prairie rearward placement as tested in game. Public notes
+state prior 47-layout structural pass and latest offline validation separately.
+
+RELEASE DETAILS / LIMITS
+File title Rearranged S282 B99 - 1.13.6 Beta, version 1.13.6, author JimTaplin.
+Requirements from Info/native installed evidence: Windows, DV B99, UMM >=0.27.3,
+Locomotive Mesh Splitter (1.1.9 tested, Nexus mod 867). Optional Model Tweaks /
+Car Changer integration is not a required dependency. Realistic Firing remains
+unsupported for this beta, without claiming compatibility is impossible forever.
+VR/multiplayer unverified. Giant 2-2-2 and Erie tender remain experimental;
+unfinished Erie effects/slip/LOD work is disclosed. No new power/grip rebalance.
+Next: James reviews/publishes ZIP as desired; inspect any new testing feedback.
+
+---
+
+## 1.13.6 complete Prairie assembly rearward BUILT AND INSTALLED, 21 Oct 2026
+
+James accepted the smaller Prairie wheels but requested cylinders, running gear
+and drivers move back together to improve the overall proportions. Scope is
+Prairie only, retaining 1.13.5 wheel size/rod geometry and fixed carrying trucks.
+
+IMPLEMENTATION
+- Smallest native solution: PrairieDriverForward 1.50 -> 0.80 m and
+  PrairieCylinderForward 0.60 -> -0.10 m. Both change by -0.70 m, translating
+  the complete mechanism without changing the relative driver/cylinder span.
+  Their difference remains -0.90 m. Existing scale/anchor compensation,
+  retarget, casing/fitting mapping, spark placement, native oil bindings and
+  physical powered-axle alignment apply the existing geometry at the new pose.
+- Cylinders/guides/static calipers/springs/shoes/cups/cock outlets follow the
+  mechanism. Branch-pipe boiler sockets remain fixed, existing blend reseats the
+  cylinder ends. No change to wheel diameter (~1.576 m), pitch, crank throw,
+  simulation radius/RPM, mass, traction or steam settings from 1.13.5.
+- High-speed and all other layouts retain 1.13.5 geometry. No physics-ledger work.
+- Initial 0.60 m rearward candidate reduced sampled strap gap to 10.4 mm, failing
+  the existing >=18 mm geometry criterion. Sweeping positions showed nonmonotonic
+  strap clearance. 0.70 m rearward clears it by 29.35 mm, so used that instead;
+  James was told why. The 0.60 m candidate was NOT installed.
+- Measurement now reads PrairieDriverForward from actual source instead of a
+  duplicated hard-coded offset, preventing stale clearance results on retuning.
+
+VALIDATION
+- Release/net48 B99 build: zero warnings/errors.
+- Actual production motion/casing/oil partial fixture: 81,873 assertions, 672
+  native pose scenarios, 2,016 cup samples passed. Expected casing/driver/spark
+  placement updated to -0.70 m from 1.13.5; sizes, source geometry/native animation,
+  guide mounting and restoration remain checked. Three high-speed cases retained.
+- Native mesh swept-envelope check: 707,381 reservoir samples, both reservoir and
+  wheel LODs: Prairie minimum 0.0293496 m, high-speed unchanged 0.0217008 m. This
+  is native-data sampled geometry, not game rendering/suspension acceptance.
+- Compiled casing/native integration: 269 checks passed, 100 prior physics and
+  DriveRetarget family methods unchanged against 1.13.5. No further broad test
+  rerun needed for the two placement constants; relevant fixture re-executed.
+- Audit: 35 packaged files, 27 unchanged seed files, all 14 legal/credit notices
+  identical, original authored drivetrain bundle/Franklin OBJ unchanged.
+- Game testing remains with James. No game launch, save edits, push or publication.
+
+INSTALLATION, GAME CLOSED
+- Version 1.13.6; DLL SHA256 87752D9DE63E4567F601ED6D4DAB713F91E49F089C95BFDA9DE5DB4EA0C575EF
+- ZIP C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.6-Test\RearrangedS282-B99-1.13.6-Test.zip
+- ZIP SHA256 7AF950602051C2E4AEF74DC62782856A6A10801E26D941604B1BFD5CE3726617
+- Full previous 1.13.5 folder backup: build/runtime-trial-1.13.6/installed-backup-20261021-112213
+  All 66 original files hash verified; all 35 installed package files verified.
+- Settings preserved byte-identical SHA256 57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB.
+- Build/package-audit/installation receipts in build/runtime-trial-1.13.6;
+  build/installation receipts also beside ZIP. Work still uncommitted.
+- Geometry/motion receipts in build/prairie-rearward-1.13.6.
+
+NEXT: James reapply Prairie; assess overall placement, both sides/LODs, branch-pipe
+sockets, cylinder/leading-truck surroundings and rear-driver/trailing-truck gap.
+Full revolutions/reverse/cutoff/slip/braking, shoes/sparks, oil-can lids/refill,
+external unload/reload, save/reload, structural test and second-car isolation.
+Keep wheel size as accepted; do not alter other layouts without request.
+Updated active/deferred ledger is TODO.md. Latest existing all-47 runtime report
+still belongs to 1.13.3 and cannot validate this version.
+
+---
+
+## 1.13.5 reservoir-clear large drivers BUILT AND INSTALLED, 21 Oct 2026
+
+James requested the previous feasibility/outstanding-work report be written into
+an active to-do ledger, then focus ONLY on shrinking high-speed versions and the
+new Prairie enough to clear the info-board air reservoir while retaining large
+wheel character. TODO.md now contains prioritized current/deferred items and
+acceptance criteria, with original upstream TODO preserved as historical notes.
+Physics A/B/C are recorded, NOT implemented. No publication or remote push.
+
+INSTALLED, GAME CLOSED
+- DLL SHA256 3FEBE4F4FADA33C8A7DE0C6FF55582AD521F45845197B2A5B74EEC71F3F9AC4C
+- ZIP C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.5-Test\RearrangedS282-B99-1.13.5-Test.zip
+- ZIP SHA256 0067EFBD41F8CE5564A690BC05D37A5D763051D4DFE0AA50002D2EFFFC817B83
+- Previous 1.13.4 full backup: build/runtime-trial-1.13.5/installed-backup-20261021-095133
+  All 66 files hash verified. All 35 package files verified after install.
+- Settings byte-identical SHA256 57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB.
+- Build/package-audit/installation receipts in build/runtime-trial-1.13.5;
+  build/installation receipts also beside Desktop ZIP. No game launch/save edits.
+
+MEASUREMENT / IMPLEMENTATION
+- Scope exactly IDs 12/13/14 (high-speed 2-8-0/2-8-2/2-8-4) and 44 (Prairie).
+  Other layouts retain wheel size/spacing. Pacific/Hudson are not reduced.
+- Actual LMS air tank includes mounting straps. Native flange radius exceeds
+  tread radius, so sizing from tread alone still clips. Resources wheel meshes
+  and installed LMS body OBJ/split selections were used, both native LODs.
+- Native tank samples against full rotating wheel envelopes reproduce penetration
+  about 0.108 m on high-speed and 0.240 m on the forward-shifted Prairie. These
+  are conservative swept-surface geometry distances, not measured game collisions.
+- New drive Y/Z scale 1.11 gives sampled minimum gap 0.02170 m on both cases;
+  approximately 707,381 reservoir surface samples, 12 mm subdivision, conservative
+  1 mm wheel X-profile bins. Native data stays ignored/local, never ships.
+- Nominal/sim diameter: high-speed 1.57679 m (old 1.7018, down 7.35%); Prairie
+  1.57618 m (old 1.8288, down 13.81%). Still about 11% larger than stock 1.424 m.
+  Prairie needs more reduction because its relocated front driver sits directly
+  beneath the reservoir. Do not claim a 2-3% reduction solves the measured envelope.
+- New LargeDriverClearance partial uses existing native scaling, with front active
+  driver as longitudinal anchor. Driver pitch contracts uniformly with mechanism;
+  front driver remains at accepted position, carrying trucks/reservoir unchanged.
+  No new clock, component, hook, DLL or motion solver. Do not shrink wheels alone:
+  that would detach crank pins or leave tyres off the rail.
+- Same relative change applied to simulation radius via existing setWheelRadius;
+  B99PhysicsState refreshes native RPM/circumference. High-speed physical powered
+  axle anchors now align to their actual resized wheel centres via existing helper.
+- Static calipers/springs use existing captured native drive-frame mapping. Shoes
+  already live under the drive; sparks follow the frame change. Prairie retains
+  accepted +1.50 m front-driver position and +0.60 m casing-rear datum: existing
+  retarget shift includes the scale/anchor compensation, not a fixed -0.90 m now.
+- Existing full cylinder normalization extends to high-speed IDs, so pipes/cocks/
+  casing bores seat on the resized native motion while keeping native casting
+  length. Full treatment now covers ten IDs 0/1/2/4/5/12/13/14/35/44. All other
+  casing treatment retained; broad walk/item shells remain existing approximation.
+- Cylinder bore/stroke, steam model, mass and adhesive-weight allocation unchanged.
+  Smaller wheels naturally change wheel-rim force and road-speed/RPM relationship;
+  this is matching native radius, not the deferred power/grip rebalance.
+- 47-choice startup log now uses actual SupportedCount; bundled notes updated.
+
+VALIDATION
+- Release/net48 against installed B99: 0 warnings/errors.
+- Native swept geometry measurement: PASS, both wheel/reservoir LODs, both cases.
+  Source scripts evidence/wheel-clearance-tests, result build/large-driver-clearance-1.13.5/geometry.json.
+- Actual source clearance/Prairie/retarget/casing/oil partial fixture: 81,873
+  assertions across 672 native pose scenarios, 2,016 cup samples. Selected ID scope,
+  matched radius, front anchor/casing datum, immutable animated transforms,
+  source geometry, native casing length, guide seating and restoration pass.
+- Whole-casing fixture expanded to ten selected IDs: 244,459 checks / 960 native
+  poses passed. Pacific/Hudson logic unchanged. No new casing shape function.
+- Additional-arrangement native-anchor fixture: 1,934 checks passed, including
+  all four selected IDs across rotated bogies and untouched unselected axles.
+  First run could not compile its old stub enum (missing existing high-speed IDs);
+  enum inventory corrected, cases extended, rerun passed. Production build passed
+  independently before that fixture correction.
+- Compiled casing/native integration: 269 checks, 100 baseline compiled methods
+  unchanged across physics and DriveRetarget families compared with 1.13.4.
+- Compiled articulated integration: 152 passed. Original drivetrain bundle and
+  Franklin OBJ unchanged. ZIP audit: 35 files, 27 seed files unchanged, all 14
+  legal/credit/notice files unchanged, only 4 expected seed replacements.
+- Whole-working-tree diff check still reports a pre-existing extra EOF blank line
+  in Stage2RuntimeChecks.cs from 1.13.4; not a functional failure or this fix.
+- Managed/native-data fixtures do NOT execute live Unity rendering, suspension,
+  actual native oil-can interaction or full game lifecycle. Latest stored all-47
+  structural report is still 1.13.3, not evidence of 1.13.5 game acceptance.
+
+NEXT: James reapply all three high-speed variants and Prairie; both sides near/far,
+reservoir strap/flange clearance, full revolutions/reverse/cutoffs/slip, shoe and
+spark placement, pipe/cock seating and cups. Switch stock/Pacific/Hudson/4144/
+articulated to ensure original sizes restore. Run structural test, save/reload,
+external unload/reload, explosion/repair and second-car isolation. Read diagnostics
+and Player.log after feedback. Deferred physics and other work are in TODO.md;
+do not start them until requested.
+
+---
+
+## 1.13.4 Prairie forward spacing + oil-cup mounting/cleanup BUILT AND INSTALLED, 21 Oct 2026
+
+Latest request: cups may rescale, but no extra regular-sized floating cups or
+excess count. Previous screenshot showed 5 cups/side on Prairie. Five is valid:
+3 crank-pin cups plus native fixed-guide and crosshead cups. Preserve actual
+bearing coverage; do not delete legitimate points just to make the count three.
+James accepts the 1.13.3 casing reduction; retain it. This build adjusts Prairie
+only for spacing, applies cup mounting/lifecycle fixes across layouts.
+
+Installed with game closed, no game launch/save edit/publication/commit/push.
+- Version 1.13.4; DLL F728972BDFB53ECB51CEC866972576F5CAAE42C2640448C221A7F0779DC2E139
+- ZIP C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.4-Test\RearrangedS282-B99-1.13.4-Test.zip
+- ZIP SHA256 000EBC10C1E0B4DE1A72067E4D6BB649A188D80915BAC06CF5106291F31DCE79
+- Full previous 1.13.3 folder backup: build/runtime-trial-1.13.4/installed-backup-20261021-090419
+  All 66 original files hash verified; all 35 package files verified after copy.
+  Settings.xml byte-identical, SHA 57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB.
+- Build, installation and package audit receipts in build/runtime-trial-1.13.4;
+  build/installation receipts also beside Desktop ZIP. Working tree remains
+  uncommitted with prior sessions' changes. No ownership handoff to another agent.
+
+IMPLEMENTATION / EVIDENCE
+- New PrairieSpacing partial: actual native drivetrain group forward 1.50 m;
+  cylinder/crosshead/guide side forward 0.60 m via existing DriveRetarget;
+  connecting/radius rod span reduced 0.90 m. Driver diameter and pitch, trucks,
+  native clocks/curves, traction, steam and mass centre unchanged. Visual/static
+  calipers, springs and spark positions follow drivers. Hidden first native
+  suspension stays hidden. CylinderDriveFrame exposes the rendered cylinder
+  frame to existing casing and Walschaerts helpers; accepted casing vertices
+  retain shape, translate +0.60 only. Other arrangements' spacing unchanged.
+- Walschaerts static cylinder-side fittings follow cylinder frame; lifting-arm
+  supports follow drivers. Dry pipe mesh rebuilt from immutable source per apply
+  (reuses owned clone); otherwise repeated layouts would retain prior mapping.
+  Prairie maps statics even if polish visibility is disabled.
+- New OilCupMounts: caches native provider poses. Fixed guide cups follow actual
+  guide mesh frame instead of mismatched scaled drive. Native LMS L/R guide mesh
+  naming is physically reversed; reflected articulated guides can swap sides.
+  Select nearest actual mesh centre and account for mesh handedness, tested.
+- DriveRetarget binds native crosshead/main-rod oil providers to rendered proxy
+  children. Same LateUpdate explicitly calls existing native consumer.Sync after
+  positioning providers, preventing script-order lag. Unbind restores original
+  local provider positions. No second animation system or new per-frame component.
+- Native PositionSyncConsumer.Sync only copies position, not scale. Real prefab
+  native cup heads share same cap mesh/scale; some OilCup03 bodies have longer
+  stems. No blanket stem resizing needed or done. Added cups clone native prefab,
+  not an already scaled live assembly. Keep native fittings, lids and refill ports.
+- ClearBigEndCups now runs on external unload, pool reset and destruction as well
+  as switching. Removes tracked and owned-prefix leftover cups/markers, deinitializes
+  readers/feeders, removes owned controller entries and immediately hides before
+  deferred destruction. Cancels stale generations. This closes a demonstrated
+  missing cleanup path; duplicate/orphan cups in James's screenshot are not proven.
+- Rod-free 4-0-4 and giant 2-2-2 clearance prototype hide unsupported six native
+  cups, hold unused points full/closed. Other layouts restore visibility. B99's
+  Unity version lacks GetComponentInParent(includeInactive): direct ancestor walk
+  in B99Oilcups.ConsumerFor restores hidden cups without reactivating early.
+- New OilCupDiagnostics captures expected/active counts, unique refill ports,
+  overlapping mounts, guide/provider gaps and cap dimensions. Structural runner
+  waits up to 120 frames for delayed extra-cup creation before capture; failures
+  report count mismatch, >2 mm provider gap or >35 mm guide-bounds gap. Native-six
+  stable identity/port checks remain. Global all-layout live results still pending.
+
+VALIDATION (this compiled candidate)
+- Release/net48 installed B99 references: 0 warnings, 0 errors.
+- Validate.PrairieMotion: 41,833 assertions, 288 native pose scenarios and 864 cup
+  samples: real native clip/rod/casing/pipe/guide data, actual production partials
+  and retarget with managed Unity stand-ins. Accepted casing shape +0.60 only,
+  shortened rod pin endpoints, animated transforms/source meshes unchanged,
+  reflected guides, positive native and negative Franklin retarget cup sync,
+  provider restoration, source ownership, contact sparks, pipe/cock triangles.
+- Surface orientation test initially compared old/new normals; forward pipe bend
+  legitimately rotates some >90 degrees. Replaced that invalid inversion proxy
+  with positive finite-difference mapping Jacobians and triangle normals compared
+  to transported local tangent normals; passed. No pipe distortion fix needed.
+- Prior whole-casing fixture 195,601 checks/672 native poses passed.
+- Pacific/Hudson fixture 29,973/96 poses passed; Fourteen spacing 1,452/96 passed;
+  original FourteenCoupled source unchanged E4E28C87FD719B0A4B478E21A088CE26C992B04B6274B637D6DEDC7767D7BD88.
+- Compiled casing/integration 262 checks and 95 prior compiled methods unchanged
+  across ConventionalPhysics/B99PhysicsState/ArticulatedSimulation/DriveRetarget.
+  Deliberate retarget exceptions ctor/LateUpdate/Restore add cup state, sync and
+  cleanup. Existing retarget mesh, role selection and animation math unchanged.
+  Added record/field declared at end to preserve baseline compiler closure names.
+- Compiled articulated integration 152 passed. New OilCupLifecycle compiled wiring
+  inspection 21 passed. BigEndOilingPlan allocation/save fitting 18 passed.
+- ZIP: 35 files, 27 seed files identical, all 14 legal/credit files identical;
+  only expected 4 seed changes (Info, DLL and two checklists). Authored bundle and
+  Franklin OBJ unchanged; every production source hash matches build receipt.
+- Tests do NOT execute live Unity controller dispatch, oil-can refilling, pool
+  unload, actual rendering, powered running or complete all-layout game tests.
+  Do not claim all floating cup issues are proven absent until James tests.
+
+NEXT: James reapply Prairie; full rotations both directions/cutoffs, inspect
+front truck and wheel/guide/cylinder clearances, near/far LOD, cocks/particles,
+open/fill/close every cup. Switch stock/Prairie/4144/Pacific/articulated/novelty
+repeatedly, external unload/reload, save/reload and second-car isolation. Run
+UMM RUN STRUCTURAL TEST — two stationary S282s, inspect latest JSON and Player.log.
+Keep accepted casing proportions; do not extend forward spacing to more layouts
+without request or evidence. Updated manual checklist is shipped in test ZIP.
+
+---
+
+## 1.13.3 full casing expansion BUILT AND INSTALLED, 21 Oct 2026
+
+James requested the same normalization for 4-6-2/4-6-4 and rigid x-4-x while
+retaining motion/physics, then explicitly confirmed installation when done.
+Installed from the audited 1.13.3 ZIP with the game closed. No game launch, save
+edit, commit, push or publication. Work remains uncommitted on b99-port.
+
+Full treatment now covers exactly seven IDs: 0/1/2 (4-4-0/4-4-2/4-4-4), 4/5
+(4-6-2/4-6-4), 35 (2-4-0) and 44 (2-6-2). Articulated multi-engine arrangements
+are outside this expansion; other layouts keep their prior casing treatment.
+All 47 arrangement IDs and the 4-14-4 spacing change are retained.
+
+Native-first comparison confirmed Show4Drivers uses scale 1.42 / Z offset
+-3.935, but only translates its static cylinders up 0.30. Show6Drivers uses
+1.2879 / -2.1; polished supports map the casting with the drive. Four-coupled
+casings were already native-sized, but the valve bore did not follow the enlarged
+valve spindle axis. They must not simply receive another inverse-scale shrink.
+The full casing path now reads the CURRENT NATIVE DRIVE frame and maps only
+the static mesh vertices into it, independent of the old static-casting frame.
+This places both existing animated bore axes correctly. Full selected layouts
+also work with polished Pacific/Hudson gear disabled. No animation transforms,
+clips, wheel size/spacing, crank motion, RPM, power or steam calculations changed.
+Existing valve-gear visibility choices and static guide poses are retained.
+
+Reuses the 1.13.2 NormalizePrairie helper (historical name, now shared), per-car
+mesh ownership and fitting/outlet restoration. No new component, hook, DLL or
+motion framework. Native width and length retained; overall height includes the
+extra distance between the existing bores: about 1.60 m on six-coupled and 1.68 m
+on four-coupled, native 1.42 m. Four-coupled casings thus gain a taller inter-bore
+web rather than shrinking below their previously native barrel size. This was
+explained to James. Do not claim exact stock overall dimensions. Dry pipes,
+cocks/plumbing and 12 native particle systems follow each casing; boiler pipe
+ends, emitter sizes/directions, source meshes and broad collision shells retained.
+
+VALIDATION:
+- Release/net48 against installed B99: 0 warnings, 0 errors.
+- Shape fixture: 690,269 repetitive numerical assertions across 96 native/
+  Franklin mesh cases, adding full-casing scale 1.42. No sampled non-positive
+  Jacobian or tested collapsed/reversed casting triangles.
+- Actual casing/Walschaerts partial fixture: 195,601 checks and 672 native
+  High/Med/Low cutoff/side poses across all seven arrangements, both LODs,
+  actual cocks and dry-pipe triangles, 12 actual native particle systems,
+  stock/setting bypass, polished option off, repeated restore/disposal, rotated/
+  scaled car, source immutability and second-car isolation. All passed.
+- Actual dry-pipe/cock triangles additionally tested for collapse and >90-degree
+  normal changes, including the 1.42 four-coupled bend. No failures.
+- Compiled casing integration: 265 checks passed; 98 physics/motion method
+  bodies match compiled 1.13.2. Compiled arrangement integration: 152 checks.
+- Existing Pacific/Hudson support fixture: 29,973 checks / 96 native poses pass.
+- FourteenCoupled.cs and DriveRetarget.cs hashes still match the previously
+  passed 1,452-check / 96-pose spacing fixture. No broader rerun needed.
+- Four-coupled actual-mesh preview inspected:
+  build/full-casing-shape-1.13.3/four-coupled-preview.png.
+- These are managed/native-data fixtures and compilation, NOT game tests.
+  In-game guide/boiler clearance, fitting seating, LOD transitions, oil access,
+  explosion/repair, driving and save/reload remain James's test. Priority list
+  is at the top of packaged RUNTIME_TRIAL_TESTING.txt.
+- Three deliberate unused-field CS0649 warnings remain in managed tender/
+  Franklin stubs; actual mod compile has zero warnings.
+
+PACKAGE / INSTALL:
+ZIP: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.3-Test\RearrangedS282-B99-1.13.3-Test.zip
+ZIP SHA256 0FE13738D3F7DCEA343CF644CB00CDCB838AE4E898095D8FBEE7494966637453.
+DLL SHA256 10DD988D9960D63D72939FBD8F1ED9DFCCFECCEAE58C560612D7DB57F00213A8.
+35 installed/package files verified. 27 original seed entries byte-identical,
+including all 14 legal/credit/notice files; original bundle and Franklin OBJ
+unchanged. All production source hashes match the build receipt.
+Full prior 1.13.2 folder backed up and all 66 files verified:
+build/runtime-trial-1.13.3/installed-backup-20261021-002757.
+Settings preserved byte-for-byte, SHA256
+57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB.
+Near-vanilla cylinder option is true. Installed Info.json is 1.13.3 and DLL
+matches ZIP. Receipts/audit at build/runtime-trial-1.13.3 and installation receipt
+also beside Desktop ZIP. Shape/integration detail at build/full-casing-shape-1.13.3
+and build/full-casing-integration-1.13.3. Old diagnostics preserved as history.
+New extract_full_fittings.py replays native LMS dry-pipe selections for tests;
+native JSON/meshes/references stay local/ignored and are not shipped.
+
+## 1.13.2 Prairie complete-casing trial BUILT AND INSTALLED, 21 Oct 2026
+
+James authorised proper Prairie cylinder normalization with existing motion and
+physics intact, plus the already-built 4-14-4 spacing change, and installation of
+the combined test. Installed 1.13.2 from the audited local test ZIP while the game
+was closed. No game launched, saves edited, commit, push or release performed.
+Work remains uncommitted on b99-port, including previous 1.13.0/1.13.1 changes.
+
+CONFIRMED CAUSE / NATIVE COMPARISON: Atlantic/other legacy four-coupled layouts
+use Show4Drivers (drive Y/Z scale 1.42) but MoveCylinders only translates their
+static casings. Prairie uses Show6Drivers (1.2879) plus the polished native
+Walschaerts support map, shared with Pacific/Hudson. That map scales the complete
+casings to match moving joints. Thus the oversized casting is geometry-path
+dependent, not a Prairie-specific physics failure. The 1.13.0 barrel-only pass
+was too limited. Pacific/Hudson can show the same enlarged silhouette but retain
+their existing treatment in this specifically requested Prairie fix.
+
+IMPLEMENTATION: CylinderCasingShape.NormalizePrairie resizes the entire casing
+length from its rear face, and both barrel/cap regions around the two existing
+piston/valve bore axes. A monotone C1 Y map retains the greater separation of
+those axes in the inter-bore web; no separately pinned surface patches or local
+dents. Native length is restored (about 1.417 m at LOD0). Overall casing height
+is about 1.601 m versus native 1.418 m, because retaining the animated axes needs
+the taller web. Do not claim the whole casting has exactly stock dimensions.
+Both native LODs and both sides are handled. No moving transforms, clips,
+crank throw, wheel spacing/diameter, RPM, simulation ports or power code changed
+for Prairie. Uses the existing mesh-clone/restore owner, no new component/DLL.
+
+WheelRearranger.CylinderCasings.cs caches the original native cocks/dry-pipe
+meshes and the 12 native steam/drip/crack ParticleSystem transforms. Cocks and
+their plumbing follow the same map as the casing; dry-pipe cylinder ends follow
+while boiler ends remain native with the existing smooth bend approach. Native
+fittings are used, not earlier Pacific/Hudson bent meshes. Per-car meshes restore
+before retarget/geometry teardown; particle local positions restore in reverse.
+Native particle hierarchy and zero shape-origin offsets were verified directly
+in installed resources.assets. Emitter orientation/size, ports and controllers
+are unchanged. Broad walk/item cylinder collision shells remain at their prior
+shape; no rigidbody or vehicle-physics edit. The existing casing option controls
+this treatment. James's installed option and polished gear option are true.
+
+Includes 1.13.1's additional 0.25 m rearward 4-14-4 driver shift, existing rod
+retarget and crosshead oil-cup alignment. Its geometry source and DriveRetarget
+hashes still match the previously passed 1,452-check / 96-pose spacing report.
+No new motion framework. Other 46 arrangement IDs/behaviour retained.
+
+VALIDATION:
+- Release/net48 compile against installed B99: 0 warnings, 0 errors.
+- Shape fixture: 659,721 repetitive numerical checks across 90 actual native/
+  Franklin mesh cases (84 previous cases + 6 Prairie/cocks LOD/side cases).
+  No tested collapsed/reversed triangles or non-positive sampled Jacobians.
+- Actual casing/Walschaerts production partials with managed Unity stand-ins:
+  44,043 checks, 96 sampled native cutoff/side poses, both LODs, all 12 actual
+  native particle systems, rotated/scaled car, repeated restoration/disposal,
+  shared-source immutability, two-car isolation, setting off and stock bypass.
+- Existing Pacific/Hudson fixture: 29,973 checks / 96 native poses passed.
+- Compiled casing integration: 263 checks; 98 physics/motion methods match
+  compiled 1.13.0. Validator now permits only cached particle position writes
+  in fitting apply/restore; actual animated transforms checked by the fixture.
+- Compiled arrangement integration: 152 checks. Rod timing: 6,720 simulated
+  rendered poses match, callback still LateUpdate. No in-game driving performed.
+- Full mesh preview inspected: build/prairie-casing-validation/prairie-preview.png.
+  Reference vs installed 1.13.0 treatment vs new full casing, not a game render.
+- Managed stubs emit three CS0649 warnings for deliberately unused tender/
+  Franklin fields; the actual mod build has zero warnings.
+- Visual quality/clearance in Unity, pipe seating, oil interactions, native LOD
+  transitions, explosion/repair, save/reload and driving remain James's tests.
+  Follow the 1.13.2 checklist at the top of RUNTIME_TRIAL_TESTING.txt.
+
+PACKAGE / INSTALL:
+ZIP: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.2-Test\RearrangedS282-B99-1.13.2-Test.zip
+ZIP SHA256 2075E67C35DBE998897F22C47A63F7312D2DDAC025F94329E104979A967A268A.
+DLL SHA256 9B378AA32B391350B3F5053F32849B367D5E0CEE506EE69702FF64C690D93B89.
+35 packaged/installed files hash verified. 27 original seed entries byte-identical
+including all 14 legal/credit/notice entries; original bundle/Franklin OBJ hashes
+unchanged. All production source hashes match the build receipt.
+Full prior 1.13.0 folder backed up and all 66 files verified:
+build/runtime-trial-1.13.2/installed-backup-20261021-001602.
+Settings.xml preserved byte-for-byte, SHA256
+57D796625848A9F41DBDD4770593EA537D389DB65646C7A59B3FA5A93DE0D7BB.
+Installed Info.json is 1.13.2, DLL matches the ZIP. Old diagnostics are preserved
+and are historical until James runs the new test. Build/install receipts are in
+build/runtime-trial-1.13.2 and beside the Desktop ZIP. Detailed numerical reports
+are in build/prairie-casing-validation and build/prairie-casing-integration.
+Native game geometry, native particle fixtures and decompiled references remain
+local/ignored, never runtime/source assets. Extraction scripts/harnesses are kept.
+
+## 1.13.1 4-14-4 spacing test BUILT, NOT INSTALLED OR PUBLISHED, 21 Oct 2026
+
+James authorised moving the 4-14-4 drivers farther back while holding cylinders
+and both carrying bogies fixed, retaining physics/animation and building a test.
+1.13.0 remains installed (Info.json and DLL hash rechecked). No game launch, save
+edit, install, commit, push or release performed. Working tree includes the
+uncommitted 1.13.0 casing work as well as this spacing change.
+
+Smallest existing solution: FourteenDriverShift changes from 0.25 to 0.50 m,
+an additional 0.25 m rearward. The existing DriveRetarget and native animation
+remain unchanged. Cylinder map, carrying-axle coordinates, driver pitch/diameter,
+wheel radius and power parameters are retained; existing AlignAdditionalAxle
+keeps native physical axle anchors with the moved rendered drivers. Main/radius
+rods bridge the new distance using the existing retarget. Added a 4-14-4-only
+crosshead oil-cup provider offset because retargeted renderers move independently
+of their non-animated Oiling1 child. Prepared geometry restores it on switching.
+Native measurements give nominal front/rear tyre gaps of 0.55/0.20 m, previously
+0.30/0.45 m. No broader rod framework or new dependency was introduced.
+
+Validation:
+- Release/net48 against installed B99 assemblies: 0 warnings, 0 errors.
+- Validate.FourteenSpacing.ps1: 1,452 assertions across 96 sampled native
+  High/Med/Low cutoff poses, both sides. Actual production layout and unchanged
+  DriveRetarget exercised with managed Unity stand-ins and local native fixtures.
+  Covers fixed trucks/cylinders, driver shift, gap guard, rendered endpoints,
+  cup placement, mirrored/transformed frames, LOD restoration and repeated binds.
+  Maximum sampled endpoint difference versus old cylinder-side endpoints:
+  0.034 mm; inherited retarget length-scale variation about 0.196%.
+- Compiled articulated integration: 152 checks passed.
+- Compiled casing integration: 259 checks passed; 98 physics/motion methods
+  byte-equivalent to 1.13.0. This does not prove unchanged whole-game physics.
+- Rod timing regression: 6,720 simulated rendered poses match source quaternions;
+  compiled callback remains LateUpdate. No game/runtime reproduction claimed.
+- Package audit: 35 files, 27 seed files byte-identical including all 14 legal,
+  credit and notice entries. Original bundle and Franklin asset hashes preserved.
+- In-game frame/shoe clearance, rolling appearance, real LOD transitions and
+  carrying-truck behaviour on curves remain for James to test. Checklist at the
+  top of RUNTIME_TRIAL_TESTING.txt is packaged with the test.
+
+ZIP: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.1-Test\RearrangedS282-B99-1.13.1-Test.zip
+ZIP SHA256 A0B8F94136E9F296AB319974710A566BD21CA2C204CB48DF4626B94D4B84A7D7.
+DLL SHA256 415E4D7D056F964CCF4E090337DF5C56712BA1C8922F5D67646CF42877E67C50.
+Reports: build/fourteen-spacing-validation/validation.json and
+build/runtime-trial-1.13.1 (build receipt, package audit, compiled integration,
+casing-integration and rod-timing reports). Native geometry fixtures remain local
+and ignored; only extraction code and managed harness sources are intended for Git.
+
+PRAIRIE FEEDBACK, OPEN: James's L-090 screenshot shows the overall cylinder
+assembly still oversized. Player.log confirms four casing meshes were reshaped
+for 2-6-2 Prairie (e.g. lines 8278/8280 in the inspected log), so it was not
+omitted from dispatch. The 1.13.0 pass was too limited to meet the requested
+overall near-vanilla appearance: upper chest, rear socket band and longitudinal
+length remain at the enlarged drivetrain scale. Numerical safety checks were
+not visual acceptance. Acknowledge that limitation; do not claim normalization
+succeeded or that 1.13.1 fixes Prairie. Decoupling casing placement/size from
+wheel layout and the moving linkage is the relevant next investigation, using
+existing retarget facilities first. No further casing rewrite was implemented
+in this spacing task. Do not revive blind whole-mesh deformation.
+
+## 1.13.0 test INSTALLED on James's explicit request, 21 Oct 2026
+
+Game process was absent before installation. Installed directly from the audited
+local 1.13.0 test ZIP; no rebuild, publication, release or save edits performed.
+Verified all 35 installed package files against the extracted ZIP. Installed
+Info.json is 1.13.0 and DLL SHA256 is
+F650F21A2718F87727F03452AC989CF2265CCB60F81622B6EE9BC2D8ED6ABE5C.
+Existing Settings.xml was preserved byte-for-byte, SHA256
+C8669F86CE3B2233A11FE9DAFB92ACCB14EFF554CDB9D48EE3839606838DA4BE.
+Complete previous 1.12.0 mod folder backed up to
+build/runtime-trial-1.13.0/installed-backup-20261020-234042.
+Installation receipt: build/runtime-trial-1.13.0/installation-receipt.json, also
+copied beside the Desktop test ZIP. Both build-receipt copies now record the
+installation. In-game testing remains outstanding. Casing option defaults on;
+toggle and reapply the arrangement for comparison. No game launched by Codex.
+
+## 1.13.0 cylinder barrel casing trial (Codex), BUILT LOCALLY, NOT INSTALLED OR PUBLISHED AT BUILD TIME, 21 Oct 2026
+
+James authorised casing work and a test build: roughly vanilla size, adjusted as
+needed, retaining existing motion/physics where possible. Baseline was clean
+b99-port at 14b1128, with 1.12.0 installed. This work remains uncommitted. No push,
+GitHub release, Nexus upload, game launch, installation or save edits performed.
+Future remote changes must still target james, never origin. Installation requires
+James's explicit go-ahead, game closed, verified released ZIP and existing backup/
+Settings preservation workflow.
+
+Native-first decision: simple inverse-scaling of the whole casting cannot retain
+both piston and valve axes. Native body-frame Y values are 0.712937 and 1.347092;
+the drive scales their separation. Current engine maps scale Y/Z, not X. We keep
+all animated transforms, timing, wheels, crank throw and native simulation intact.
+
+IMPLEMENTED: optional per-car mesh treatment of MAIN CYLINDER BARREL HEIGHT/BULK.
+This is deliberately not a full vanilla-sized cylinder assembly. Upper valve
+chests, casing length, rear socket bands, drain/cock mounts and steam-pipe contact
+remain at the previous geometry. Existing native walk/item collision shells also
+remain unchanged and may not exactly match the revised outer surface. No new
+mesh colliders, rigidbodies, physics patches, ports or animation proxies added.
+
+Initial combined Y/Z correction produced local folds near pinned pipe sockets.
+Removing Z correction prevented that but the actual-mesh preview still showed
+upper-chest dents. Final correction therefore preserves the whole upper chest
+(native Y >= 1.30, blending from 1.02; Franklin bridge >= 1.12, from 0.85), with
+conservative 0.85 strength. Small-engine enlargement is capped at 1.35 target
+gain and rail clearance 0.08 m, hence at most 29.75% applied barrel enlargement.
+Larger main barrels approach native height. Do not claim the upper chests or full
+outer bounds are now vanilla-sized, or that this is a complete linkage retarget.
+
+Files: CylinderCasingShape.cs contains deterministic geometry; the
+WheelRearranger.CylinderCasings.cs partial captures native mesh frames, handles
+native LOD0/LOD1 plus lazily cached rear engines and visible retarget proxies, and
+owns/restores temporary meshes. Original meshes/materials stay immutable.
+Franklin's original bundled casing is CPU-unreadable; models/franklin_casing.obj
+is a readable export of ONLY that original MIT mod asset, preserving positions,
+UVs, normals and winding. Build.RuntimeTrial.ps1 packages it in assets/. The
+unchanged original drivetrain bundle remains intact. Native game mesh data and
+decompiled references are LOCAL fixture evidence only, not runtime/source assets.
+
+Integration: CacheCylinderCasings after SetupDrivers; ApplyCylinderCasings after
+layout geometry; restore before articulated/retarget teardown and geometry
+snapshots. Tender statics inherit the corrected source mesh; detach the tender
+before restoring/freeing it. OnDestroy additionally disposes readable fallback
+sources. Native stock ID10 bypasses the treatment. Settings field
+nearVanillaCylinderCasings defaults true; UMM label is "Near-vanilla cylinder
+casings (trial, reapply)". Toggle and reapply to compare/restore old presentation.
+Structural capture adds cylinderCasingMeshes; counts do not prove appearance.
+
+VALIDATION:
+- Release net48 build against installed B99 assemblies: 0 errors, 0 warnings.
+- Actual production shape helper: 629,173 numerical assertions across 84 actual
+  native LOD0/LOD1/Franklin mesh cases, scales 0.4 through 1.42, offsets and
+  anisotropic scale. All passed. No sampled non-positive Jacobians and no tested
+  triangle normals turning >90 degrees. These are repetitive vertex checks,
+  NOT 629,173 game scenarios. Final preview inspected before packaging.
+- Original Franklin export: 5,642 attribute/index round-trip checks passed.
+- Compiled casing integration: 259 checks, including stock bypass and cleanup
+  order; 98 physics/motion method bodies unchanged from compiled 1.12.0 across
+  ConventionalPhysics, B99PhysicsState, ArticulatedSimulation and DriveRetarget.
+- Existing suites passed: catalogue/save policy 1,421; compiled articulated
+  integration 152; additional arrangements 1,891; frame geometry 3,947; effects
+  9,014; big-end oiling 18; curve drag 150; Pacific/Hudson valve-gear fixture.
+- No Unity/game runtime exercised. In-game appearance, articulation/body clearance,
+  near/far transitions, oiling/cocks, explosion/repair, tender attach/detach and
+  repeated switching/save/reload are still for James to test. Updated checklist is
+  at the TOP of RUNTIME_TRIAL_TESTING.txt; lower notes are historical.
+
+Package: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.13.0-Test\RearrangedS282-B99-1.13.0-Test.zip
+ZIP SHA256 B03F99070564480CC3C8F39053EC23853531E08D7BB4E7B4BD5C8785F978E292.
+DLL SHA256 F650F21A2718F87727F03452AC989CF2265CCB60F81622B6EE9BC2D8ED6ABE5C.
+Franklin OBJ SHA256 33F38E9F278FFF97EDED891830119227767D2027845D5574A8A9C59ECCC79739.
+35 packaged files; 27 seed entries byte-identical, including all 14 legal/credit/
+notice files. Only expected DLL/Info/test-document seed entries changed.
+Receipts/audit/logs: build/runtime-trial-1.13.0; geometry report/preview:
+build/cylinder-casing-validation; compiled comparison: build/cylinder-casing-integration.
+Final source helper SHA256 A62A758B6E059A56A1AC8D843E1AC27016D3D4FE7FBC8A4E91A0C43119D4A0C7.
+Installed version remains 1.12.0, DLL SHA256
+3D6094AE837DC0687684E33DFEA5ECC15D74798BFCF263CD0B68076D0B28F7FC (rechecked).
+
+NEXT after casing trial feedback: the previously requested larger drivers AND
+wider driver pitch on 2-6-0/2-4-0, not implemented here. Other Claude handover
+items (switching report, big-end cups, Erie later stages, curving derail stress)
+remain as previously documented. Do not revive the discarded casing deformation.
+
 ## 1.12.0 Prairie, 2-6-6-0, 2-10-10-2 (Claude), RELEASED pre-release v1.12.0 (tag 7d11e81), INSTALLED, 20 Oct 2026
 
 Installed from the released ZIP (380AA5B2...4755; DLL 3D6094AE...F7FC from the final rebuild, Info.json 1.12.0).
@@ -2019,3 +3602,8 @@ James is developing a separate chuff patcher; do not replace or expand it here.
 No change to Derailroader, the user's chuff patcher, installed mods or saves was made.
 The only ZIP is a local stage 2 development trial. No release, commit, push or
 publication was performed.
+
+
+
+
+

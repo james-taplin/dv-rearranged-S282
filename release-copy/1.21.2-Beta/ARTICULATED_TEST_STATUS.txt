@@ -1,0 +1,15 @@
+1.21.2 BETA - VALIDATION STATUS - 22 OCTOBER 2026
+
+Runtime DLL matches installed test build byte for byte.
+SHA256: 2E0C783E38BF2DC773C37B1D67AC4A55D5B01D343701EDC51909D18E94D6BEA5
+
+Existing native-engine fixture: 4,142 checks, 132 layout/mass cases and 1,400
+native engine ticks pass. Covers original-cylinder limits, cache consistency,
+restoration, resource-independent sizing, isolation and FoA on both sides of
+stock. Compiled comparison confirms 105 protected methods unchanged versus
+1.21.1. Existing physics wiring checks pass. Production build: zero warnings
+and errors. These do not establish live 1.21.2 driving acceptance.
+
+Previous live evidence: 1.20.0 all 47 structural checks pass; five power captures
+reviewed with no recorded simulation-update faults and wheel/crank RPM agreeing.
+Visible running gear/pipes accepted by tester. No live 1.21.2 capture reviewed yet.

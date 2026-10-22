@@ -1,0 +1,80 @@
+1.19.0 PRELIMINARY PHYSICS
+Structural report now includes physicsCalibration and rearDriverFollowers.
+Power sample tractive.preliminaryPhysics reports effective driver share, area
+scale, original/calibrated reference pull, grip and stock ratio ceiling. The
+underlying engine records contain actual changed bore/cached area/volume.
+These numbers describe a reduction-only first pass, not validated tonnage.
+Erie tender remains separately calibrated. Axle-load caps are calculated from
+current TotalMass when selecting/reapplying the arrangement; selected load share
+then follows native mass changes. No actual axle-mass redistribution occurs.
+
+tractive.adhesionEcsEligible is true when native ECS moving/sliding/slipping tags
+allow adhesion input/output updates. False means the sampled live grip may be
+old even if the structural reference is correct. Do not force updates or alter
+native tags to manufacture agreement; compare moving captures during power tests.
+
+Rearranged S282 B99 - PHYS-A measurement tools (1.17.0)
+
+This stage only observes the existing simulation. It does not rebalance grip,
+bores, power, steam consumption or locomotive weight. Native steam/traction
+remain unchanged. Granular geometry controls are separate temporary test tools.
+
+STRUCTURAL CAPTURE
+Use the existing RUN STRUCTURAL TEST button in UMM with two stationary,
+non-exploded stock 2-8-2 S282s, regulators shut, in a disposable sandbox.
+Close UMM so native simulation advances. The test cycles every arrangement and
+returns to stock, as before; it does not save the game automatically.
+
+Outputs in the mod folder:
+  stage2-runtime-checks.json
+  stage2-tractive-measurements.csv
+
+Each arrangement has a separate measurements object: live ECS per-axle/total
+grip; controller force limit; actual mass, base/cargo/resource mass; boiler
+pressure/water; resource-container quantities; all engine IDs, activation,
+dimensions/cached area/volume, pressures, cutoff and controls. Dormant engines
+are disclosed but excluded from pull. Erie tender figures are kept separate.
+Missing/non-finite values stay null, not zero. Measurement errors do not alter
+the native engine or exact structural restoration/isolation comparisons.
+
+DRIVING CAPTURE
+The existing START POWER DIAGNOSTICS button also records this information in
+each sample under tractive, with metadata under tractiveReference (schema 3).
+Close UMM and drive normally, then stop capture. Existing JSONL safety limits
+and engine-exception preservation remain. Measurements can reflect different
+native tick phases; ECS force limits can be stale at rest or during pauses.
+
+TABLE EXPORT (PowerShell)
+From this mod folder:
+  .\Tools\TractiveTable.ps1 -InputPath .\stage2-runtime-checks.json
+
+Produces tractive-table.md and tractive-table.bbcode.txt beside the input.
+Optional -OutputPrefix chooses another output basename. The tool reads the
+capture and never edits it. Older structural captures without PHYS-A data
+cannot be converted into measurements retroactively.
+
+INTERPRETATION
+Reference steam is the SAME 15 bar absolute, 0.75 cutoff and 300 C for every
+engine. These are explicit comparison inputs, not measured full-regulator
+conditions. The native mean-torque pressure/condensation formula and cached
+piston area, stroke, cylinder count and current radius produce reference pull.
+Native low-RPM torque is instantaneous; a structural run with closed regulators
+does NOT measure starting performance. Theoretical sampled-condition mean force
+is separate from observed generated force and excludes native torque smoothing
+and drivetrain-health reduction.
+
+Dry reference grip uses captured current TotalMass, total/powered axle counts,
+9.81 m/s2 and the read-back wheelslip friction coefficient. Live grip includes
+native rail/sand conditions and is listed separately from controller slip-drop
+limits. The native axle split is an equivalent grip model, not an actual weighing
+of each driving axle. Resource amounts keep the resource's native units.
+
+Stock index is 100 * min(reference pull, reference dry grip) divided by that
+same figure for this capture's stock 2-8-2. It is a relative force index ONLY.
+It is not tonnage, a 2-percent grade rating, a speed limit or a power curve.
+Loaded running tests are required before publishing performance claims.
+Failed/missing rows have unavailable indices; missing stock reference disables
+indices; the giant 2-2-2 is explicitly an experimental clearance prototype.
+Erie's separate tender force/grip is never silently added to the loco table.
+
+PHYS-B weight allocation and PHYS-C cylinder calibration are still deferred.

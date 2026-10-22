@@ -143,9 +143,9 @@ internal static class Program {
         cases.Add("six giant configurations: native geometry ownership, transformed bogie alignment, oil providers, animation copying, dense sparks, repeated restoration/disposal");
     }
     static void AlignmentCases() {
-        foreach(int id in new[]{34,35}) {
+        foreach(int id in new[]{12,13,14,34,35,44}) {
             var f=new Fixture(true);var before=f.Axles.Select(a=>a.position).ToArray();
-            f.Mod.Align(id);var expected=id==34?new[]{1,2,3}:new[]{1,2};
+            f.Mod.Align(id);var expected=id==35?new[]{1,2}:id==34||id==44?new[]{1,2,3}:new[]{0,1,2,3};
             var visual=new[]{f.Mod.firstRightDriveWheel,f.Mod.secondRightDriveWheel,f.Mod.thirdRightDriveWheel,f.Mod.fourthRightDriveWheel};
             for(int i=0;i<6;i++) {
                 if(expected.Contains(i)){Check(Near(f.Axles[i].position,visual[i].position),"new conventional axle matches current visual world centre");Check(ReferenceEquals(f.Axles[i].GetComponent<PoweredWheel>().wheelTransform,visual[i]),"new conventional powered wheel targets visual");}
@@ -155,7 +155,7 @@ internal static class Program {
         }
         var broken=new Fixture();Object.Destroy(broken.Mod.driveAxle2.GetComponent<PoweredWheel>());
         try{broken.Mod.Align(35);Check(false,"missing native axle must fail");}catch(InvalidOperationException e){Check(e.Message.Contains("native powered axle"),"missing native axle fails actionably");}
-        cases.Add("2-6-0/2-4-0 alignment across rotated bogies, unaffected axles, missing-native-wheel failure");
+        cases.Add("High-speed/Prairie/2-6-0/2-4-0 alignment across rotated bogies, unaffected axles, missing-native-wheel failure");
     }
     static void IsolationCase() {
         var a=new Fixture();var b=new Fixture(true);var before=b.OriginalTransforms.Select(t=>t.position).ToArray();

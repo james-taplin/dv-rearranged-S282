@@ -91,16 +91,26 @@ namespace RearrangedS282
 
         private void AlignAdditionalPoweredAxles(int id)
         {
+            // Native wheel transforms remain animation sources for respaced
+            // layouts; physical axle anchors follow their displayed centres.
+            Transform Presented(Transform wheel) => ResolvePresentedWheel(wheel);
             if (id == (int)WheelArrangementType.s260 || id == (int)WheelArrangementType.s262)
             {
-                AlignAdditionalAxle(driveAxle2, secondRightDriveWheel);
-                AlignAdditionalAxle(driveAxle3, thirdRightDriveWheel);
-                AlignAdditionalAxle(driveAxle4, fourthRightDriveWheel);
+                AlignAdditionalAxle(driveAxle2, Presented(secondRightDriveWheel));
+                AlignAdditionalAxle(driveAxle3, Presented(thirdRightDriveWheel));
+                AlignAdditionalAxle(driveAxle4, Presented(fourthRightDriveWheel));
             }
-            else if (id == (int)WheelArrangementType.s240)
+            else if (id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big || id == (int)WheelArrangementType.s284Big)
             {
-                AlignAdditionalAxle(driveAxle2, secondRightDriveWheel);
-                AlignAdditionalAxle(driveAxle3, thirdRightDriveWheel);
+                AlignAdditionalAxle(driveAxle1, Presented(firstRightDriveWheel));
+                AlignAdditionalAxle(driveAxle2, Presented(secondRightDriveWheel));
+                AlignAdditionalAxle(driveAxle3, Presented(thirdRightDriveWheel));
+                AlignAdditionalAxle(driveAxle4, Presented(fourthRightDriveWheel));
+            }
+            else if (id == (int)WheelArrangementType.s240 || id == (int)WheelArrangementType.s440)
+            {
+                AlignAdditionalAxle(driveAxle2, Presented(secondRightDriveWheel));
+                AlignAdditionalAxle(driveAxle3, Presented(thirdRightDriveWheel));
             }
             else if (id == (int)WheelArrangementType.s222)
                 AlignAdditionalAxle(driveAxle3, giantSingleWheels[1]);

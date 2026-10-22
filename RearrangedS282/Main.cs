@@ -55,11 +55,21 @@ namespace RearrangedS282
 #endif
 				stage2Harmony.CreateClassProcessor(typeof(CommsRadio_Awake_Patch)).Patch();
 				modEntry.OnGUI = entry => {
+                    GUILayout.Label("Running Rearranged S282 " + typeof(Main).Assembly.GetName().Version);
 #if B99_ALL_STANDARD
-					GUILayout.Label("47 ARRANGEMENTS — TEST BUILD\n" +
+					GUILayout.Label("47 ARRANGEMENTS — MAIN CONNECTING ROD SPACING TRIAL\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +
 						"Selections are saved with each locomotive. Loaded arrangements wait until switching is safe.\n" +
 						"First conversion may take a few seconds to prepare rods.");
+					var radio = CommsRadio_Awake_Patch.rearranger;
+					if (radio != null)
+					{
+						GUILayout.Label(radio.SettingsSelectionStatus);
+						if (!Stage2RuntimeChecks.Running && !PowerDiagnostics.Recording && radio.SettingsTarget != null &&
+							GUILayout.Button("REAPPLY CURRENT ARRANGEMENT — highlighted S282")) radio.ReapplyFromSettings();
+						if (GUILayout.Button("RESET WHEEL-ARRANGER RADIO SELECTION")) radio.ResetSelectionFromSettings();
+					}
+					if (CommsRadioS282Rearranger.ReapplyStatus != null) GUILayout.Label(CommsRadioS282Rearranger.ReapplyStatus);
 					if (DeltaTrailingTruckCompatibility.Status != null) GUILayout.Label(DeltaTrailingTruckCompatibility.Status);
 					GUILayout.Space(8);
 					GUILayout.Label(PowerDiagnostics.Status);
@@ -94,7 +104,7 @@ namespace RearrangedS282
 #endif
 				};
 #if B99_ALL_STANDARD
-				Logger.Log("B99 expanded trial: 40 choices including the 4-14-4, articulated 2-6-6-2 Mallet and 2-2-2-2-2 triplex, polished Pacific/Hudson Walschaerts, 2-6-0/2-4-0, giant-driver 2-2-2 clearance prototype and the retained original catalogue.");
+				Logger.Log($"B99 expanded trial: {WheelArrangement.SupportedCount} choices including the 4-14-4, articulated 2-6-6-2 Mallet and 2-2-2-2-2 triplex, polished Pacific/Hudson Walschaerts, 2-6-0/2-4-0, giant-driver 2-2-2 clearance prototype and the retained original catalogue.");
 #else
 				Logger.Log("B99 stage 2: stock / 2-8-4 runtime trial. Persistence and other arrangements disabled.");
 #endif

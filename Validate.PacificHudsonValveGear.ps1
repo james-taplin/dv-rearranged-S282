@@ -7,7 +7,7 @@ $fixture=Join-Path $PSScriptRoot 'evidence\pacific-hudson-valve-gear'
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
- <ItemGroup><Compile Include="$source"/><Compile Include="$fixture\Stubs.cs"/><Compile Include="$fixture\Program.cs"/></ItemGroup>
+ <ItemGroup><Compile Include="$source"/><Compile Include="$PSScriptRoot\RearrangedS282\CylinderCasingShape.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.CylinderCasings.cs"/><Compile Include="$fixture\Stubs.cs"/><Compile Include="$fixture\Program.cs"/></ItemGroup>
 </Project>
 "@
 $projectPath=Join-Path $OutputDirectory 'PacificHudson.Validation.csproj'

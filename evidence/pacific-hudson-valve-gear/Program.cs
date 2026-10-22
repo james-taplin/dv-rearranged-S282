@@ -67,10 +67,10 @@ internal static class Program
             w.Prepare();
         }
         internal void Restore(){foreach(var p in stock)p.Restore();}
-        internal void Legacy()
+        internal void Legacy(float scale=1.2879f,float offset=-2.1f)
         {
-            w.driveL.localScale=new(-1,1.2879f,1.2879f);w.driveR.localScale=new(1,1.2879f,1.2879f);
-            w.driveL.localPosition=w.driveR.localPosition=new(0,0,-2.1f);
+            w.driveL.localScale=new(-1,scale,scale);w.driveR.localScale=new(1,scale,scale);
+            w.driveL.localPosition=w.driveR.localPosition=new(0,0,offset);
             foreach(var p in mapped.Where(p=>p.t.name.StartsWith("s282a_cylinder")||p.t.name.Contains("crosshead_guide")))p.t.localPosition=new(0,.21f,0);
             w.lLiftingArmSupport.gameObject.SetActive(false);w.rLiftingArmSupport.gameObject.SetActive(false);
             w.lCrosshead.localScale=w.rCrosshead.localScale=new(1,.78f,1);
@@ -92,9 +92,9 @@ internal static class Program
             }
         }
     }
-    static void CheckMapped(Rig rig,Matrix4x4 world)
+    static void CheckMapped(Rig rig,Matrix4x4 world,float scale=1.2879f,float offset=-2.1f)
     {
-        var affine=Matrix4x4.TRS(new(0,0,-2.1f),Quaternion.identity,new(1,1.2879f,1.2879f));
+        var affine=Matrix4x4.TRS(new(0,0,offset),Quaternion.identity,new(1,scale,scale));
         foreach(var part in rig.mapped)
         {
             // Particle outlets follow the mapped pivot only; emitters are never stretched.
@@ -112,6 +112,28 @@ internal static class Program
         Check(strings.Contains("Cutoff")&&strings.Contains("SpeedMultiplier"),"Native controller has original Cutoff and SpeedMultiplier parameters");
         Check(data.GetProperty("clips").GetArrayLength()==3,"All three native cutoff clips represented");
         var rig=new Rig(data);int nativeCount=All(rig.w.transform).Count();var originals=rig.pipes.Select(f=>f.sharedMesh).ToArray();var originalVertices=originals.Select(m=>m.vertices.ToArray()).ToArray();
+        int extendedPoses=0;
+        // Exercise all resized conventional families using the actual static
+        // alignment helper, including the previously mismatched twelve-driver
+        // frame and hidden optional valve gear. Physics and animated joints are
+        // outside this helper; positions/rotations must remain byte-for-byte.
+        foreach(var family in new[]{(scale:1.42f,offset:-3.935f),(scale:1.2879f,offset:-2.1f),(scale:.84f,offset:1.1f),(scale:1.11f,offset:-.7f)})
+        foreach(bool visible in new[]{false,true})
+        foreach(var clip in data.GetProperty("clips").EnumerateArray())
+        foreach(var frame in clip.GetProperty("frames").EnumerateArray())
+        {
+            rig.Restore();NativePose(rig,clip,frame);rig.Legacy(family.scale,family.offset);
+            var animated=All(rig.w.driveL).Concat(All(rig.w.driveR)).Select(t=>(t,p:t.localPosition,q:t.localRotation)).ToArray();
+            rig.w.ApplyVisible(visible);CheckMapped(rig,Matrix4x4.identity,family.scale,family.offset);
+            Check(Near(rig.w.lCrosshead.localScale,Vector3.one)&&Near(rig.w.rCrosshead.localScale,Vector3.one),"Crosshead retains native proportions with hidden or visible gear");
+            foreach(var pose in animated)
+            {
+                Check(Near(pose.t.localPosition,pose.p),"Alignment never changes an animated linkage position");
+                Check(pose.t.localRotation.x==pose.q.x&&pose.t.localRotation.y==pose.q.y&&pose.t.localRotation.z==pose.q.z&&pose.t.localRotation.w==pose.q.w,"Alignment never changes animation rotation/phase");
+            }
+            extendedPoses++;
+        }
+        scenarios.Add(extendedPoses+" additional native cutoff poses across four-, six-, twelve-driver and reservoir-clear frames, both sides/LODs and hidden/visible optional valve gear");
         foreach(var clip in data.GetProperty("clips").EnumerateArray())
         foreach(var frame in clip.GetProperty("frames").EnumerateArray())
         foreach(int layout in new[]{4,5})

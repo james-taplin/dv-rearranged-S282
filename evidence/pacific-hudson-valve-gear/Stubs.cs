@@ -68,9 +68,11 @@ namespace UnityEngine
         public readonly Transform transform;
         public bool activeSelf=true;
         internal MeshFilter filter;
+        internal ParticleSystem particle;
+        public bool activeInHierarchy=>activeSelf && (transform.parent==null || transform.parent.gameObject.activeInHierarchy);
         public GameObject(string name){this.name=name;transform=new Transform(this);}
         public void SetActive(bool value){activeSelf=value;}
-        public T GetComponent<T>() where T:class=>filter as T;
+        public T GetComponent<T>() where T:class=>filter as T ?? particle as T;
     }
     public sealed class Transform : Object,IEnumerable<Transform>
     {
@@ -87,6 +89,15 @@ namespace UnityEngine
         {Transform value=this;foreach(var part in path.Split('/')){value=value.children.FirstOrDefault(c=>c.name==part);if(value==null)return null;}return value;}
         public Matrix4x4 localToWorldMatrix=>(parent==null?Matrix4x4.identity:parent.localToWorldMatrix)*Matrix4x4.TRS(localPosition,localRotation,localScale);
         public Matrix4x4 worldToLocalMatrix=>localToWorldMatrix.inverse;
+        public Vector3 position {get=>TransformPoint(Vector3.zero);set=>localPosition=parent==null?value:parent.InverseTransformPoint(value);}
+        public Vector3 TransformPoint(Vector3 p)=>localToWorldMatrix.MultiplyPoint3x4(p);
+        public Vector3 InverseTransformPoint(Vector3 p)=>worldToLocalMatrix.MultiplyPoint3x4(p);
+        public T[] GetComponentsInChildren<T>(bool includeInactive) where T:class
+        {
+            var result=new List<T>();
+            void Visit(Transform t){if(includeInactive||t.gameObject.activeInHierarchy){var c=t.GetComponent<T>();if(c!=null)result.Add(c);foreach(var child in t.children)Visit(child);}}
+            Visit(this);return result.ToArray();
+        }
         public IEnumerator<Transform> GetEnumerator()=>children.GetEnumerator(); IEnumerator IEnumerable.GetEnumerator()=>GetEnumerator();
     }
     public sealed class Mesh : Object
@@ -105,25 +116,56 @@ namespace UnityEngine
     {
         public readonly Transform transform;
         public Mesh sharedMesh;
+        public GameObject gameObject=>transform.gameObject;
+        public string name=>transform.name;
         public MeshFilter(Transform transform,Mesh mesh){this.transform=transform;sharedMesh=mesh;transform.gameObject.filter=this;}
     }
+    public sealed class ParticleSystem
+    {
+        public readonly Transform transform;
+        public ParticleSystem(Transform t){transform=t;t.gameObject.particle=this;}
+    }
 }
+namespace Dummiesman { public sealed class OBJLoader { public UnityEngine.Mesh Load(string path)=>throw new InvalidOperationException("Unexpected asset IO in native Prairie fixture"); } }
 namespace RearrangedS282
 {
     using UnityEngine;
     internal partial class WheelRearranger
     {
-        internal Transform transform,driveL,driveR,lCrosshead,rCrosshead,lLiftingArmSupport,rLiftingArmSupport,reachRodSupport;
+        internal Transform transform,driveL,driveR,lCrosshead,rCrosshead,lLiftingArmSupport,rLiftingArmSupport,reachRodSupport,lfCrossheadBracket,rfCrossheadBracket;
         internal int gearCalls;
         private void ShowValveGear(){gearCalls++;reachRodSupport.gameObject.SetActive(true);}
         private void HideReachRod(){foreach(var drive in new[]{driveL,driveR})drive.Find("s282_mech_cutoff_rod").gameObject.SetActive(false);}
+        private Transform tenderEngineRoot;
+        private void DetachTenderEngine()=>throw new InvalidOperationException("No tender in Prairie fixture");
+        private T[] GetComponentsInChildren<T>(bool includeInactive) where T:class=>transform.GetComponentsInChildren<T>(includeInactive);
+        internal void PreparePrairie(){CacheCylinderCasings();SetupPacificHudsonValveGear();}
+        internal void ApplyPrairie(){ApplyPacificHudsonValveGear();ApplyCylinderCasings(44);}
+        internal void ApplyCasingFor(int id)=>ApplyCylinderCasings(id);
+        internal bool FullCasingFor(int id)=>UsesFullCylinderCasings(id);
+        internal void RestoreCasings()=>RestoreCylinderCasings();
+        internal void DisposeCasings()=>DisposeCylinderCasings();
         internal void Prepare()=>SetupPacificHudsonValveGear();
         internal void Apply()=>ApplyPacificHudsonValveGear();
+        internal void ApplyVisible(bool visible)=>ApplyPacificHudsonValveGear(visible);
         internal void Dispose()=>DisposePacificHudsonValveGear();
+        // No retarget is installed in this baseline casing/support fixture.
+        // Actual shifted frames and live oil bindings have a separate fixture.
+        private static Matrix4x4 CylinderDriveFrame(Transform drive)=>drive.localToWorldMatrix;
     }
     internal static class Main
     {
+        internal static string ModPath="fixture";
+        internal static readonly FixtureSettings settings=new();
         internal static readonly LoggerStub Logger=new LoggerStub();
-        internal sealed class LoggerStub{internal readonly System.Collections.Generic.List<string> Lines=new System.Collections.Generic.List<string>();internal void Log(string line)=>Lines.Add(line);}
+        internal sealed class LoggerStub{internal readonly System.Collections.Generic.List<string> Lines=new System.Collections.Generic.List<string>();internal void Log(string line)=>Lines.Add(line);internal void Warning(string line)=>Lines.Add(line);}
     }
+    internal sealed class FixtureSettings{internal bool nearVanillaCylinderCasings=true;}
+    internal enum WheelArrangementType{s440=0,s442=1,s444=2,s460=3,s462=4,s464=5,s282=10,s280Big=12,s282Big=13,s284Big=14,s0120=27,s4122=30,s260=34,s240=35,s262=44}
+    internal static class WheelArrangement
+    {
+        internal static bool IsArticulatedId(int id)=>false;
+        internal static string[] WheelArrangementNames=Enumerable.Range(0,47).Select(i=>i==44?"2-6-2 Prairie":"fixture arrangement").ToArray();
+    }
+    internal static class AssetBundleLoader{internal static GameObject FranklinBValveGear,FranklinBValveGear4444;}
 }

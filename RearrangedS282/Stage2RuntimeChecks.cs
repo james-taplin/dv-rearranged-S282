@@ -56,6 +56,7 @@ namespace RearrangedS282
             var results = new JArray();
             var report = new JObject { ["build"] = "articulated-trial", ["version"] = typeof(Main).Assembly.GetName().Version.ToString(), ["subject"] = subject.ID,
                 ["control"] = control.ID, ["passed"] = false, ["arrangements"] = results };
+            report["tractiveReference"] = TractiveDiagnostics.ReferenceInfo();
             JObject before = null, controlBefore = null;
             try { before = Capture(subject); controlBefore = Capture(control); }
             catch (Exception ex) { report["error"] = ex.ToString(); }
@@ -78,15 +79,53 @@ namespace RearrangedS282
                     catch (Exception ex) { result["error"] = ex.ToString(); }
                     yield return new WaitForFixedUpdate();
                     yield return new WaitForFixedUpdate();
+                    for (int frame = 0; frame < 120 && !runner.BigEndCupsReady; frame++) yield return null;
+                    yield return new WaitForEndOfFrame();
                     try
                     {
                         if (!switched) throw new InvalidOperationException(runner.LastConventionalError ?? "Conversion refused; check the game log.");
                         var changed = Capture(subject); result["converted"] = changed;
+                        result["steamConnections"] = runner.SteamConnectionReport();
+                        var connections = (JObject)result["steamConnections"];
+                        ValidateSteamConnections(connections);
+                        result["rearDriverFollowers"] = runner.RearDriverFollowerReport();
+                        if ((bool)result["rearDriverFollowers"]["passed"] != true)
+                            throw new InvalidOperationException("Rear five-axle engine driver followers are unbound or out of phase.");
+                        result["physicsCalibration"] = runner.PreliminaryPhysicsReport();
+                        if ((bool)result["physicsCalibration"]["dimensionsConsistent"] != true)
+                            throw new InvalidOperationException("Cylinder bore, cached area/volume, stroke or count are inconsistent.");
+                        result["measurements"] = TractiveDiagnostics.Capture(subject);
+                        var calibration = (JObject)result["physicsCalibration"];
+                        if ((double)calibration["referenceGripN"] > 0d &&
+                            (double)result["measurements"]["referenceMeanForceN"] / (double)calibration["referenceGripN"] >
+                            (double)calibration["designReferencePullGripCeiling"] * 1.002d)
+                            throw new InvalidOperationException("Calibrated reference pull exceeds the rated design pull/grip ceiling.");
+                        var cupPresentation = runner.CaptureOilCupPresentation();
+                        result["oilcupPresentation"] = cupPresentation;
+                        if ((bool?)cupPresentation["ready"] != true)
+                            throw new InvalidOperationException("Oilcup presentation did not finish initializing.");
+                        if ((bool?)cupPresentation["countsMatch"] != true)
+                            throw new InvalidOperationException("Oilcup count or unique refill-port ownership disagrees with the active bearings.");
+                        if ((float?)cupPresentation["maximumProviderGapM"] > .002f)
+                            throw new InvalidOperationException("Visible oilcup has drifted away from its provider.");
+                        if ((float?)cupPresentation["maximumGuideGapM"] > .035f)
+                            throw new InvalidOperationException("Fixed guide oilcup has no nearby guide mounting surface.");
                         if (!JToken.DeepEquals(before["oilcups"], changed["oilcups"]))
                             throw new InvalidOperationException("Native oilcup circuit or position binding changed.");
                         var wheels = WheelArrangement.LocomotiveWheels(id);
                         int total = wheels.Sum() / 2;
                         int powered = WheelArrangement.IsArticulatedId(id) ? wheels.Skip(1).Take(wheels.Length - 2).Sum() / 2 : wheels[1] / 2;
+                        bool pitched = DriverLayout.Supports(id);
+                        if ((int)changed["driverPitchPresentations"] != (pitched ? powered * 2 : 0))
+                            throw new InvalidOperationException("Driver pitch presentation count disagrees with the selected arrangement.");
+                        float expectedPitch = pitched ? DriverLayout.ClampExtraPitch(WheelRearranger.RequestedDriverPitchM(id), id) : 0f;
+                        if (Mathf.Abs((float)changed["extraCoupledPitchM"] - expectedPitch) > .00001f)
+                            throw new InvalidOperationException("Driver pitch does not match the selected setting.");
+                        float expectedRearward = pitched ? WheelRearranger.ClampDriverGroupRearwardMetres(WheelRearranger.RequestedDriverRearwardM(id)) : 0f;
+                        if ((bool)changed["connectingRodSpacingActive"] != pitched ||
+                            Mathf.Abs((float)changed["driverGroupRearwardM"] - expectedRearward) > .00001f ||
+                            (int)changed["precisionRodRetargets"] != (id == (int)WheelArrangementType.s262 || expectedRearward > 0f ? 2 : 0))
+                            throw new InvalidOperationException("Main connecting-rod spacing does not match the selected setting.");
                         if ((int)changed["axles"] != total || (int)changed["entityAxles"] != total ||
                             (int)changed["powered"] != powered || (int)changed["poweredPort"] != powered)
                             throw new InvalidOperationException("Axle counts disagree with the selected arrangement.");
@@ -108,9 +147,11 @@ namespace RearrangedS282
                         }
                         if (id != 10 && runner.ExplosionMaterialRendererCount == 0)
                             throw new InvalidOperationException("Added running gear has no native explosion material registration.");
-                        if (!JToken.DeepEquals(before["steam"], changed["steam"]) ||
-                            !JToken.DeepEquals(before["type"], changed["type"]) || !JToken.DeepEquals(before["mass"], changed["mass"]))
-                            throw new InvalidOperationException("Native engine, shared type or base mass changed.");
+                        foreach (int index in new[] { 0, 2, 3, 4 })
+                            if (!JToken.DeepEquals(before["steam"][index], changed["steam"][index]))
+                                throw new InvalidOperationException("Cylinder count, stroke or cutoff limits changed.");
+                        if (!JToken.DeepEquals(before["type"], changed["type"]) || !JToken.DeepEquals(before["mass"], changed["mass"]))
+                            throw new InvalidOperationException("Shared type or base mass changed.");
                         if (!JToken.DeepEquals(controlBefore, Capture(control))) throw new InvalidOperationException("Control locomotive changed.");
                         if (!runner.TrySwitchStage2(10)) throw new InvalidOperationException("Return to stock failed.");
                         result["passed"] = true;
@@ -129,6 +170,8 @@ namespace RearrangedS282
                     }
                     catch (Exception ex) { result["error"] = ex.ToString(); result["passed"] = false; }
                     // Save progress after every arrangement so an interrupted run has evidence.
+                    report["tractiveCsvError"] = TractiveDiagnostics.WriteStructuralCsv(report,
+                        System.IO.Path.Combine(Main.ModPath, "stage2-tractive-measurements.csv"));
                     System.IO.File.WriteAllText(System.IO.Path.Combine(Main.ModPath, "stage2-runtime-checks.json"), report.ToString());
                 }
                 report["passed"] = results.Count == WheelArrangement.SupportedCount && results.All(r => (bool)r["passed"]);
@@ -251,10 +294,17 @@ namespace RearrangedS282
 #if B99_ALL_STANDARD
                 ["oilcups"] = CaptureOilcups(car),
                 ["frontCouplingMounts"] = CaptureFrontCouplingMounts(car),
+                ["cylinderCasingMeshes"] = car.GetComponent<WheelRearranger>()?.CylinderCasingMeshCount ?? 0,
+                ["driverPitchPresentations"] = car.GetComponent<WheelRearranger>()?.DriverLayoutPresentationCount ?? 0,
+                ["extraCoupledPitchM"] = car.GetComponent<WheelRearranger>()?.DriverLayoutExtraPitchM ?? 0f,
+                ["connectingRodSpacingActive"] = car.GetComponent<WheelRearranger>()?.ConnectingRodSpacingActive == true,
+                ["driverGroupRearwardM"] = car.GetComponent<WheelRearranger>()?.DriverGroupRearwardM ?? 0f,
+                ["precisionRodRetargets"] = car.GetComponent<WheelRearranger>()?.ConnectingRodSpacingRetargetCount ?? 0,
                 ["articulated"] = car.GetComponent<WheelRearranger>()?.ArticulatedGeometryActive == true,
                 ["engines"] = new JArray(engines.Select(e => new JObject {
                     ["eventPort"] = e.chuffEventReadOut.id, ["cylinders"] = e.numCylinders,
-                    ["bore"] = e.cylinderBore, ["stroke"] = e.pistonStroke
+                    ["bore"] = e.cylinderBore, ["stroke"] = e.pistonStroke,
+                    ["area"] = e.pistonArea, ["volumeLitres"] = e.cylinderVolume
                 })),
 #endif
                 ["steam"] = new JArray(engine.numCylinders, engine.cylinderBore, engine.pistonStroke, engine.minCutoff, engine.maxCutoff),
@@ -263,6 +313,17 @@ namespace RearrangedS282
             };
         }
 #if B99_ALL_STANDARD
+        internal static void ValidateSteamConnections(JObject connections)
+        {
+            float gap = (float)connections["maximumEndpointGapM"];
+            // Newtonsoft distinguishes a string-valued null from JTokenType.Null,
+            // although both serialize as null. Test the error value, not its type.
+            if ((int)connections["expectedCylinders"] != (int)connections["connectedCylinders"] ||
+                (int)connections["colliders"] != 0 || float.IsNaN(gap) || float.IsInfinity(gap) || gap < 0f || gap > .003f ||
+                !string.IsNullOrEmpty((string)connections["error"]))
+                throw new InvalidOperationException("Steam-pipe sockets, endpoint gaps or collider-free presentation are inconsistent: " + connections);
+        }
+
         private static JObject CaptureFrontCouplingMounts(TrainCar car)
         {
             var visual = car.frontCoupler?.visualCoupler;
@@ -282,7 +343,7 @@ namespace RearrangedS282
             if (providers == null || cups == null || cups.Length != 6)
                 throw new InvalidOperationException("Native six-cup oiling setup is missing.");
             return new JObject { ["externalLoaded"] = true, ["cups"] = new JArray(cups.Select(c => {
-                var consumer = c.GetComponentInParent<DV.Util.PositionSyncConsumer>();
+                var consumer = B99Oilcups.ConsumerFor(c);
                 if (consumer == null || providers.Count(p => p != null && p.syncTag == consumer.syncTag && p.transform == consumer.providerTransform) != 1)
                     throw new InvalidOperationException("Oilcup has lost its unique native position binding.");
                 return new JObject { ["id"] = c.GetInstanceID(), ["tag"] = consumer.syncTag,

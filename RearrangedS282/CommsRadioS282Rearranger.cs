@@ -45,6 +45,40 @@ namespace RearrangedS282
 		private TrainCar SelectedCar = null;
 		private TrainCar PointedCar = null;
 		private MeshRenderer HighlighterRender;
+		private static bool SettingsMenuOpen => UnityModManagerNet.UnityModManager.UI.Instance?.Opened == true;
+#if B99_ALL_STANDARD
+		internal static string ReapplyStatus { get; private set; }
+		internal TrainCar SettingsTarget => SelectedCar != null ? SelectedCar : PointedCar;
+		internal string SettingsSelectionStatus => $"Radio: {CurrentState}; {ButtonBehaviour}; target " +
+			(SettingsTarget != null ? SettingsTarget.ID : "none");
+
+		internal void ResetSelectionFromSettings()
+		{
+			Main.Logger.Log("Radio selection reset from UMM: " + SettingsSelectionStatus);
+			ResetState();
+			ReapplyStatus = "Radio selection reset. Close UMM, select the S282, then cycle arrangements.";
+		}
+
+		internal void ReapplyFromSettings()
+		{
+			var target = SettingsTarget;
+			if (target == null || target.carType != TrainCarType.LocoSteamHeavy || signalOrigin == null ||
+				(target.transform.position - signalOrigin.position).magnitude > SIGNAL_RANGE)
+			{
+				ReapplyStatus = "Highlight the S282 with the wheel-arranger radio before opening UMM.";
+				return;
+			}
+			var rearranger = target.GetOrAddComponent<WheelRearranger>();
+			int id = (int)rearranger.currentWA;
+			Main.Logger.Log($"UMM reapply requested: {target.ID}, {WheelArrangement.WheelArrangementNames[id]}; " + SettingsSelectionStatus);
+			bool applied = rearranger.TrySwitchStage2(id);
+			if (applied) ConventionalSpawn.RecordApplied(target, id);
+			ReapplyStatus = applied ? $"Reapplied {WheelArrangement.WheelArrangementNames[id]} to {target.ID}."
+				: "Reapply refused: " + (rearranger.LastConventionalError ?? "stop, repair and close the regulator; let driving force and wheel slip settle first");
+			Main.Logger.Log(ReapplyStatus);
+			ResetState();
+		}
+#endif
 
 		private int selectedWheelArrangement = (int)WheelArrangementType.s282;
 
@@ -223,6 +257,7 @@ namespace RearrangedS282
 
 		public void OnUpdate()
 		{
+			if (SettingsMenuOpen) return;
 			TrainCar trainCar;
 
 			switch (CurrentState)
@@ -282,6 +317,7 @@ namespace RearrangedS282
 		//Gets called when we click with the comms radio
 		public void OnUse()
 		{
+			if (SettingsMenuOpen) return;
 			switch (CurrentState)
 			{
 				case State.SelectS282:
@@ -315,6 +351,7 @@ namespace RearrangedS282
 
 		public bool ButtonACustomAction()
 		{
+			if (SettingsMenuOpen) return true;
 			if (CurrentState == State.SelectWheelArrangement)
 			{
 				selectedWheelArrangement = WheelArrangement.NextRuntimeId(selectedWheelArrangement, -1);
@@ -330,6 +367,7 @@ namespace RearrangedS282
 
 		public bool ButtonBCustomAction()
 		{
+			if (SettingsMenuOpen) return true;
 			if (CurrentState == State.SelectWheelArrangement)
 			{
 				selectedWheelArrangement = WheelArrangement.NextRuntimeId(selectedWheelArrangement, 1);

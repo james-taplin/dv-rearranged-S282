@@ -19,7 +19,8 @@ namespace RearrangedS282
     // big end gets a copy of that side's native cup, instantiated from the
     // external-interactables prefab, wired to its own extra native oiling point
     // (BigEndOiling) and following a marker on the engine's coupling rod.
-    // Stock 2-8-2, the 4-0-4 and the 2-2-2 prototype keep the native cups only.
+    // Stock 2-8-2 keeps the native cups only. Unsupported rod cups on the
+    // 4-0-4 and the 2-2-2 prototype are hidden by the presentation layer.
     internal partial class WheelRearranger
     {
         private const string BigEndCupPrefix = "[Rearranged big end ";
@@ -41,6 +42,7 @@ namespace RearrangedS282
         }
 
         private int bigEndGeneration;
+        internal bool BigEndCupsReady { get; private set; } = true;
 
         // Called after every switch and whenever the external interactables load.
         // The simulation side applies at once; the cups are built a few frames
@@ -51,15 +53,22 @@ namespace RearrangedS282
         {
             var car = loco;
             if (car == null || car.SimController == null || car.SimController.simFlow == null) return;
-            ClearBigEndCups();
+            ClearBigEndCups(external);
+            BigEndCupsReady = true;
             int generation = ++bigEndGeneration;
             var flow = car.SimController.simFlow;
             var points = BigEndOiling.Points(flow);
             if (points == null || points.oilingPoints.Length != BigEndOilingPlan.TotalPoints) return;
             var plan = PlanBigEnds(car, out int dropped);
             if (dropped > 0) Main.Logger.Warning($"Big-end oiling: {dropped} big ends have no spare oiling point on {currentWA}.");
-            BigEndOiling.SetActive(flow, BigEndOilingPlan.ActivePoints(plan.allocation));
-            if (external != null && plan.allocation.Any(a => a >= 0)) StartCoroutine(BuildBigEndCupsLater(car, external, generation));
+            var active = BigEndOilingPlan.ActivePoints(plan.allocation);
+            if (!NativeOilCupsVisible) for (int i = 0; i < BigEndOilingPlan.NativePoints; i++) active[i] = false;
+            BigEndOiling.SetActive(flow, active);
+            if (external != null && plan.allocation.Any(a => a >= 0))
+            {
+                BigEndCupsReady = false;
+                StartCoroutine(BuildBigEndCupsLater(car, external, generation));
+            }
         }
 
         private (List<BigEndSite> sites, int[] allocation) PlanBigEnds(TrainCar car, out int dropped)
@@ -110,6 +119,7 @@ namespace RearrangedS282
                     if (feeder != null && flow.TryGetPort(feeder.portId, out var port))
                     { feeder.Deinit(); feeder.Init(port, null); feeder.SetupControlChangedListeners(); Append(feeders, feeder); }
             }
+            BigEndCupsReady = true;
         }
 
         // Driven big ends of the current arrangement: every active driving wheel of
@@ -130,7 +140,8 @@ namespace RearrangedS282
                 var rod = drive.Find("s282_mech_wheels_connect");
                 var main = rod.Find("s282_mech_push_rod_to_connect");
                 var wheels = drive.Cast<Transform>().Where(w => w.name.StartsWith("s282_wheels_driving_", StringComparison.Ordinal) &&
-                    !w.name.Contains("LOD") && w.gameObject.activeInHierarchy).ToArray();
+                    !w.name.Contains("LOD") && w.gameObject.activeInHierarchy)
+                    .Select(ResolvePresentedWheel).Distinct().ToArray();
                 if (wheels.Length == 0) continue;
                 float Along(Transform t) => transform.InverseTransformPoint(t.position).z;
                 var mainWheel = wheels.OrderBy(w => Mathf.Abs(Along(w) - Along(main))).First();
@@ -172,7 +183,7 @@ namespace RearrangedS282
             };
             string tag = "RS_BIGEND_" + pointIndex;
 
-            // Marker on the coupling rod, above the crank pin (the rod only translates).
+            // Follow the native coupling-rod clock, including its tiny authored rock.
             var marker = new GameObject("[Rearranged big end marker " + pointIndex + "]").transform;
             marker.SetParent(site.Rod, false);
             marker.position = site.PinWorld + site.Drive.TransformVector(Vector3.up * BigEndCupLift);
@@ -207,10 +218,13 @@ namespace RearrangedS282
             ManualOilingPointsDefinition.OilingPointDefinition Definition(int i) => BigEndOiling.Definition(car).oilingPoints[i];
         }
 
-        private void ClearBigEndCups()
+        private void ClearBigEndCups(GameObject external = null)
         {
             bigEndGeneration++;
-            foreach (var cup in bigEndCups.Where(c => c != null))
+            var rootExternal = external != null ? external : loco != null ? loco.loadedExternalInteractables : null;
+            var leftovers = rootExternal != null ? rootExternal.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.name.StartsWith(BigEndCupPrefix, StringComparison.Ordinal)).Select(t => t.gameObject) : Enumerable.Empty<GameObject>();
+            foreach (var cup in bigEndCups.Concat(leftovers).Where(c => c != null).Distinct().ToArray())
             {
                 foreach (var reader in cup.GetComponentsInChildren<OilingPointPortFeederReader>(true)) reader.Deinit();
                 foreach (var feeder in cup.GetComponentsInChildren<InteractablePortFeeder>(true)) feeder.Deinit();
@@ -223,7 +237,9 @@ namespace RearrangedS282
                 cup.SetActive(false); Object.Destroy(cup);
             }
             bigEndCups.Clear();
-            foreach (var marker in bigEndMarkers.Where(m => m != null)) { marker.gameObject.SetActive(false); Object.Destroy(marker.gameObject); }
+            var staleMarkers = GetComponentsInChildren<Transform>(true)
+                .Where(t => t.name.StartsWith("[Rearranged big end marker ", StringComparison.Ordinal));
+            foreach (var marker in bigEndMarkers.Concat(staleMarkers).Where(m => m != null).Distinct().ToArray()) { marker.gameObject.SetActive(false); Object.Destroy(marker.gameObject); }
             bigEndMarkers.Clear();
         }
 

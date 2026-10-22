@@ -44,6 +44,15 @@ namespace RearrangedS282
 
         internal static void Deinit(TrainCar car) { if (car != null) car.GetComponent<EffectsState>()?.Stop(); }
 
+        internal static void TenderChanged(TrainCar car)
+        {
+            var state = ActiveState(car);
+            if (state == null) return;
+            state.ResetParticles();
+            state.RefreshNow();
+        }
+        internal static bool TenderParticlesReady(TrainCar car) => car != null && car.GetComponent<EffectsState>()?.TenderReady == true;
+
         internal static bool IsOwnedPresentation(Transform t)
         {
             for (; t != null; t = t.parent) if (t.GetComponent<ArticulatedEffectMarker>() != null) return true;
@@ -152,18 +161,35 @@ namespace RearrangedS282
             internal Transform Root;
             internal int Index;
             internal string Name;
+            internal bool Tender;
         }
 
         private sealed class ChuffBinding : AudioBinding
         {
             internal AudioClipSimReadersController Controller;
             private readonly List<ChuffClipsSimReader> readers = new();
+            private ChuffClipsSimReader tunedFront;
+            private float originalMedium, originalHigh;
+            private AnimationCurve originalVolume;
             internal void Add(EffectsState owner)
             {
                 if (Copies.Count != 0 || !Ready) return;
                 var template = Template<ChuffClipsSimReader>(Car, r => r.chuffEventPortId == owner.Simulation.MainEngine.chuffEventReadOut.id);
                 if (template == null) throw new InvalidOperationException("Native S282 chuff template missing.");
                 Owner = owner; owner.Audio.Add(this);
+                if (ChuffStageTuning.HasLowPressureFront((int)Car.GetComponent<WheelRearranger>().currentWA))
+                {
+                    tunedFront = Controller.entries.OfType<ChuffClipsSimReader>().FirstOrDefault(r =>
+                        !IsOwnedPresentation(r.transform) && r.chuffEventPortId == owner.Simulation.MainEngine.chuffEventReadOut.id);
+                    if (tunedFront == null) throw new InvalidOperationException("Native front chuff reader missing.");
+                    originalMedium = tunedFront.mediumPressureThreshold; originalHigh = tunedFront.highPressureThreshold;
+                    originalVolume = tunedFront.pressureToVolumeCurve;
+                    // A restrained presentation profile, not simulated compound
+                    // pressure. Front Mallet/Erie machinery is the LP position.
+                    tunedFront.mediumPressureThreshold = ChuffStageTuning.Pressure(template.mediumPressureThreshold);
+                    tunedFront.highPressureThreshold = ChuffStageTuning.Pressure(template.highPressureThreshold);
+                    tunedFront.pressureToVolumeCurve = ChuffStageTuning.Volume(template.pressureToVolumeCurve);
+                }
                 foreach (var secondary in owner.Secondaries)
                 {
                     var engine = secondary.Engine;
@@ -182,6 +208,12 @@ namespace RearrangedS282
             }
             internal override void Remove()
             {
+                if (tunedFront != null)
+                {
+                    tunedFront.mediumPressureThreshold = originalMedium; tunedFront.highPressureThreshold = originalHigh;
+                    tunedFront.pressureToVolumeCurve = originalVolume;
+                }
+                tunedFront = null; originalVolume = null;
                 if (Initialized) foreach (var reader in readers) Safe(reader.Deinit);
                 if (Controller != null) Controller.entries = Controller.entries.Where(r => !readers.Any(x => ReferenceEquals(x, r))).ToArray();
                 readers.Clear(); Forget();
@@ -261,9 +293,21 @@ namespace RearrangedS282
                 get
                 {
                     var list = new List<Secondary> { new Secondary { Engine = Simulation.RearEngine, Root = Rear, Index = 1, Name = "rear" } };
-                    // The Erie tender engine's effects belong on the tender (not bound yet).
+                    // Audio remains on its existing path; tender visual leaves
+                    // are added separately to ParticleSecondaries below.
                     if (Simulation.IsMiddleActive && Middle != null && !Simulation.IsTenderEngine)
                         list.Add(new Secondary { Engine = Simulation.MiddleEngine, Root = Middle, Index = 2, Name = "middle" });
+                    return list;
+                }
+            }
+            internal List<Secondary> ParticleSecondaries
+            {
+                get
+                {
+                    var list = Secondaries;
+                    var root = Car.GetComponent<WheelRearranger>().TenderEffectsRoot;
+                    if (Simulation.IsTenderEngine && Simulation.IsMiddleActive && root != null)
+                        list.Add(new Secondary { Engine = Simulation.MiddleEngine, Root = root, Index = 3, Name = "tender", Tender = true });
                     return list;
                 }
             }
@@ -276,11 +320,28 @@ namespace RearrangedS282
             // Extra-engine outlet in that engine's coordinates, from its authored car-local position.
             internal Vector3 SecondaryOutletLocal(Vector3 carLocal, Secondary secondary) =>
                 SecondaryOutletLocal(carLocal, secondary, carLocal);
-            internal Vector3 SecondaryOutletLocal(Vector3 carLocal, Secondary secondary, Vector3 centreCarLocal) =>
-                Car.GetComponent<WheelRearranger>().TryMapArticulatedOutlet(Car.transform.TransformPoint(carLocal),
-                    Car.transform.TransformPoint(centreCarLocal), secondary.Index, out var mapped)
+            internal Vector3 SecondaryOutletLocal(Vector3 carLocal, Secondary secondary, Vector3 centreCarLocal)
+            {
+                var rearranger = Car.GetComponent<WheelRearranger>();
+                var origin = Car.transform.TransformPoint(carLocal); var centre = Car.transform.TransformPoint(centreCarLocal);
+                if (secondary.Tender)
+                {
+                    if (!rearranger.TryMapTenderOutlet(origin, centre, out var tenderLocal))
+                        throw new InvalidOperationException("Erie tender outlet mapping unavailable.");
+                    return tenderLocal;
+                }
+                return rearranger.TryMapArticulatedOutlet(origin, centre, secondary.Index, out var mapped)
                     ? mapped : carLocal + Vector3.back * EngineSeparation;
+            }
             private ParticleBinding particles;
+            private Transform particleTender;
+            internal bool TenderReady => particles != null && particles.TenderReady;
+            internal void ResetParticles()
+            {
+                if (particles != null) Safe(particles.Remove);
+                particles = null;
+                particleTender = null;
+            }
             private float nextSearch;
             private bool warned;
 
@@ -289,6 +350,8 @@ namespace RearrangedS282
                 if (!Active || Car == null || Simulation == null || !Simulation.IsActive || Front == null || Rear == null) return;
                 try
                 {
+                    var tender = Car.GetComponent<WheelRearranger>().TenderEffectsRoot;
+                    if (particles != null && !ReferenceEquals(tender, particleTender)) ResetParticles();
                     foreach (var controller in AudioControllers<AudioClipSimReadersController>(Car))
                         if (Chuffs.TryGetValue(controller, out var binding) && AudioBindingMatches(binding, Car, Simulation.Flow)) binding.Add(this);
                     foreach (var controller in AudioControllers<LayeredAudioSimReadersController>(Car))
@@ -297,7 +360,7 @@ namespace RearrangedS282
                     {
                         var controller = Car.SimController.particlesController;
                         if (controller != null && ReferenceEquals(ParticleFlow?.GetValue(controller), Simulation.Flow))
-                        { particles = new ParticleBinding(this, controller); particles.Add(); }
+                        { particles = new ParticleBinding(this, controller); particles.Add(); particleTender = tender; }
                     }
                 }
                 catch (Exception ex)
@@ -335,6 +398,8 @@ namespace RearrangedS282
             private readonly List<GameObject> copies = new();
             private readonly List<ParticlesPortReadersController.ParticlePortReader> engineOutlets = new();
             private readonly List<CylinderCockParticlePortReader> readers = new();
+            private SteamSmokeParticlePortReader tenderExhaust;
+            internal bool TenderReady => tenderExhaust != null && readers.Any(r => r != null && r.crankRotationPortId == owner.Simulation.MiddleEngine.crankRotationReadOut.id);
             private readonly List<(Port events, Action<float> callback)> smoke = new();
             private bool initialized;
 
@@ -345,7 +410,7 @@ namespace RearrangedS282
             internal void Add()
             {
                 var main = owner.Simulation.MainEngine;
-                var secondaries = owner.Secondaries;
+                var secondaries = owner.ParticleSecondaries;
                 var original = controller.entries.OfType<CylinderCockParticlePortReader>()
                     .FirstOrDefault(r => !IsOwnedPresentation(r.transform) && r.crankRotationPortId == main.crankRotationReadOut.id);
                 var prefab = owner.Car.carLivery.prefab;
@@ -420,7 +485,11 @@ namespace RearrangedS282
                         foreach (var updater in outlet.particleUpdaters) updater.Init(outlet, flow);
                     }
                     var smokeReader = controller.entries.OfType<SteamSmokeParticlePortReader>().FirstOrDefault(r => r.chuffEventPortId == main.chuffEventReadOut.id);
-                    if (smokeReader != null && SmokeChuff != null)
+                    if (secondary.Tender)
+                    {
+                        AddTenderExhaust(templateController, smokeReader, secondary);
+                    }
+                    else if (smokeReader != null && SmokeChuff != null)
                     {
                         var pulse = AccessTools.MethodDelegate<Action<float>>(SmokeChuff, smokeReader);
                         // All exhaust groups share one native chimney. Retain its
@@ -431,6 +500,48 @@ namespace RearrangedS282
                         smoke.Add((engine.chuffEventReadOut, callback));
                     }
                 }
+            }
+
+            private void AddTenderExhaust(ParticlesPortReadersController authored, SteamSmokeParticlePortReader native, Secondary secondary)
+            {
+                var outlet = owner.Car.GetComponent<WheelRearranger>().TenderExhaustOutlet;
+                var steam = authored.transform.Find("SteamSafetyRelease/SteamExhaust");
+                if (outlet == null || steam == null || native == null)
+                    throw new InvalidOperationException("Erie exhaust outlet or native white-steam template missing.");
+                var root = new GameObject("[Rearranged articulated effects] tender exhaust");
+                root.AddComponent<ArticulatedEffectMarker>(); root.transform.SetParent(outlet, false); copies.Add(root);
+                var plume = Copy(steam.gameObject, root.transform, "tender white exhaust steam");
+                plume.transform.localPosition = Vector3.zero;
+                // The authored safety-valve steam is aimed along local +Z.
+                plume.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                plume.transform.localScale = Vector3.one;
+                foreach (var ps in plume.GetComponentsInChildren<ParticleSystem>(true))
+                {
+                    ps.gameObject.SetActive(true);
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    var main = ps.main; main.playOnAwake = false;
+                    main.simulationSpace = ParticleSystemSimulationSpace.World;
+                }
+                plume.SetActive(true);
+                var empty = new GameObject("no embers"); empty.transform.SetParent(root.transform, false);
+                var reader = root.AddComponent<SteamSmokeParticlePortReader>();
+                // A normal tender has no fire. Reuse the native broken-boiler
+                // state (normally zero) to disable the reader's idle-fire plume;
+                // its own native broken-boiler gate also suppresses damaged flow.
+                reader.fireOnPortId = reader.isBoilerBrokenPortId = native.isBoilerBrokenPortId;
+                reader.chuffEventPortId = secondary.Engine.chuffEventReadOut.id;
+                reader.exhaustPressurePortId = secondary.Engine.exhaustPressureReadOut.id;
+                reader.smokeParticlesParent = plume; reader.emberParticlesParent = empty;
+                reader.smokeStartSpeedMultiplier = native.smokeStartSpeedMultiplier;
+                reader.smokeEmissionRateMultiplier = native.smokeEmissionRateMultiplier;
+                reader.smokeMaxParticlesMultiplier = native.smokeMaxParticlesMultiplier;
+                reader.emberStartSpeedMultiplier = native.emberStartSpeedMultiplier;
+                reader.emberEmissionRateMultiplier = native.emberEmissionRateMultiplier;
+                reader.emberMaxParticlesMultiplier = native.emberMaxParticlesMultiplier;
+                RequirePorts(flow, reader.fireOnPortId, reader.chuffEventPortId, reader.exhaustPressurePortId);
+                tenderExhaust = reader;
+                controller.entries = controller.entries.Append(reader).ToArray();
+                reader.Init(flow);
             }
 
             private static string LocalPath(Transform leaf, Transform root)
@@ -460,6 +571,8 @@ namespace RearrangedS282
                 Vector3 position = owner.Car.transform.InverseTransformPoint(leaf.transform.position);
                 Vector3 centre = owner.Car.transform.InverseTransformPoint(leaf.transform.TransformPoint(PacificHudsonAffine.EmitterCentreLocal(leaf.transform)));
                 Quaternion rotation = leaf.transform.rotation;
+                if (secondary.Tender)
+                    rotation = secondary.Root.rotation * Quaternion.Inverse(owner.Car.transform.rotation) * rotation;
                 leaf.transform.SetParent(secondary.Root, false);
                 leaf.transform.localPosition = owner.SecondaryOutletLocal(position, secondary, centre);
                 leaf.transform.rotation = rotation;
@@ -475,6 +588,12 @@ namespace RearrangedS282
 
             internal void Remove()
             {
+                if (tenderExhaust != null)
+                {
+                    Safe(tenderExhaust.Deinit);
+                    if (controller != null) controller.entries = controller.entries.Where(r => !ReferenceEquals(r, tenderExhaust)).ToArray();
+                    tenderExhaust = null;
+                }
                 foreach (var (events, callback) in smoke) events.ValueUpdatedInternally -= callback;
                 smoke.Clear();
                 if (initialized) foreach (var reader in readers) Safe(reader.Deinit);

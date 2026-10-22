@@ -11,6 +11,7 @@ namespace RearrangedS282
         private readonly List<PacificHudsonPart> pacificHudsonParts = new List<PacificHudsonPart>();
         private readonly List<PacificHudsonPipe> pacificHudsonPipes = new List<PacificHudsonPipe>();
         private readonly List<Transform> pacificHudsonReachSupports = new List<Transform>();
+        private readonly List<PacificHudsonPart> prairieDriverFittings = new List<PacificHudsonPart>();
         private string pacificHudsonPreparationError;
         private Vector3 pacificHudsonCrossheadLScale, pacificHudsonCrossheadRScale;
 
@@ -33,6 +34,7 @@ namespace RearrangedS282
             pacificHudsonParts.Clear();
             pacificHudsonPipes.Clear();
             pacificHudsonReachSupports.Clear();
+            prairieDriverFittings.Clear();
             pacificHudsonPreparationError = null;
             pacificHudsonCrossheadLScale = lCrosshead.localScale;
             pacificHudsonCrossheadRScale = rCrosshead.localScale;
@@ -57,6 +59,14 @@ namespace RearrangedS282
                         pacificHudsonPreparationError = "Missing Pacific/Hudson native dry pipe: " + lod + "/" + name;
                     else pacificHudsonPipes.Add(new PacificHudsonPipe(filter, driveR));
                 }
+                if (split != null)
+                    foreach (string side in new[] { "l", "r" })
+                        for (int axle = 1; axle <= 4; axle++)
+                            foreach (string kind in new[] { "caliper", "suspension" })
+                            {
+                                var part = split.Find("s282a_" + kind + "_" + side + "_" + axle);
+                                if (part != null) prairieDriverFittings.Add(new PacificHudsonPart(part, driveR, part.name, false));
+                            }
             }
             // LMS only translates these holders. Move their outlets with the
             // cylinders but never stretch emitter shapes, readers or ports.
@@ -83,16 +93,25 @@ namespace RearrangedS282
             pacificHudsonParts.Add(new PacificHudsonPart(part, driveR, path, positionOnly));
         }
 
-        private void ApplyPacificHudsonValveGear()
+        private void ApplyPacificHudsonValveGear(bool showGear = true)
         {
             if (pacificHudsonPreparationError != null) throw new InvalidOperationException(pacificHudsonPreparationError);
             if (pacificHudsonParts.Count == 0 || pacificHudsonPipes.Count != 4)
                 throw new InvalidOperationException("Pacific/Hudson native geometry was not prepared.");
-            // Show6Drivers already applies one uniform Y/Z mapping to every
-            // animated linkage. Apply that identical mapping to the static mating
-            // parts, rather than overriding the Animator's joint curves each frame.
-            foreach (var part in pacificHudsonParts) part.Apply(driveR);
-            foreach (var pipe in pacificHudsonPipes) pipe.Apply(driveR);
+            // Resized conventional drives apply one uniform Y/Z mapping to every
+            // animated linkage. Apply that identical mapping to static mating
+            // parts, including when optional valve gear is hidden. Read the
+            // retarget's cylinder-side frame after any driver-spacing adjustment.
+            var cylinderFrame = CylinderDriveFrame(driveR);
+            foreach (var part in pacificHudsonParts)
+                part.Apply(part.DriverSide ? driveR.localToWorldMatrix : cylinderFrame);
+            foreach (var pipe in pacificHudsonPipes) pipe.Apply(cylinderFrame);
+            // The clips bind crosshead scale as an authored constant. Restore it
+            // before the first sample too; legacy inverse scaling distorts the
+            // crosshead against its guide even when optional valve gear is hidden.
+            lCrosshead.localScale = pacificHudsonCrossheadLScale;
+            rCrosshead.localScale = pacificHudsonCrossheadRScale;
+            if (!showGear) return;
             ShowValveGear();
             lLiftingArmSupport.gameObject.SetActive(true);
             rLiftingArmSupport.gameObject.SetActive(true);
@@ -103,10 +122,6 @@ namespace RearrangedS282
                 if (support != null) support.gameObject.SetActive(false);
             driveR.Find("s282_mech_cutoff_rail/s282_mech_lubricator_rod").gameObject.SetActive(false);
             driveR.Find("LubricatorParts").gameObject.SetActive(false);
-            // The native clips bind crosshead scale as a constant. Match that
-            // authored value immediately; subsequent native samples preserve it.
-            lCrosshead.localScale = pacificHudsonCrossheadLScale;
-            rCrosshead.localScale = pacificHudsonCrossheadRScale;
         }
 
         private void DisposePacificHudsonValveGear()
@@ -115,6 +130,7 @@ namespace RearrangedS282
             pacificHudsonPipes.Clear();
             pacificHudsonParts.Clear();
             pacificHudsonReachSupports.Clear();
+            prairieDriverFittings.Clear();
         }
 
         private sealed class PacificHudsonPart
@@ -127,6 +143,7 @@ namespace RearrangedS282
             private readonly string path;
             private readonly bool positionOnly;
             private bool shearLogged;
+            internal bool DriverSide => path.Contains("lifting_arm_support");
             internal PacificHudsonPart(Transform part, Transform nativeDrive, string path, bool positionOnly)
             {
                 this.part = part; this.path = path; this.positionOnly = positionOnly;
@@ -136,9 +153,11 @@ namespace RearrangedS282
                 emitterCentre = positionOnly ? PacificHudsonAffine.EmitterCentreLocal(part) : Vector3.zero;
             }
             internal void Apply(Transform drive)
+                => Apply(drive.localToWorldMatrix);
+            internal void Apply(Matrix4x4 driveFrame)
             {
                 if (part == null) throw new InvalidOperationException("Pacific/Hudson native part was destroyed.");
-                var local = part.parent.worldToLocalMatrix * drive.localToWorldMatrix * frameInNativeDrive;
+                var local = part.parent.worldToLocalMatrix * driveFrame * frameInNativeDrive;
                 if (!positionOnly &&
                     PacificHudsonAffine.TryDecompose(local, nativeScale, out var position, out var rotation, out var scale))
                 {
@@ -171,15 +190,14 @@ namespace RearrangedS282
                 this.filter = filter; source = filter.sharedMesh;
                 frameInNativeDrive = nativeDrive.worldToLocalMatrix * filter.transform.localToWorldMatrix;
             }
-            internal void Apply(Transform drive)
+            internal void Apply(Matrix4x4 driveFrame)
             {
                 if (filter == null || source == null) throw new InvalidOperationException("Pacific/Hudson native dry pipe was destroyed.");
-                if (corrected == null)
                 {
                     if (!source.isReadable) throw new InvalidOperationException("Pacific/Hudson native dry pipe mesh is not readable.");
-                    var localMapping = filter.transform.worldToLocalMatrix * drive.localToWorldMatrix * frameInNativeDrive;
+                    var localMapping = filter.transform.worldToLocalMatrix * driveFrame * frameInNativeDrive;
                     var vertices = PacificHudsonAffine.BendPipe(source.vertices, frameInNativeDrive, localMapping);
-                    var copy = Object.Instantiate(source);
+                    var copy = corrected != null ? corrected : Object.Instantiate(source);
                     try
                     {
                         copy.name = "[Rearranged Pacific/Hudson] " + source.name;
@@ -187,7 +205,7 @@ namespace RearrangedS282
                         if (copy.uv.Length == copy.vertexCount) copy.RecalculateTangents();
                         corrected = copy;
                     }
-                    catch { Object.Destroy(copy); throw; }
+                    catch { if (corrected == null) Object.Destroy(copy); throw; }
                 }
                 filter.sharedMesh = corrected;
             }

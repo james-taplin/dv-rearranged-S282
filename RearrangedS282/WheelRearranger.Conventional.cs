@@ -18,6 +18,8 @@ namespace RearrangedS282
         private bool conventionalFault;
         private ArticulatedSimulation articulatedSimulation;
         private B99ExplosionMaterials explosionMaterials;
+        private CylinderCalibration cylinderCalibration;
+        private float preliminaryDriverShare = float.NaN;
         internal int ExplosionMaterialRendererCount => explosionMaterials?.Count ?? 0;
         internal bool ConventionalSetupBlocked => conventionalFault;
         internal string LastConventionalError { get; private set; }
@@ -60,6 +62,11 @@ namespace RearrangedS282
                         SetupBody(); SetupLubrication(); SetupAir();
                         if (loco.AreExternalInteractablesLoaded) LoadExternalInteractables(loco.loadedExternalInteractables);
                         SetupFrontBogie(); SetupRearBogie(); SetupDrivers();
+                        CacheDriverLayouts();
+                        CacheConnectingRodSpacing();
+                        CacheOilCupMounts();
+                        CacheCylinderCasings();
+                        CacheSteamConnections();
                         SetupPacificHudsonValveGear();
                         SetupArticulatedGeometry();
                         preparedGeometry = new GeometryState(loco);
@@ -70,14 +77,23 @@ namespace RearrangedS282
                             .Where(t => !originalTransforms.Contains(t) && originalTransforms.Contains(t.parent)).ToArray();
                     }
                 }
+                if (cylinderCalibration == null)
+                    cylinderCalibration = new CylinderCalibration(sim.simFlow.OrderedSimComps.OfType<LocoSim.Implementations.ReciprocatingSteamEngine>().ToArray(),
+                        stage2Physics.DriverRadius, stage2Physics.OriginalSlipCoefficient,
+                        stage2Physics.OriginalPowered.Length, stage2Physics.OriginalTotalAxles);
                 if (id == 10) RestoreConventionalStock();
                 else
                 {
+                    cylinderCalibration.Restore();
+                    SuspendSteamConnections();
+                    SuspendConnectingRodSpacing();
+                    RestoreCylinderCasings();
                     ArticulatedEffects.Deinit(loco);
                     articulatedSimulation?.Restore();
                     SuspendArticulatedGeometry();
                     SuspendAdditionalGeometry();
-            Suspend4144Geometry();
+                    Suspend4144Geometry();
+                    SuspendDriverLayout();
                     preparedGeometry.Restore();
                     currentWA = WheelArrangementType.s282;
                     if (WheelArrangement.IsArticulatedId(id))
@@ -95,12 +111,32 @@ namespace RearrangedS282
                         else
                         {
                             ApplyLegacyGeometry(id);
-                            if ((id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s262) &&
-                                Main.settings.polishedPacificHudsonValveGear)
-                                ApplyPacificHudsonValveGear();
+                            ApplyLargeDriverClearance(id, sim.drivingForce.wheelRadius);
+                            if (id == (int)WheelArrangementType.s262) ApplyPrairieForwardSpacing(false);
+                            ApplyDriverLayout(id);
+                            ApplyConnectingRodSpacing(id, id == (int)WheelArrangementType.s262
+                                ? PrairieCylinderForward - PrairieDriverForward + prairieClearanceCylinderShiftM : 0f);
+                            if (id == (int)WheelArrangementType.s262)
+                            {
+                                // One retarget owns the existing Prairie span plus
+                                // temporary spacing after final scaling. Polish reads that frame.
+                                ApplyPacificHudsonValveGear(Main.settings.polishedPacificHudsonValveGear);
+                            }
+                            else if (UsesReservoirClearance(id))
+                                ApplyPacificHudsonValveGear(Main.settings.show282BigValveGear);
+                            else if (id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464)
+                                ApplyPacificHudsonValveGear(Main.settings.polishedPacificHudsonValveGear);
+                            else if (id == (int)WheelArrangementType.s440 || id == (int)WheelArrangementType.s442 ||
+                                id == (int)WheelArrangementType.s444 || id == (int)WheelArrangementType.s240)
+                                ApplyPacificHudsonValveGear(Main.settings.show4CoupledValveGear);
+                            else if (id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s260)
+                                ApplyPacificHudsonValveGear(Main.settings.show6CoupledValveGear);
+                            else if (id >= (int)WheelArrangementType.s0120 && id <= (int)WheelArrangementType.s4122)
+                                ApplyPacificHudsonValveGear(Main.settings.show12CoupledValveGear);
                             AlignAdditionalPoweredAxles(id);
                         }
                     }
+                    ApplyCylinderCasings(id);
                     foreach (var bogie in loco.Bogies)
                         bogie.axles = Enumerable.Range(0, bogie.transform.Find("bogie_car").childCount)
                             .Select(i => bogie.transform.Find("bogie_car").GetChild(i))
@@ -114,19 +150,34 @@ namespace RearrangedS282
                     int expectedPowered = WheelArrangement.IsArticulatedId(id) ? wheels.Skip(1).Take(wheels.Length - 2).Sum() / 2 : wheels[1] / 2;
                     if (powered.Length != expectedPowered || total != wheels.Sum() / 2)
                         throw new InvalidOperationException("Active physical axles do not match the selected arrangement.");
-                    // Equal axle loads, with driven-axle loads capped for small coupled groups.
+                    // Effective adhesive load using existing native friction conversion; actual mass and CoM stay native.
                     var groups = WheelArrangement.IsArticulatedId(id)
                         ? wheels.Skip(1).Take(wheels.Length - 2).Select(w => w / 2).ToArray() : new[] { wheels[1] / 2 };
-                    float mass = loco.massController.CarMass;
-                    float fraction = ConventionalPhysics.DriverWeightFraction(groups, total, mass);
+                    float mass = loco.massController.TotalMass;
+                    float fraction = id == (int)WheelArrangementType.s222
+                        ? ConventionalPhysics.DriverWeightFraction(groups, total, mass)
+                        : ConventionalPhysics.TargetDriverWeightFraction(wheels, ConventionalPhysics.ReferenceOperatingMassKg, WheelArrangement.IsArticulatedId(id));
+                    preliminaryDriverShare = fraction;
                     stage2Physics.Apply(sim.drivingForce.wheelRadius, powered, total, fraction);
                     Main.Logger.Log($"Driver weight: {fraction * mass / 1000f:F1} t on {powered.Length} driven axles " +
                         $"(equal share {(float)powered.Length / total * mass / 1000f:F1} t of {mass / 1000f:F0} t).");
                     currentWA = (WheelArrangementType)id;
                     if (WheelArrangement.IsArticulatedId(id)) articulatedSimulation.Apply(id);
+                    if (powered.Length != 0 && id != (int)WheelArrangementType.s222)
+                    {
+                        var active = sim.simFlow.OrderedSimComps.OfType<LocoSim.Implementations.ReciprocatingSteamEngine>()
+                            .Where(e => !(e is ArticulatedRearEngine aux) || (aux.Active && !aux.TenderMode)).ToArray();
+                        cylinderCalibration.Apply(active, sim.drivingForce.wheelRadius, mass, fraction, powered.Length);
+                        if (id == (int)WheelArrangementType.s28882)
+                            cylinderCalibration.ApplyTender(articulatedSimulation.MiddleEngine, sim.drivingForce.wheelRadius);
+                        Main.Logger.Log($"Design cylinder calibration: area x{cylinderCalibration.AreaScale:F4}; " +
+                            $"reference pull {cylinderCalibration.BeforeForceN / 1000:F1} -> {cylinderCalibration.AfterForceN / 1000:F1} kN; design ratio ceiling {cylinderCalibration.TargetRatio:F3} at 124 t rated mass.");
+                    }
+                    ApplySteamConnections(id);
                     RefreshConventionalRollingAudio();
                 }
                 UpdateExternalControlPositions();
+                ApplyOilCupMounts();
                 B99Oilcups.Bind(loco, loco.loadedExternalInteractables);
                 RefreshBigEndOiling(loco.loadedExternalInteractables);
                 ArticulatedEffects.Refresh(loco, WheelArrangement.IsArticulatedId(id));
@@ -154,11 +205,17 @@ namespace RearrangedS282
 
         private void RestoreConventionalStock()
         {
+            cylinderCalibration?.Restore();
+            preliminaryDriverShare = float.NaN;
+            SuspendSteamConnections();
+            SuspendConnectingRodSpacing();
+            RestoreCylinderCasings();
             ArticulatedEffects.Deinit(loco);
             articulatedSimulation?.Restore();
             SuspendArticulatedGeometry();
             SuspendAdditionalGeometry();
             Suspend4144Geometry();
+            SuspendDriverLayout();
             stockGeometry.Restore();
             // Restore original parent ownership before deactivating generated frames.
             foreach (var t in generatedRoots) if (t != null) t.gameObject.SetActive(false);
@@ -176,6 +233,7 @@ namespace RearrangedS282
             try
             {
                 loco = GetComponent<TrainCar>();
+                ClearBigEndCups();
                 DeltaTrailingTruckCompatibility.Clear(loco);
                 if (stockGeometry != null) RestoreConventionalStock();
                 currentWA = WheelArrangementType.s282;
@@ -190,6 +248,12 @@ namespace RearrangedS282
 
         private void OnDestroy()
         {
+            cylinderCalibration?.Restore();
+            ClearBigEndCups();
+            SuspendSteamConnections();
+            DisposeConnectingRodSpacing();
+            DisposeDriverLayouts();
+            DisposeCylinderCasings();
             // The tender engine lives on another car: give the tender its bogies back.
             DetachTenderEngine();
             ArticulatedEffects.Deinit(loco);

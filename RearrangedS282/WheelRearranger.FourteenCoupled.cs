@@ -23,7 +23,9 @@ namespace RearrangedS282
         // cylinders' native-scaled position; the crosshead side stays with the
         // cylinders and the main and radius rods are lengthened (DriveRetarget).
         // The trailing truck goes back to the 2-10-4/4-10-4 rear-axle position.
-        private const float FourteenDriverShift = .25f;
+        // 1.13.1: a further 0.25 m behind 1.13.0, leaving about 0.20 m
+        // tyre-to-tyre clearance to the unchanged leading trailing-truck axle.
+        private const float FourteenDriverShift = .50f;
         private static readonly Vector3 FourteenTrailingLimit = new Vector3(0f, .36f, -3.7f);
         private static readonly string[] FourteenParticleHolders = { "LocoS282A_Particles/CylCockSteam",
             "LocoS282A_Particles/CylCockWaterDrip", "LocoS282A_Particles/CylinderCrack" };
@@ -154,9 +156,26 @@ namespace RearrangedS282
             }
             // Crosshead side back to the cylinders; main and radius rods lengthened.
             foreach (var drive in new[] { driveL, driveR })
+            {
                 DriveRetarget.Bind(drive, FourteenDriverShift / s, DriveRetarget.NativeWalschaertsRole, transform);
+                // Retargeting shifts rendered crossheads, not their animated
+                // source transforms. The native oil cup uses a separate,
+                // non-animated child provider: keep it on the visible crosshead.
+                // Its captured native pose is restored on every switch/pool.
+                Move4144CrossheadCup(drive, body.TransformVector(Vector3.forward * FourteenDriverShift));
+            }
+            float leadingGap = layout.Lead2 - MalletTrailingRadius - (layout.Drivers[0] + layout.Radius);
+            float trailingGap = layout.Drivers[6] - layout.Radius - (layout.Trail1 + MalletTrailingRadius);
             Main.Logger.Log($"4-14-4: scale {s:0.000}, {2f * layout.Radius:0.00} m drivers {layout.Drivers[0]:0.00}..{layout.Drivers[6]:0.00}, " +
                 $"leading {layout.Lead1:0.00}/{layout.Lead2:0.00}, trailing {layout.Trail1:0.00}/{layout.Trail2:0.00} (body z).");
+            Main.Logger.Log($"4-14-4 spacing: driver shift {FourteenDriverShift:0.00} m; front/rear tyre gaps {leadingGap:0.00}/{trailingGap:0.00} m; " +
+                "cylinders, carrying trucks, driver pitch, diameter and native animation retained.");
+        }
+
+        private static void Move4144CrossheadCup(Transform drive, Vector3 worldShift)
+        {
+            var cup = drive.Find("s282_mech_push_rod/Oiling1");
+            if (cup != null) cup.localPosition += cup.parent.InverseTransformVector(worldShift);
         }
 
         // Moves a truck axle to a body-frame Z and its support frame by the same amount.

@@ -12,6 +12,18 @@ namespace RearrangedS282
     // their arrangement-specific translation and scale. No new oil simulations.
     internal static class B99Oilcups
     {
+        // This Unity version has no includeInactive overload for parent lookup.
+        // Walk the native cup's ancestors directly so hidden cups can be restored.
+        internal static PositionSyncConsumer ConsumerFor(Component item)
+        {
+            for (var node = item.transform; node != null; node = node.parent)
+            {
+                var consumer = node.GetComponent<PositionSyncConsumer>();
+                if (consumer != null) return consumer;
+            }
+            return null;
+        }
+
         internal static void Bind(TrainCar car, GameObject external)
         {
             if (external == null) return;
@@ -27,7 +39,7 @@ namespace RearrangedS282
                 if (!car.SimController.simFlow.TryGetPort(cup.refillPortId, out var refill) ||
                     !car.SimController.simFlow.TryGetPort(cup.refillingFlowNormalizedPortId, out var flow))
                     throw new InvalidOperationException("S282 oilcup simulation port missing: " + cup.refillPortId);
-                var consumer = cup.GetComponentInParent<PositionSyncConsumer>();
+                var consumer = ConsumerFor(cup);
                 if (consumer == null || !consumers.Contains(consumer))
                     throw new InvalidOperationException("S282 oilcup position consumer was not found.");
                 var matching = providers.Where(p => p != null && p.syncTag == consumer.syncTag).ToArray();
@@ -35,6 +47,7 @@ namespace RearrangedS282
                     throw new InvalidOperationException("S282 oilcup needs one native position provider: " + consumer.syncTag);
                 consumer.SetProviderTransform(matching[0]);
                 consumer.Sync();
+                car.GetComponent<WheelRearranger>()?.BindOilCupPresentation(matching[0], consumer);
             }
         }
     }

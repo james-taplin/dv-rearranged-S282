@@ -1,0 +1,17 @@
+REARRANGED S282 B99 1.13.6 BETA
+
+changes since 1.9.2
+added the 2-6-2 prairie
+added the 2-6-6-0 and 2-10-10-2 articulated mallets
+added the experimental erie triplex with a powered tender engine
+added working oil cups to the driven crank pins
+fixed floating oil cups and tracking on moving rods
+fixed leftover oil cups after switching unloading and deleting locos
+fixed stale parts being restored when switching between duplex and triplex arrangements
+normalised cylinder casings on the prairie pacific hudson and four coupled arrangements
+extended cylinder normalisation to the high speed arrangements
+adjusted cylinder pipes cocks and particle outlets to match
+improved the 4-14-4 driver spacing and rod reach
+reduced high speed and prairie drivers to clear the air reservoirs
+moved the prairie cylinders running gear and drivers into better proportion
+expanded structural diagnostics with oil cup counts mounting and tracking checks

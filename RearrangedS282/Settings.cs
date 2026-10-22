@@ -47,6 +47,7 @@ namespace RearrangedS282
 		[Draw("x-10-2 trailing truck style:", DrawType.ToggleGroup)] public X102Options x102Options = X102Options.small_wheels;
 
 		[Header("Valve gear")]
+		[Draw("Near-vanilla cylinder casings (trial, reapply):")] public bool nearVanillaCylinderCasings = true;
 		[Draw("Show x-4-x valve gear:", Height = HEIGHT)] public bool show4CoupledValveGear = false;
 		[Draw("Show x-6-x valve gear:", Height = HEIGHT)] public bool show6CoupledValveGear = false;
 		[Draw("Polished Walschaerts on 4-6-2 / 4-6-4 (reapply):", Height = HEIGHT)] public bool polishedPacificHudsonValveGear = true;
@@ -54,6 +55,25 @@ namespace RearrangedS282
 		[Draw("Show high-speed 2-8-2 valve gear:", Height = HEIGHT)] public bool show282BigValveGear = false;
 		[Draw("Show x-10-x valve gear:", Height = HEIGHT)] public bool show10CoupledValveGear = true;
 		[Draw("Show x-12-x valve gear:", Height = HEIGHT)] public bool show12CoupledValveGear = true;
+
+		[Header("Coupled driver spacing trial (reapply arrangement)")]
+		[Draw("2-6-0 extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
+		public float mogulExtraCoupledPitchMetres = .18f;
+		[Draw("2-4-0 extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
+		public float twoFortyExtraCoupledPitchMetres = .20f;
+		[Draw("2-6-2 Prairie extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .22, Precision = 2)]
+		public float prairieExtraCoupledPitchMetres = .22f;
+		[Draw("4-4-0 American extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
+		public float americanExtraCoupledPitchMetres = 0f;
+		[Header("Main connecting rod spacing trial (reapply arrangement)")]
+		[Draw("2-6-0 drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
+		public float mogulDriverRearwardMetres = .12f;
+		[Draw("2-4-0 drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
+		public float twoFortyDriverRearwardMetres = .14f;
+		[Draw("2-6-2 Prairie drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
+		public float prairieDriverRearwardMetres = .12f;
+		[Draw("4-4-0 American drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
+		public float americanDriverRearwardMetres = 0f;
 
 		[Header("Curving (wheelbase): long rigid driver groups drag and squeal more on tight curves")]
 		[Draw("Extra curve drag for long rigid wheelbases:", Height = HEIGHT)] public bool curveDrag = true;

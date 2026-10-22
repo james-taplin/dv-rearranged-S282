@@ -1,0 +1,29 @@
+OPTIONAL BETA TEST CHECKLIST
+
+Confirm Running Rearranged S282 1.22.2.0 in UMM after a full game restart.
+Check normal arrangement selection and save/reload on a familiar locomotive.
+Compare stock with a small rigid and a larger rigid or Mallet under similar load.
+Observe controlled starts, brief slip/recovery and ordinary steam consumption.
+Check near/far gear and pipe appearance, oilcup refill and repeated switching.
+For Erie, check tender coupling/detachment and treat it as experimental.
+
+Diagnostic tools are optional for normal use. Structural test requires two
+stationary S282s and cycles one through all arrangements; run in a suitable
+sandbox. Power diagnostics creates timestamped files; stop/save after driving.
+Report exact arrangement, version, conditions and screenshots/logs for defects.
+
+
+ERIE VISUALS
+Check the rear side-wall exhaust pipe bands and elbow from roof side and rear.
+Open the water hatch and inspect clearances. Under power watch white steam
+pulses at the pipe mouth; coast and check emission stops as pressure falls.
+Open cylinder cocks and check tender jets on both sides. Drips require water
+in the cylinders. Uncouple reconnect switch arrangement and save/reload.
+
+
+
+SOUND CHECK
+Compare a Mallet or Erie front and rear under light and heavier power then
+switch back to stock and a simple duplex. Listen for normal chuffs at low speed
+and retained native loops at higher speed. No new sound controls are required.
+

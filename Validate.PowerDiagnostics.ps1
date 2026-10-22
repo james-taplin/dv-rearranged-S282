@@ -16,6 +16,9 @@ $project = @"
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$root\RearrangedS282\PowerDiagnostics.cs" />
+    <Compile Include="$root\RearrangedS282\TractiveDiagnostics.cs" />
+    <Compile Include="$root\RearrangedS282\TractiveEffortModel.cs" />
+    <Compile Include="$root\evidence\power-diagnostics-tests\TractiveCases.cs" />
     <Compile Include="$root\RearrangedS282\WheelArrangement.cs" />
     <Compile Include="$root\evidence\power-diagnostics-tests\Stubs.cs" />
     <Compile Include="$root\evidence\power-diagnostics-tests\Program.cs" />

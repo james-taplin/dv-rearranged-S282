@@ -35,3 +35,7 @@ LICENSE is the original, unchanged MIT notice with its author and third-party
 credits. THIRD_PARTY_NOTICES.txt maps bundled libraries to the full notices under
 licenses/. Those components retain their respective terms; they are not all
 relicensed by the mod's MIT notice. See README_BETA.txt for beta limitations.
+discorddraconequus - Verde S2104F-890 stage-specific chuff configuration informed the
+Mallet/Erie sound-profile approach. Independently implemented using native B99
+readers; no Verde meshes audio assets or code are bundled.
+

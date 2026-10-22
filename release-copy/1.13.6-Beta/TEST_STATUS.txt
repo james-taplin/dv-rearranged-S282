@@ -1,0 +1,27 @@
+REARRANGED S282 B99 1.13.6 BETA - VALIDATION STATUS
+21 October 2026
+
+The runtime DLL is byte-identical to the installed 1.13.6 test build.
+DLL SHA256: 87752D9DE63E4567F601ED6D4DAB713F91E49F089C95BFDA9DE5DB4EA0C575EF
+
+CONFIRMED IN GAME ON THE PREVIOUS BUILD
+The stored 1.13.5.0 structural report passes all 47 arrangements, with subject
+L-006 and separate control L-047. Report last written 21 October 2026 at
+11:13 UTC. This is stationary structural validation, not a complete driving,
+visual, audio, refilling or multiplayer pass.
+
+1.13.6 OFFLINE VALIDATION
+- Release/net48 against installed B99: zero warnings and errors.
+- Actual-source motion/casing/oil fixture: 81,873 assertions across 672 native
+  animation pose scenarios and 2,016 cup samples.
+- Compiled native integration: 269 checks; 100 existing physics/DriveRetarget
+  method bodies unchanged against 1.13.5.
+- Both wheel/reservoir LODs checked against sampled native mesh envelopes:
+  approximately 29 mm Prairie clearance and 22 mm high-speed clearance.
+- Packaged DLL, runtime helpers, authored assets and retained licences audited.
+
+LIMITS
+The final 0.70 m Prairie rearward placement has not yet received a recorded
+in-game acceptance pass. Offline fixtures use managed Unity stand-ins or native
+mesh data and do not establish live rendering, controller dispatch or driving.
+Use the included manual checklist. This is a beta release.

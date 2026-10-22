@@ -66,13 +66,14 @@ namespace RearrangedS282
         internal static ManualOilingPoints Points(SimulationFlow flow) =>
             flow?.OrderedSimComps?.OfType<ManualOilingPoints>().FirstOrDefault();
 
-        // Which points the current arrangement uses (native six always).
+        // Which points the current arrangement uses; unsupported visual cups are inactive.
         internal static void SetActive(SimulationFlow flow, bool[] active)
         {
             var points = Points(flow);
             if (points == null) return;
             States.Remove(points);
             States.Add(points, new State { Active = active });
+            HoldUnusedFull(points);
         }
 
         private static void HoldUnusedFull(ManualOilingPoints __instance)
@@ -80,7 +81,7 @@ namespace RearrangedS282
             var points = __instance.oilingPoints;
             if (points == null || points.Length <= BigEndOilingPlan.NativePoints) return;
             States.TryGetValue(__instance, out var state);
-            for (int i = BigEndOilingPlan.NativePoints; i < points.Length; i++)
+            for (int i = state?.Active != null ? 0 : BigEndOilingPlan.NativePoints; i < points.Length; i++)
             {
                 if (state?.Active != null && i < state.Active.Length && state.Active[i]) continue;
                 var point = points[i];

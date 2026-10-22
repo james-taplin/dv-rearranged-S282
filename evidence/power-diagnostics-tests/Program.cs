@@ -13,7 +13,7 @@ using UnityModManagerNet;
 using DV;
 using ModMain = RearrangedS282.Main;
 
-internal static class Program {
+internal static partial class Program {
     private sealed class LimitReportedStream : MemoryStream {
         // Reach the byte-limit branch without allocating or writing 64 MiB.
         public override long Position { get => 64L * 1024 * 1024; set => base.Position = value; }
@@ -74,6 +74,7 @@ internal static class Program {
         try {
             Output = Path.GetFullPath(args[0]);
             Directory.CreateDirectory(Output);
+            PowerDiagnostics.CurveSampler=car=>null; PowerDiagnostics.CurveSessionInfo=()=>new JObject();
             UnityModManager.modEntries.Add(new UnityModManager.ModEntry { Active = true, Info = new UnityModManager.ModInfo { Id = "RealisticFiring", Version = "test-version" } });
             UnityModManager.modEntries.Add(new UnityModManager.ModEntry { Active = false, Info = new UnityModManager.ModInfo { Id = "InactiveMod", Version = "0" } });
 
@@ -166,7 +167,7 @@ internal static class Program {
             PowerDiagnostics.Capture(articulated.sim);
             var articulatedRecords = End();
             var articulatedSample = Samples(articulatedRecords).Single();
-            Check(articulatedRecords[0].Value<int>("schema") == 2, "Schema identifies per-engine capture extension");
+            Check(articulatedRecords[0].Value<int>("schema") == 3, "Schema identifies per-engine capture extension");
             Check(articulatedSample.Value<string>("arrangement").Contains("Articulated"), "Articulated catalogue name captured");
             Check(articulatedSample["engines"].Count() == 2 && articulatedSample["engines"][1].Value<string>("eventPort") == rear.chuffEventReadOut.id, "Both named engine sources are captured separately");
             Near(articulatedSample["engines"][1].Value<float>("crankRpm"), 180, "Rear crank RPM is read directly without a front-engine assumption");
@@ -195,7 +196,7 @@ internal static class Program {
             Check(FinalizeTick(failed.sim, null) == null, "Normal finalizer while recording does not create an engine exception");
             var faultRecords = End();
             var faultSamples = Samples(faultRecords);
-            Check(faultRecords[0].Value<int>("schema") == 2 && faultRecords[0].Value<string>("phase").Contains("finalizer") && faultRecords[0].Value<string>("phase").Contains("fault"), "Additive schema retains version two and accurately describes completion/fault timing");
+            Check(faultRecords[0].Value<int>("schema") == 3 && faultRecords[0].Value<string>("phase").Contains("finalizer") && faultRecords[0].Value<string>("phase").Contains("fault"), "Additive schema retains version three and accurately describes completion/fault timing");
             Check(faultSamples.Length == 3 && faultSamples.Take(2).All(s => s.Value<bool>("simUpdateFailed")), "Fault snapshots obey the same ten-Hz per-car sampling gate");
             Check(faultSamples.All(s => s.Value<string>("car") == "L-FAULT" && s.Value<int>("arrangementId") == 6), "Fault snapshots retain exact car and arrangement identity");
             Check(faultSamples[0]["simUpdateFault"].Value<string>("type") == typeof(NullReferenceException).FullName && faultSamples[0]["simUpdateFault"].Value<string>("type").Length <= 200, "Fault type is captured with a bounded type field");
@@ -259,6 +260,7 @@ internal static class Program {
             File.WriteAllText(ModMain.ModPath, "file blocks output directory");
             PowerDiagnostics.Begin();
             Check(!PowerDiagnostics.Recording && PowerDiagnostics.Status.Contains("error"), "Output failure leaves capture stopped with visible status");
+            TractiveCases();
             var report = new JObject { ["passed"] = true, ["checks"] = new JArray(Checks),
                 ["limitations"] = "Actual PowerDiagnostics.cs and private finalizer executed with narrow Unity/native/Harmony stand-ins. Exception identity, fault sampling and output values are exercised; this does not inject a fault into the real engine or validate Harmony invocation/order, in-game UI, quit hook or crash durability." };
             File.WriteAllText(Path.Combine(Output, "validation.json"), report.ToString());

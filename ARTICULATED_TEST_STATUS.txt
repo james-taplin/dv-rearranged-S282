@@ -1,3 +1,147 @@
+1.21.2 TWO-SIDED BALANCE CORRECTION
+The previous stock pull/grip restriction is removed. Machinery-sensitive nominal
+FoA ceilings now permit calibrated arrangements on either side of stock.
+Original-cylinder maximum and all other simulation systems retained. The giant
+2-2-2 keeps its existing prototype special measures and is excluded from balance.
+See FOA_BALANCE.md for all47 arrangements and separate tender comparison.
+Previous notes below describe historical candidates, not the current ceiling.
+
+1.21.1 TARGETED FoA REFINEMENT CANDIDATE
+Machinery-sensitive reduction-only cylinder ceiling replaces universal4.4.
+Articulation, shared phase/slip, native flow, geometry and tender clamp retained.
+See FOA_REFINEMENT.md. Native tests pass; not live tested or installed.
+
+Historical statuses follow:
+
+1.21.0 CALCULATED PHYSICS CANDIDATE
+Native articulation and accepted geometry unchanged. Rated cylinder design is
+resource-independent; nominal factor of adhesion4.4, reduction-only. Erie tender
+cylinders separately calibrated; its force clamp/weather behaviour unchanged.
+Offline native-engine and compiled checks pass. No live1.21 claim.
+
+Historical 1.20 status follows:
+
+1.20.0 PIPE POLISH CANDIDATE
+Dense shafts retain original collars; compact rigid connections; minimum new
+shaft OD162.56mm. Erie tender LP connection internal, no exterior cab/tender
+bridge. Header/branch endpoint tangents corrected. Accepted wheels/layouts and
+1.19 physics retained. Offline tests distinguish dense faces/curvature/UV from
+actual body clearance/material/LOD appearance, which still require in-game QA.
+Latest recorded live session was1.18.0 and had a false-null structural predicate
+failure fixed here. It did not validate1.19 calibration/follower fix.
+
+1.19.0 CANDIDATE
+Fixes clone cleanup destroying added-driver rotation followers. Rebind followers
+to the same rear engine's native fourth wheel. Structural checks verify both
+rear fifth-wheel bindings/rotation gaps on 2-10-10-2. Live animation acceptance
+pending. Preliminary cylinder capacity reductions preserve auxiliary/main ratios;
+Erie tender engine retains prior dimensions and separate force clamp. Native
+articulation, steam graph and shared native traction/slip group retained.
+
+1.18.0 CANDIDATE: steam intake presentation
+Original MIT inlet manifolds and flanged pipe meshes now follow the existing
+native engine/tender poses. Native simulation is unchanged. Managed lifecycle
+and geometry validation passed; live visuals, clearance, native LOD transitions
+and tender attach/detach still require the game test. Not installed during the
+user's ongoing 1.17.0 structural run.
+
+Rearranged S282 B99 - 1.17.0 geometry presets and diagnostic measurement stage
+
+Mogul .18/.12, 2-4-0 .20/.14, Prairie .22/.12 m pitch/rearward requested presets.
+Prairie pitch range extended to .22 m. Native steam/traction/articulation retained.
+PHYS-A observes grip/mass/resources/active cylinders and exports comparison data.
+Erie tender power/grip stays separate; no gameplay power/grip rebalance.
+Live game acceptance pending. Pipe reconnection remains after positions settled.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.16.0 Prairie and American tuning trial
+
+New temporary pitch/rearward controls affect Prairie 2-6-2 and American 4-4-0
+as well as retained Mogul/2-4-0 controls. New pair defaults zero; wheel sizes,
+accepted cylinder positions and native steam/traction are retained. Prairie
+combines its existing rod span with tuning under one retarget owner. Articulated
+geometry is unchanged. Live game acceptance is pending. Steam-pipe reconnection
+using original Franklin meshes is the next phase after positions are accepted.
+The granular controls are development tools to be removed for release.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.15.0 main connecting rod spacing trial
+
+Only Mogul/2-4-0 gain driver-group displacement relative to fixed cylinders.
+Measured main/radius pins and rigid boss geometry follow the existing native
+clock. Other arrangements retain previous geometry and retarget policy. Native
+steam/traction calculations remain unchanged. Follow RUNTIME_TRIAL_TESTING.txt;
+live game acceptance remains with James. UMM now provides direct reapplication.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.14.0 coupled driver spacing trial
+
+2-6-0 and 2-4-0 receive coupling-rod pitch controls with a fixed main driver.
+Native animation sources, main rod/valve gear and steam settings are retained.
+All 47 arrangements remain selectable; articulated and other rigid layouts
+keep 1.13.6 geometry. Follow the new priority tests in RUNTIME_TRIAL_TESTING.txt.
+This build still needs James's in-game visual and lifecycle acceptance.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.13.6 Prairie rearward placement trial
+
+Prairie mechanism/cylinders/drivers translated rearward together 0.70 m from
+1.13.5, retaining wheel size and rod geometry. Carrying trucks, high-speed and
+articulated layouts unchanged. Follow the new 1.13.6 checklist; game acceptance
+remains with James.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.13.5 reservoir-clear large-driver trial
+
+Retains all 47 layouts and 1.13.4 oil-cup mounting/cleanup. Reduces only high-speed
+2-8-0/2-8-2/2-8-4 and Prairie to approximately 1.58 m drivers. Native animation,
+matching radius/RPM and per-car restore retained; existing cylinder normalization
+also seats the resized high-speed mechanisms. No articulated layout rebalance.
+Follow the 1.13.5 checklist. Offline validation is not in-game acceptance.
+
+Previous notes (historical):
+Rearranged S282 B99 - 1.13.3 expanded cylinder casing trial
+
+Full casing treatment covers Prairie/Pacific/Hudson and rigid 4-4-0, 4-4-2,
+4-4-4 and 2-4-0. No articulated-cylinder expansion in this change. Both bores
+follow the existing native drive axes while casing length/barrels/caps return
+toward native proportions, with fitted pipes/cocks/outlets. Moving joints,
+physics and all arrangement IDs are retained, including the 4-14-4 spacing fix.
+Follow the 1.13.3 checklist; no in-game visual acceptance claimed yet.
+
+Previous notes:
+Rearranged S282 B99 - 1.13.2 Prairie casings + 4-14-4 spacing trial
+
+Full Prairie casing treatment now replaces its 1.13.0 barrel-only treatment.
+Casing length returns to native size; both barrel/cap regions are reduced,
+with extra web height retaining the two existing animated bore axes. Cocks,
+dry pipes and particle outlets follow the casing. Motion/physics are retained.
+Includes the 4-14-4 spacing change. All 47 arrangements remain available.
+Other arrangements keep their previous casing treatment. No in-game acceptance
+claimed for this test; follow the 1.13.2 checklist in RUNTIME_TRIAL_TESTING.txt.
+
+Previous notes:
+Rearranged S282 B99 - 1.13.1 4-14-4 spacing trial
+
+Moves the 4-14-4 driver group a further 0.25 m rearward using its existing
+main/radius rod retarget; cylinders and both carrying trucks stay in place.
+Driver diameter, pitch and simulation parameters remain unchanged. Native
+animation-pose fixtures pass; in-game clearance and appearance are unverified.
+The Prairie's oversized overall cylinder assembly remains an open visual issue.
+Follow the 1.13.1 checklist at the top of RUNTIME_TRIAL_TESTING.txt.
+
+Previous notes:
+Rearranged S282 B99 - 1.13.0 casing trial
+
+Retains 1.12.0's 47 layouts. Cylinder exterior meshes now have optional,
+per-locomotive barrel treatment; motion/physics and articulation are unchanged.
+Casing length is retained to protect existing connections and engine spacing;
+rail clearance and attachment fit limit the enlargement. Upper valve chests,
+socket, drain and pipe mounting regions are preserved. Existing broad walk/item
+shells remain unchanged for this trial.
+No in-game acceptance is claimed; follow the 1.13.0 tests in RUNTIME_TRIAL_TESTING.txt.
+
+Previous notes:
 Rearranged S282 B99 - 1.5.0 Mallet trial
 
 1.5.0 adds the articulated 2-6-6-2 Mallet (ID 37) on the same native pin/aim

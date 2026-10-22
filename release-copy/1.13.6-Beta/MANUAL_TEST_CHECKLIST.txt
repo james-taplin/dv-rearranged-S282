@@ -1,0 +1,15 @@
+REARRANGED S282 B99 1.13.6 BETA - MANUAL CHECKLIST
+
+Use a backed-up save and keep a second stock S282 as a control when possible.
+1 Reapply Prairie and assess both sides near and far after the rearward move
+2 Check reservoir straps flange clearance cylinder bores and branch pipe sockets
+3 Roll both ways through full revolutions at low medium and high cutoff
+4 Check slipping braking shoes sparks cylinder cocks steam drips and oil cups
+5 Open fill and close cups with the oil can and look for floating or duplicate cups
+6 Switch Prairie high speed stock Pacific Hudson 4-14-4 and articulated layouts
+7 Check save reload external unload reload explosion repair and second car isolation
+8 Optional UMM structural test needs two stationary S282s and closed regulators
+
+Send arrangement names reproduction steps screenshots or video Player.log and
+stage2-runtime-checks.json if captured. Power and curve diagnostics are optional.
+A structural pass does not replace driving visual audio or refill checks.

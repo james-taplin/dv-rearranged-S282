@@ -1,0 +1,30 @@
+new in 1.22.1
+
+added white exhaust steam for the erie tender engine
+added tender cylinder cock jets and conditional water drips
+added rear side mounted exhaust pipe with bands and a lower elbow
+checked clearance from the coal pile water hatch and rear ladder
+kept existing physics audio and temporary proportion controls
+
+changes since 1.13.6
+
+improved driver spacing on the mogul prairie and 2-4-0
+added coupling rod reshaping and connecting rod reach adjustment
+added temporary running gear tuning for the american and smaller layouts
+added direct arrangement reapply and radio selection reset controls
+rebuilt steam pipes and manifolds for the different cylinder layouts
+fixed folded pipe meshes sharp bends and awkward connections
+kept a sensible minimum pipe thickness on small cylinder arrangements
+removed the external erie steam pipes running through the cab
+fixed the fifth rear drivers not turning on the 2-10-10-2
+reworked effective driver weight grip and cylinder sizing on modified arrangements
+gave arrangements more varied starting pull and slip characteristics on both sides of stock
+balanced the erie tender cylinders against their own adhesive weight
+stopped water level during arrangement selection changing cylinder sizing
+kept the stock s282 physics unchanged
+expanded power diagnostics and added tractive effort comparison tables
+fixed false structural test failures
+added the running mod version to the umm panel
+kept the experimental 2-2-2 separate from the balance pass
+
+

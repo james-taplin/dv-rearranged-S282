@@ -1,0 +1,64 @@
+NEXUS UPLOAD DETAILS
+
+File title: Rearranged S282 B99 - 1.13.6 Beta
+Version: 1.13.6
+Author: JimTaplin
+Archive: RearrangedS282-B99-1.13.6-Beta.zip
+
+SHORT DESCRIPTION
+47 S282 wheel arrangements for B99 with articulated Mallets and triplexes saved
+choices oil cups and optional curve drag and squeal
+
+DESCRIPTION
+B99 continuation of SatiricRug's Rearranged S282 with 47 selectable arrangements.
+Includes conventional and articulated layouts, native auxiliary steam engines,
+optional random spawning, saved per-loco selections, oil cups, cylinder and rod
+polish, and optional curve drag and squeal.
+
+This update moves the Prairie cylinders running gear and drivers rearward together
+while retaining the smaller reservoir-clear wheels and current rod geometry.
+
+Requires Windows, Derail Valley B99, Unity Mod Manager 0.27.3 or later and
+Locomotive Mesh Splitter (1.1.9 tested):
+https://www.nexusmods.com/derailvalley/mods/867
+
+Close the game before updating and back up saves and Settings.xml. Install using
+UMM over the previous RearrangedS282 version. Keep included assets and exporter.
+Select layouts with Wheel Rearranger on the comms radio while stopped with the
+regulator closed. Random spawning is optional and off by default.
+
+BETA STATUS
+All 47 layouts passed the structural test on 1.13.5. The latest 1.13.6 Prairie
+position passes offline checks; final in-game visual/driving acceptance remains
+pending. Realistic Firing is unsupported for this beta. Multiplayer and VR are
+unverified. The giant 2-2-2 and Erie tender engine remain experimental; see README.
+
+CHANGELOG SINCE 1.9.2
+added the 2-6-2 prairie
+added the 2-6-6-0 and 2-10-10-2 articulated mallets
+added the experimental erie triplex with a powered tender engine
+added working oil cups to the driven crank pins
+fixed floating oil cups and tracking on moving rods
+fixed leftover oil cups after switching unloading and deleting locos
+fixed stale parts being restored when switching between duplex and triplex arrangements
+normalised cylinder casings on the prairie pacific hudson and four coupled arrangements
+extended cylinder normalisation to the high speed arrangements
+adjusted cylinder pipes cocks and particle outlets to match
+improved the 4-14-4 driver spacing and rod reach
+reduced high speed and prairie drivers to clear the air reservoirs
+moved the prairie cylinders running gear and drivers into better proportion
+expanded structural diagnostics with oil cup counts mounting and tracking checks
+
+CREDITS FOR THE PAGE
+**SatiricRug (Peter Schinske)** / *original Rearranged S282 and Locomotive Mesh Splitter;*\
+**Altfuture** / *Derail Valley;*\
+**Wiz** / *DV Car Changer;*\
+**Nitro** / *S282 Model Tweaks and Delta trailing truck integration;*\
+**Derailroader contributors** / *tooling that informed the native B99 physics integration;*
+\
+**AND:**\
+**JimTaplin** / *B99 port new arrangements direction testing and releases;*\
+**Claude/Codex** / *coding tooling diagnostics implementation and stability assistance.*
+
+Original and bundled third-party notices remain in the download. MIT applies to
+the mod; bundled components retain their own included licence terms.

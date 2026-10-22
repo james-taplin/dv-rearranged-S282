@@ -64,6 +64,25 @@ namespace RearrangedS282
 			}
 		}
 
+		// Precision main/radius-rod presentation reuses the original local-game
+		// extractor. Native geometry remains a user's local cache, never packaged.
+		internal Mesh ReadableRetargetMesh(Mesh mesh)
+		{
+			if (mesh == null) throw new ArgumentNullException(nameof(mesh));
+			string name = mesh.name.Replace(" Instance", "").Replace("(Clone)", "").Trim();
+			if (name != "s282_mech_push_rod_to_connect" && name != "s282_mech_push_rod_to_connect_LOD1" &&
+				name != "s282_mech_cutoff_to_cylinder_rod" && name != "s282_mech_cutoff_to_cylinder_rod_LOD1")
+				throw new InvalidOperationException("Unsupported native retarget mesh: " + name);
+			generateMeshFromGameFiles(name);
+			var readable = new OBJLoader().Load(Path.Combine(exportPathFull, name + ".obj"));
+			if (readable == null || !readable.isReadable || readable.vertexCount == 0)
+			{
+				if (readable != null) UnityEngine.Object.Destroy(readable);
+				throw new InvalidOperationException("Native retarget mesh export was not readable: " + name);
+			}
+			return readable;
+		}
+
 		readonly struct Range
 		{
 			public readonly int start;//inclusive

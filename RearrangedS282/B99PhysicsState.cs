@@ -151,5 +151,6 @@ namespace RearrangedS282
             if (poweredAxles == 0) calc.engineBrakingForcePerAxle = 0f;
             car.entity.SetComponentData(calc);
         }
+        public float OriginalSlipCoefficient => originalFriction.wheelslipFrictionCoef;
     }
 }

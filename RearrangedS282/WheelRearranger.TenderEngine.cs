@@ -32,6 +32,18 @@ namespace RearrangedS282
         private PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair[] tenderAnimatorsBefore;
         private float tenderForceN, tenderLimitN, tenderDemandN;
         private bool tenderSlipping;
+        internal Transform TenderEffectsRoot => tenderEngineRoot != null && tenderEngineRoot.gameObject.activeInHierarchy ? tenderEngineRoot : null;
+        internal Transform TenderExhaustOutlet => tenderPresentation != null ? tenderPresentation.Outlet : null;
+        private ErieTenderPresentation tenderPresentation;
+
+        internal bool TryMapTenderOutlet(Vector3 nativeOrigin, Vector3 nativeCentre, out Vector3 local)
+        {
+            local = default;
+            if (bigMallet == null || !TryMapArticulatedOutlet(nativeOrigin, nativeCentre, 1, out local)) return false;
+            float offset = TenderCylinderFrontZ - bigMallet.Scale * MeasureNativeCylinderFront();
+            local += Vector3.forward * (offset - bigMallet.RearOffset);
+            return true;
+        }
 
         private static bool IsS282Tender(TrainCar car) =>
             car != null && CarTypes.IsTender(car.carLivery) && car.carType == TrainCarType.Tender;
@@ -45,7 +57,7 @@ namespace RearrangedS282
                 var other = car.rearCoupler != null && car.rearCoupler.coupledTo != null ? car.rearCoupler.coupledTo.train : null;
                 if (IsS282Tender(other) && !other.derailed) wanted = other;
             }
-            if (wanted != tenderEngineCar)
+            if (wanted != tenderEngineCar || wanted == null && !ReferenceEquals(tenderEngineCar, null))
             {
                 DetachTenderEngine();
                 if (wanted != null)
@@ -134,6 +146,16 @@ namespace RearrangedS282
                 }
             }
             articulatedSimulation.SetTenderEngine(true);
+            // Presentation failure must never remove a working tender engine.
+            try
+            {
+                tenderPresentation = tenderEngineRoot.gameObject.AddComponent<ErieTenderPresentation>();
+                tenderPresentation.Releasing = () => ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
+                tenderPresentation.Initialize(tender, steamNative.First().Materials);
+            }
+            catch (Exception ex) { Main.Logger.LogException("Erie tender exhaust presentation", ex); }
+            ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
+            RefreshSteamConnectionsForTender();
             Main.Logger.Log($"Erie triplex: tender engine attached to {tender.ID}; {2f * bigMallet.Radius:0.00} m drivers, " +
                 $"cylinders at {TenderCylinderFrontZ:0.00}, drivers {offset + s * firstLeftDriveWheel.localPosition.z:0.00}..{offset + s * fourthLeftDriveWheel.localPosition.z:0.00} (tender z).");
         }
@@ -152,11 +174,20 @@ namespace RearrangedS282
             tenderAnimatorsBefore = null;
             foreach (var go in tenderHidden) if (go != null) go.SetActive(true);
             tenderHidden.Clear();
-            if (tenderEngineRoot != null) { tenderEngineRoot.gameObject.SetActive(false); Object.Destroy(tenderEngineRoot.gameObject); }
+            if (tenderEngineRoot != null) tenderEngineRoot.gameObject.SetActive(false);
+            ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
+            if (tenderEngineRoot != null)
+            {
+                // Remove native readers while their leaves still exist.
+                tenderPresentation?.Release();
+                Object.Destroy(tenderEngineRoot.gameObject);
+            }
             if (tenderEngineCar != null && tenderEngineRoot != null) Main.Logger.Log($"Erie triplex: tender engine detached from {tenderEngineCar.ID}.");
             tenderEngineRoot = tenderDriveL = tenderDriveR = null;
+            tenderPresentation = null;
             tenderEngineCar = null;
             tenderForceN = tenderLimitN = tenderDemandN = 0f; tenderSlipping = false;
+            RefreshSteamConnectionsForTender();
         }
 
         // Pull at the tender's rails, limited by the tender's own adhesion.
@@ -183,7 +214,9 @@ namespace RearrangedS282
 
         internal JObject TenderEngineReport() => currentWA != WheelArrangementType.s28882 ? null : new JObject
         {
+            ["driverRadiusM"] = bigMallet != null ? .712f * bigMallet.Scale : (float?)null,
             ["tender"] = tenderEngineCar != null ? tenderEngineCar.ID : null, ["attached"] = tenderEngineRoot != null,
+            ["exhaustOutlet"] = TenderExhaustOutlet != null, ["visualEffects"] = ArticulatedEffects.TenderParticlesReady(GetComponent<TrainCar>()),
             ["demandN"] = tenderDemandN, ["limitN"] = tenderLimitN, ["appliedN"] = tenderForceN, ["slipping"] = tenderSlipping,
             ["tenderMassKg"] = tenderEngineCar != null && tenderEngineCar.massController != null ? tenderEngineCar.massController.TotalMass : (float?)null
         };

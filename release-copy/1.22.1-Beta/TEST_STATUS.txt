@@ -1,0 +1,17 @@
+1.22.1 BETA - VALIDATION STATUS - 22 OCTOBER 2026
+Runtime DLL matches installed 1.22.1 test build byte for byte.
+SHA256 7DB617848F714D67B88B36B71509E18CC93E290E18390F37C9A2B30420920311
+
+Production build zero warnings/errors. Erie presentation: 66 managed geometry
+and cleanup checks over five attach/remove cycles. Original mesh/material reuse,
+pipe mouth/emitter alignment, LOD ownership and restoration checked. Native coal
+pile, water-hatch all-angle envelope and rear ladder clearance checked offline.
+279 compiled integration checks confirm 105 protected physics/retarget methods
+unchanged versus 1.22.0. Earlier 1.22.0 articulation/effect checks also passed.
+These checks do not execute native particle readers or Unity rendering.
+
+Previous live evidence: 1.20 all 47 structural checks passed; representative
+power captures reviewed. No live 1.22.1 acceptance run reviewed yet.
+Erie effects intensity, near/far, hatch interaction and coupling/save/pool
+lifecycle still need in-game acceptance. Physics calibration retains the
+validated 1.21.2 baseline. No new arrangements or selectable powered-tender option.
