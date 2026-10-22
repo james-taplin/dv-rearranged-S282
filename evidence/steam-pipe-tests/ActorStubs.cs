@@ -93,6 +93,7 @@ namespace UnityEngine
         public static float Dot(Vector3 a,Vector3 b)=>a.x*b.x+a.y*b.y+a.z*b.z;
         public static Vector3 Cross(Vector3 a,Vector3 b)=>new(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
         public float magnitude => (float)Math.Sqrt(x*x+y*y+z*z);
+        public float sqrMagnitude=>x*x+y*y+z*z;
         public N.Vector3 Native => new(x,y,z);
         public static Vector3 From(N.Vector3 v) => new(v.X,v.Y,v.Z);
         public static Vector3 operator +(Vector3 a,Vector3 b) => new(a.x+b.x,a.y+b.y,a.z+b.z);
@@ -138,14 +139,21 @@ namespace UnityEngine
     {
         public bool isReadable=true;
         public Vector3[] vertices=Array.Empty<Vector3>();
+        public Vector3[] normals=Array.Empty<Vector3>();
+        public bool dynamicMarked;
         public Vector2[] uv=Array.Empty<Vector2>();public int[] triangles=Array.Empty<int>();
         public float[] colors=Array.Empty<float>(),tangents=Array.Empty<float>();public int subMeshCount=1;
         public Bounds bounds;
         public int vertexCount=>vertices.Length;
-        public void Clear(){vertices=Array.Empty<Vector3>();triangles=Array.Empty<int>();uv=Array.Empty<Vector2>();}
-        public Mesh Clone()=>new(){name=name,isReadable=isReadable,vertices=vertices.ToArray(),bounds=bounds,uv=uv.ToArray(),triangles=triangles.ToArray(),colors=colors.ToArray(),tangents=tangents.ToArray(),subMeshCount=subMeshCount};
-        public void RecalculateBounds() { bounds=new Bounds{min=new(vertices.Min(v=>v.x),vertices.Min(v=>v.y),vertices.Min(v=>v.z)),max=new(vertices.Max(v=>v.x),vertices.Max(v=>v.y),vertices.Max(v=>v.z))}; }
-        public void RecalculateNormals(){}public void RecalculateTangents(){}
+        public void Clear(){vertices=Array.Empty<Vector3>();normals=Array.Empty<Vector3>();triangles=Array.Empty<int>();uv=Array.Empty<Vector2>();bounds=new Bounds(Vector3.zero,Vector3.zero);}
+        public Mesh Clone()=>new(){name=name,isReadable=isReadable,vertices=vertices.ToArray(),normals=normals.ToArray(),bounds=bounds,uv=uv.ToArray(),triangles=triangles.ToArray(),colors=colors.ToArray(),tangents=tangents.ToArray(),subMeshCount=subMeshCount};
+        public void MarkDynamic()=>dynamicMarked=true;
+        public void SetVertices(List<Vector3> value)=>vertices=value.ToArray();
+        public void SetNormals(List<Vector3> value)=>normals=value.ToArray();
+        public void SetUVs(int channel,List<Vector2> value){if(channel!=0)throw new NotSupportedException("Fixture implements UV0 only");uv=value.ToArray();}
+        public void SetTriangles(List<int> value,int submesh){if(submesh!=0)throw new NotSupportedException("Fixture implements one submesh");triangles=value.ToArray();}
+        public void RecalculateBounds() { bounds=vertices.Length==0?new Bounds(Vector3.zero,Vector3.zero):new Bounds{min=new(vertices.Min(v=>v.x),vertices.Min(v=>v.y),vertices.Min(v=>v.z)),max=new(vertices.Max(v=>v.x),vertices.Max(v=>v.y),vertices.Max(v=>v.z))}; }
+        public void RecalculateNormals(){normals=new Vector3[vertices.Length];for(int i=0;i<triangles.Length;i+=3){int a=triangles[i],b=triangles[i+1],c=triangles[i+2];var n=Vector3.Cross(vertices[b]-vertices[a],vertices[c]-vertices[a]);normals[a]+=n;normals[b]+=n;normals[c]+=n;}for(int i=0;i<normals.Length;i++)normals[i]=normals[i].magnitude>.0000001f?normals[i].normalized:Vector3.zero;}public void RecalculateTangents(){}
     }
     public sealed class MeshFilter : Component { public Mesh sharedMesh;public MeshFilter(){}public MeshFilter(Transform t,Mesh mesh){gameObject=t.gameObject;gameObject.components.Add(this);sharedMesh=mesh;} }
     public sealed class ParticleSystem:Component {public ParticleSystem(){}public ParticleSystem(Transform t){gameObject=t.gameObject;gameObject.components.Add(this);} }

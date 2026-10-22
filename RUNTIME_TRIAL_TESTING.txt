@@ -1,3 +1,8 @@
+1.22.3 GEOMETRY AND STEAM DUCT TEST
+See GEOMETRY_TEST_STATUS.txt for changes, checked coverage and open limits.
+Extends original pipe pieces/profile/materials; no new arrangements or physics.
+Earlier 1.22.3 guide-only candidate is superseded. In-game acceptance pending.
+
 1.22.2 STAGE SOUND TUNING
 Mallet and Erie front engine chuffs use a modest LP-style pressure profile:
 15 percent shorter above-atmosphere span for sample thresholds and individual

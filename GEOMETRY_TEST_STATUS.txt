@@ -1,0 +1,40 @@
+Rearranged S282 B99 1.22.3 - geometry test candidate
+
+This is a TEST build. It is not yet a Nexus release and has not been installed.
+It supersedes the earlier uninstalled 1.22.3 guide-only candidate.
+
+Changes
+- Common motion frame and casing/guide alignment for resized rigid families,
+  including twelve drivers. Existing driver locations and animation retained.
+- Steam duct kit extends SatiricRug's original shaft profile, collars and style.
+  Matched round elbows, reducers, compact risers and an offset Prairie casting.
+- Original boiler branches retained where they fit. Six-coupled lower collar
+  reduced only where its outer rim touched the relocated compressor outlet.
+- Articulated front/middle branches mount on measured outboard casing faces;
+  rear engines retain the original cast manifold. Horizontal headers stay clear
+  of the reservoir/board. Erie tender supply remains internal.
+- Original materials and texture regions reused. No new texture dependency.
+
+Physics, boiler/steam consumption, accepted wheel proportions, cylinder motion,
+Erie tender exhaust and stage sound tuning are retained. No new arrangements.
+
+Offline validation
+- Actual production builder reconstructed all 44 generated-pipe arrangements.
+- Native body, tanks, steps and compressor meshes checked at both native LODs.
+- All 44 neutral layouts and the synthetic +/-6-degree poses have no detected
+  static triangle crossings. All 76 neutral/stress poses generate successfully.
+- Larger synthetic +/-12-degree poses still have front engine/body contacts.
+  These are a stress envelope with reconstructed pivots, not measured game
+  curves. They are NOT certified clipping-free. In-game curve checks required.
+- Source mesh/UV, winding, bore and adapter checks plus lifecycle/LOD ownership
+  and protected compiled physics comparisons complement the surface audit.
+
+Limits and manual checks
+Triangle crossing tests do not prove minimum clearance, coplanar overlap,
+nested solids or complete Franklin/main-rod motion. The test is not a Unity
+rendering test. Check both sides in game, low and high speed, cutoff/reverse,
+tight curves, near/far LOD, switching to stock, and a second locomotive.
+Run the structural diagnostic once; it checks connections, not appearance.
+Pay particular attention to the Prairie cast adapter's material finish and the
+front pipe joints on Big Mallets/Franklin duplexes. Keep this off Nexus pending
+that visual test. Existing 1.22.2 remains installed until installation is asked.

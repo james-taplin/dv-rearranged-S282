@@ -89,7 +89,8 @@ namespace RearrangedS282
             var up = template.MeshFromNative.MultiplyVector(Vector3.up);
             return new SteamPipePresentation.Cylinder { Part = filter.transform, Socket = local,
                 Forward = template.MeshFromNative.MultiplyVector(Vector3.forward), Up = up,
-                Scale = Mathf.Clamp(filter.transform.TransformVector(up).magnitude, .55f, 1f), Side = side, Car = car };
+                Scale = Mathf.Clamp(filter.transform.TransformVector(up).magnitude, .55f, 1f), Side = side, Car = car,
+                CasingVertices = current, CasingTriangles = filter.sharedMesh.isReadable ? filter.sharedMesh.triangles : template.Readable.triangles };
         }
 
         private static bool LegacySteamRenderer(Transform part)
@@ -116,6 +117,15 @@ namespace RearrangedS282
                 if (!filter.gameObject.activeInHierarchy || mesh == null || !SteamTemplate(mesh, out var template) ||
                     (!template.Franklin && !steamDetailSources.Contains(template.Mesh))) continue;
                 cylinders.Add(SteamCylinder(filter, template));
+            }
+            // Its relocated air-compressor outlet occupies the original lower
+            // boiler branch. Keep the authored upper fitting and use an offset
+            // cast transition to the Prairie's actual cylinder inlet.
+            foreach (var cylinder in cylinders)
+            {
+                cylinder.ForwardBranch = id == (int)WheelArrangementType.s262;
+                cylinder.CompactCollar = id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s462 ||
+                    id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s260;
             }
             var wheels = WheelArrangement.LocomotiveWheels(id);
             steamExpected = (articulated ? wheels.Length - 2 : 1) * 2;

@@ -12,8 +12,9 @@ Set-Content -LiteralPath $projectPath -Value $project -Encoding utf8
 & 'C:\Program Files\dotnet\dotnet.exe' run --project $projectPath -c Release -- (Join-Path $PSScriptRoot 'build\steam-pipes-1.18.0\original-assets.json') (Join-Path $PSScriptRoot 'evidence\cylinder-casing-tests\native-casings.json') (Join-Path $PSScriptRoot 'evidence\cylinder-casing-tests\native-full-casing-fittings.json') (Join-Path $OutputDirectory 'validation.json')
 if($LASTEXITCODE -ne 0){throw 'Steam pipe geometry validation failed'}
 
-$actorProject=$project.Replace('SteamPipeShape.cs','SteamPipeShape.cs').Replace('<Compile Include="'+$PSScriptRoot+'\RearrangedS282\CylinderCasingShape.cs"/>','<Compile Include="'+$PSScriptRoot+'\RearrangedS282\SteamPipePresentation.cs"/>').Replace('\Stubs.cs','\ActorStubs.cs').Replace('\Program.cs','\ActorProgram.cs')
+$actorProject=$project.Replace('<Compile Include="'+$PSScriptRoot+'\RearrangedS282\CylinderCasingShape.cs"/>','<Compile Include="'+$PSScriptRoot+'\RearrangedS282\CylinderCasingShape.cs"/><Compile Include="'+$PSScriptRoot+'\RearrangedS282\SteamDuctMesh.cs"/><Compile Include="'+$PSScriptRoot+'\RearrangedS282\SteamPipeNativeFit.cs"/><Compile Include="'+$PSScriptRoot+'\RearrangedS282\SteamPipeLowerCollar.cs"/><Compile Include="'+$PSScriptRoot+'\RearrangedS282\SteamPipePresentation.cs"/>').Replace('\Stubs.cs','\ActorStubs.cs').Replace('\Program.cs','\ActorProgram.cs')
 $actorPath=Join-Path $OutputDirectory 'SteamPipes.Actor.csproj'
 Set-Content -LiteralPath $actorPath -Value $actorProject -Encoding utf8
 & 'C:\Program Files\dotnet\dotnet.exe' run --project $actorPath -c Release -- (Join-Path $PSScriptRoot 'build\steam-pipes-1.18.0\original-assets.json') (Join-Path $PSScriptRoot 'evidence\cylinder-casing-tests\native-full-casing-fittings.json') (Join-Path $OutputDirectory 'actor-validation.json')
 if($LASTEXITCODE -ne 0){throw 'Steam pipe presentation validation failed'}
+

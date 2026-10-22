@@ -1,3 +1,87 @@
+## Source-derived steam duct extensions - 22 Oct 2026
+
+Local source checkpoint: codex/steam-duct-polish-20261022, child of reviewed
+ec68558. Separate index; active b99-port branch/index unchanged. No push.
+
+Current candidate is still1.22.3 TEST, replacing the earlier uninstalled guide-only
+candidate. Installed1.22.2 remains untouched. No game launch, installation,
+publication, full backup or rollback copy performed. Clean rebuild0warnings/
+0errors. DLL D48E09D26260626444CB7EEDA8C8A35840FF9A85A1FEE49FC858302F1E0AF4E1.
+Desktop test ZIP is in RearrangedS282-B99-1.22.3-Test; its build-receipt.json gives
+final ZIP hash. GEOMETRY_TEST_STATUS.txt included in package.
+
+Scope correction: extend the original set with matching pieces rather than
+replace everything from scratch. Three agents implemented/audited original
+profiles, native/casing fit and actual production surface/lifecycle coverage.
+Original steam_transfer and steam_manifold OBJ exports byte-identical. New kit
+uses original13-sided shaft and complete collars/topology/UVs/materials.
+SteamDuctMesh adds analytic round elbows, lengths, reducers and a compact Prairie
+cast offset retaining the actual35-corner native cut. Its new skin uses ONLY the
+transfer shaft atlas island; cross-island UV blending was caught and corrected.
+Native prefix UVs retained. No new assembly/dependency or physics system.
+
+Native rigid branches now seat the complete sampled cut boundary in the actual
+normalized casing, rather than checking centres alone. On3/4/5/34, compact only
+the lower-collar outer annulus from~.144m to~.108m radius in private copies. Shaft,
+upper flare and topology unchanged. Actual air-output contacts13LOD0/7LOD1 become
+zero. Prairie adapter uses.22m outward bow, both ends fixed. It is a compact cast
+transition, not a constant-bore swept elbow: its finish/profile need game review.
+Articulated front/middle branches mount to measured outboard casing faces, with
+round elbows outside steps/board. Original rear manifolds retained; headers stay
+horizontal. New transfer shafts have a minimum.8native width; original boiler
+castings retain their authored varying profile. Erie tender supply remains
+internal; accepted exhaust/effects and stage sound unchanged.
+
+Final evidence:
+- build/steam-duct-candidate-4:44real generated-pipe arrangements strict success.
+  Native body/tanks/steps/compressor LOD0+LOD1 have zero neutral surface crossings.
+  All76neutral/stress poses generate; all +/-6degree poses clear. +/-12degree
+  synthetic poses have front-engine/body contacts:8uniqueLOD0/7LOD1. Reconstructed
+  pivots/stress are not measurements of real game curves.
+- clearance-neutral.json:2040actual native cylinder-side clip queries in neutral
+  frames,zero contacts. Custom Franklin and stretched main rods excluded.
+- source-receipt.json binds stable before/after source hashes; compiled IL confirms
+  final.22adapter bow. Earliercandidate3 read an in-flight.12edit; superseded.
+- SteamDuctMesh113958checks. Native fit/collar3140checks, both sides/nativeLODs.
+- build/steam-duct-actor-validation:8488checks,39reachable synthetic primary,
+  33rigid stress,22explicit unsupported geometric rejections with cleanup, and
+  two simultaneous live instance stand-ins. Maximum endpoint gap.0308mm.
+- build/steam-duct-protected:279checks/105protected compiled methods unchanged
+  against installed1.22.2. Compiled steam ownership19checks; retained Erie66.
+
+Remaining: game materials, Prairie side profile, near/far and tight curves;
+continuous/native Franklin/main-rod solid inspection. Surface checks do not
+establish coplanar/nested overlap or minimum gap. No whole-locomotive all-clear.
+Native mesh/capture evidence stays local/ignored, never in test ZIP.
+
+A documentation-only UTF-8 write error truncated this handover during update.
+Saved history below was recovered from source commit ec68558; the intervening
+uninstalled guide-only audit is summarized next and remains in GEOMETRY_AUDIT.md.
+No runtime source or package was affected. This note prevents treating recovered
+historical investigation wording as the current implementation.
+
+## Intervening guide-only1.22.3 audit (superseded candidate)
+
+Existing common-frame helper applied to4-coupled, remaining6-coupled and12-coupled
+rigids, including hidden gear; authored crosshead scale restored. Ten-wheeler/
+Mogul/12-driver full casing treatment follows actual piston/valve axes. Wheels
+and physics not moved. Credit corrected to discorddraconequus. Earlier DLL
+13B18CEF0EC7EEF03A8D6ED1FCCA97B1AB6C3826EB7CD0B57C9324D95B3C1526 was built but
+not installed; it had NO pipe runtime changes and is superseded by current test.
+
+Prior build/geometry-audit evidence: guide170517checks/384addedposes+96old;
+casing369141checks/1536poses; connecting30cases/2880poses/.364mm main joint,
+.318mm radius joint; coupling180cases;4-14-4 96poses/.0342mm endpoint delta;
+Prairie672poses/2016cups; old pipe1570599shapechecks/2208actorchecks (endpoint
+only, not a clearance result); compiled catalogue152;105protected unchanged;
+rod timing6720poses. Initial actual-body/air audits then found pipe contacts
+requiring this new duct pass. Original initial audit/detail remains in
+GEOMETRY_AUDIT.md. No previous live1.22.3 acceptance was claimed.
+
+---
+
+Recovered saved history follows (older entries are historical):
+
 ## Twelve-driver valve report investigated - 22 Oct 2026
 
 User requested latest logs/diagnostics review and supplied dark screenshot of
