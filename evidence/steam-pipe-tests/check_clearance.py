@@ -27,16 +27,25 @@ v,f=obj(Path(r'B:\SteamLibrary\steamapps\common\Derail Valley\Mods\LocoMeshSplit
 v=np.asarray(v,dtype=float);f=np.asarray(f,dtype=int)
 ref=(root/'evidence/cylinder-casing-tests/LMS_LOD0.reference.txt').read_text(encoding='utf-8-sig')
 ranges={n:(float(lo.rstrip('f')),float(hi.rstrip('f'))) for n,lo,hi in re.findall(r'RangeFloat\s+(\w+)\s*=\s*new MeshSplittersUtil.RangeFloat\(([-.\df]+),\s*([-.\df]+)\)',ref)}
-exclude=np.zeros(len(f),dtype=bool)
+exclude=np.zeros(len(f),dtype=bool);air_parts=[]
 for name,body in re.findall(r'private static Mesh (get\w+Mesh)\([^)]*\)\s*\{(.*?)\n\t\}',ref,re.S):
     if not any(t in name for t in ['Cylinder','DryPipe','CrossheadSupport','LiftingArmSupport','Brake','Suspension','AirTank','OilLines','Lubricator','AirPump','Frame','Subframe']):continue
+    selected=np.zeros(len(f),dtype=bool)
     for box in re.findall(r'markPartOfMesh\(val.vertices,\s*array\d*,\s*(\w+),\s*(\w+),\s*(\w+)\)',body):
         mask=np.ones(len(v),dtype=bool)
         for a,n in enumerate(box):
             lo,hi=ranges[n];mask&=(v[:,a]>=lo)&(v[:,a]<=hi)
-        exclude|=mask[f].all(axis=1)
+        selected|=mask[f].all(axis=1)
+        if 'AirTank' in name:
+            mask=np.ones(len(v),dtype=bool)
+            for a,n in enumerate(box):
+                lo,hi=ranges[n];axis=-v[:,a] if a==0 else v[:,a];mask&=(axis>=lo)&(axis<=hi)
+            selected|=mask[f].all(axis=1)
+    exclude|=selected
+    if 'AirPump' in name and 'Pipe' in name and selected.any():air_parts.append((name,selected))
 v[:,2]+=4.88
 fixed=triangles(v,f[~exclude])
+air_parts=[(name,triangles(v,f[mask])) for name,mask in air_parts]
 tank=clearance['tanks'][0]
 tv=np.asarray(tank['vertices']);tf=np.asarray(tank['triangles'])
 # LMS authors only one reservoir mesh and mirrors its transform for the other.
@@ -102,16 +111,25 @@ for clip in animation['clips']:
 
 case_results=[];total_checks=0
 for case in data['cases']:
-    id=case['id'];sockets=np.asarray(case['sockets']);modified=id in [0,1,2,3,4,5,12,13,14,34,35,44]
+    id=case['id'];sockets=np.asarray(case['sockets']);modified=id in [0,1,2,3,4,5,34,35,44]
     obstacles=[('fixed native body excluding relocated fragments',fixed)]
     current_tank=tanks.copy();current_tank[:,:,2]-=.1 if modified else 0
     obstacles.append(('reservoirs',current_tank))
+    for label,original in air_parts:
+        part=original.copy()
+        if modified and 'OutputPipe' in label:part[:,:,2]=(part[:,:,2]-4.88)*1.12+4.88-.58
+        if modified and 'InputPipe' in label:part[:,:,2]+=.07
+        obstacles.append((label,part))
     result=[]
-    for mesh in case['meshes']:
-        if 'original boiler fitting' in mesh['name']:continue # retained native collar enters its authored boiler seat
-        pipe=triangles(mesh['vertices'],mesh['triangles'])
+    pipes=[(mesh,triangles(mesh['vertices'],mesh['triangles'])) for mesh in case['meshes'] if 'original boiler fitting' not in mesh['name']]
+    boiler=np.asarray(case['boilers'])
+    for mesh,pipe in pipes:
         for label,obstacle in obstacles:
             hit=crossings(pipe,obstacle);total_checks+=1
+            # A native inclined boiler seat deliberately intersects the retained
+            # collar. Keep this small joint neighbourhood separate from a pipe
+            # crossing the running board farther along its route.
+            if len(hit):hit=hit[np.linalg.norm(hit[:,None,:]-boiler[None,:,:],axis=2).min(axis=1)>.15]
             if len(hit):result.append(dict(pipe=mesh['name'],obstacle=label,count=len(hit),points=hit[:12].tolist()))
     # Recover cylinder-side frame from the actual recorded socket and native
     # dimensions; Franklin gear uses different authored assets and is excluded.
@@ -126,20 +144,23 @@ for case in data['cases']:
             side=1 if socket[0]>=0 else -1
             # Native top socket / lower dry-pipe seat is approximately z9.49695.
             offset=socket[2]-9.49695-(scale-1)*8.84 if full else socket[2]-scale*9.49695
+            if not data['correctedSockets'] and (id in [3,34] or 27<=id<=30):
+                # The old defect is precisely that the cylinder socket does not
+                # share the gear's frame. Do not infer that frame from the socket.
+                offset=1.1 if 27<=id<=30 else -2.1
             mapping=matrix([0,0,offset],[0,0,0,1],[side,scale,scale])
             for clip,time,parts in poses:
                 for name,part in parts:
                     mapped=(np.c_[part.reshape(-1,3),np.ones(part.size//3)]@mapping.T)[:,:3].reshape(-1,3,3)
-                    for mesh in case['meshes']:
-                        if 'original boiler fitting' in mesh['name']:continue
-                        pipe=triangles(mesh['vertices'],mesh['triangles'])
+                    for mesh,pipe in pipes:
                         # Fast whole-envelope rejection precedes triangle work.
                         if not ((pipe.max((0,1))>=mapped.min((0,1)))&(mapped.max((0,1))>=pipe.min((0,1)))).all():continue
                         hit=crossings(pipe,mapped);total_checks+=1
                         if len(hit):result.append(dict(pipe=mesh['name'],obstacle=name,clip=clip,time=time,count=len(hit),points=hit[:12].tolist()))
     case_results.append(dict(id=id,name=case['name'],crossings=result))
     print(case['name']+': '+str(len(result))+' crossing groups',flush=True)
-report=dict(cases=len(case_results),trianglePairQueries=total_checks,arrangementsWithCrossings=sum(bool(c['crossings']) for c in case_results),results=case_results,
-    limitations=['Recorded 1.22.0 neutral sockets plus recomputed new rigid sockets; actual Unity scene not executed','Non-coplanar surface crossings only; does not prove separation of nested solids or a minimum clearance','Relocated body fragments removed, reservoirs tested separately; retained native boiler collar seating excluded','Native sampled cylinder-side crosshead/valve/piston pieces only; custom Franklin gear, stretched main/radius rods and full articulation/body movement require live inspection','Stock has native pipes, giant prototype and zero-driver novelty have no generated connections; Erie rear exhaust covered by its separate native clearance test'])
+report=dict(status='CONTACTS_REQUIRE_REVIEW' if any(c['crossings'] for c in case_results) else 'NO_CROSSINGS_FOUND_WITH_LIMITS',
+    correctedSockets=data['correctedSockets'],cases=len(case_results),trianglePairQueries=total_checks,arrangementsWithCrossings=sum(bool(c['crossings']) for c in case_results),results=case_results,
+    limitations=['Recorded 1.22.0 neutral sockets'+(' plus recomputed new rigid sockets' if data['correctedSockets'] else '')+'; actual Unity scene not executed','Non-coplanar surface crossings only; does not prove separation of nested solids or a minimum clearance','Relocated body fragments removed, reservoirs and native air pipes tested separately; retained native boiler collar seating within 0.15m of each boiler attachment excluded','Native sampled cylinder-side crosshead/valve/piston pieces only; custom Franklin gear, stretched main/radius rods and full articulation/body movement require live inspection','Stock has native pipes, giant prototype and zero-driver novelty have no generated connections; Erie rear exhaust covered by its separate native clearance test'])
 (out/'clearance.json').write_text(json.dumps(report,indent=2))
 print(json.dumps({k:v for k,v in report.items() if k not in ['results']},indent=2))

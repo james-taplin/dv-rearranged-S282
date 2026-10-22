@@ -19,11 +19,14 @@ namespace UnityEngine {
   public static Quaternion Angle(double degrees){double r=degrees*Math.PI/360;return new Quaternion{x=Math.Sin(r),w=Math.Cos(r)};}
  }
  public class Transform {
+  public GameObject gameObject;
+  public Transform Find(string path)=>null;
+  public T[] GetComponentsInChildren<T>(bool inactive)=>Array.Empty<T>();
   public Quaternion localRotation=Quaternion.Angle(0);
   public Vector3 localEulerAngles {get{return new Vector3(Math.Atan2(localRotation.x,localRotation.w)*360/Math.PI,0,0);}set{localRotation=Quaternion.Angle(value.x);}}
  }
  public class GameObject { public Transform transform=new Transform(); }
- public class MonoBehaviour { public Transform transform=new Transform(); }
+ public class MonoBehaviour { public bool enabled=true; public Transform transform=new Transform(); }
 }
 namespace RodTimingRegression {
  public static class Harness {

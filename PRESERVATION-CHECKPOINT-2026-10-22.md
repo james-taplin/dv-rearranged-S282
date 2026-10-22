@@ -1,44 +1,44 @@
 # Local preservation checkpoint - 22 October 2026
 
-James requested an independent backup and local Git preservation of newer work,
-with no publishing or deletion. Codex assembled this single honest checkpoint
-from the verified backup below; individual historical commits were not invented.
+James requested independent backups and local Git preservation, with no
+publishing or deletion. Codex preserved the original verified full-folder
+snapshot, then added this bounded final source capture to the same local
+codex/preserve-local-20261022 safety branch. Historical commits were not invented.
 
-Backup: C:\Users\james\Desktop\Derail Valley Mods\_Repository Backups\2026-10-22-preservation-01\rearranged-s282-b99
+Previous preservation commit: ff4dc6fad6f6ef90040bc7002fa472576ab1890a
 
-Parent: 14b112841a53ab53e4162e52ec8df06b14ae6948
+Final source capture started UTC: 10/22/2026 20:09:17
+Final source capture completed UTC: 10/22/2026 20:09:24
+Source files captured: 176
+Explicit source deletions reflected only in this checkpoint tree: 0
 
-Local preservation branch: codex/preserve-local-20261022
+Source snapshot: C:\Users\james\Desktop\Derail Valley Mods\_Repository Backups\2026-10-22-preservation-01\_Final Source Snapshots\rearranged-s282-b99
+Manifest: C:\Users\james\Desktop\Derail Valley Mods\_Repository Backups\2026-10-22-preservation-01\_Final Source Snapshots\rearranged-s282-b99\_SOURCE_SNAPSHOT_MANIFEST.json
+Manifest SHA256: DA7368619F2991CC712434D4D4B562005B593BE422A20BBB5651B1857EEA010B
 
-The active development branch, its working source and its normal index were not
-changed by this preservation operation. An isolated index and the backup folder
-supplied the tree. Other chats were actively developing these projects, so their
-live folders can contain work newer than this snapshot. This branch is a safety
-checkpoint, not a new source-of-truth branch or a release announcement.
+Each copied file matched SHA256 before and after its individual copy, with stable
+source length and last-write timestamp. This is a bounded per-file capture while
+other chats continued working; it is not an atomic snapshot of the entire tree.
+Current live source can advance beyond it. The manifest records every selected
+file, its hash and capture time. No continuing pursuit of a moving source is
+implied. The earlier complete folder backup retains ignored evidence, native
+fixtures, references, caches, packages and the original Git database.
 
-The runtime-trial build script defaults to 1.22.2; root Info.json is the retained
-1.3.0 stage-baseline template. The existing handover records later releases and
-an unresolved twelve-driver valve-gear investigation. Those are historical
-records, not newly verified runtime results. Active geometry work continued
-while this preservation snapshot was being prepared.
+Runtime-trial script default: 1.22.2. Root Info.json remains the historical 1.3.0 stage-baseline template; geometry and diagnostic development continues independently.
 
-The checkpoint captures 175 changed/new source, authoring,
-offline-test, script and documentation files, plus this note. The three S282 OBJ
-files and S060 branch-pipe source data, where applicable, are documented custom
-assets from the inherited MIT mod. Ignored game references, native fixtures,
-logs, caches, packages and other local evidence remain in the full filesystem
-backup; they were not newly added to Git. Each selected file's SHA256 matched
-the independent backup manifest before staging, and each staged Git blob was
-checked against that file after the repository's normal text normalization.
-The raw backup retains the original file bytes.
+Only approved source, scripts, docs, authoring/test code and documented custom
+MIT mod meshes/data were selected. No native game assets, reference DLLs,
+generated packages or ignored evidence were newly added to Git. Six common
+credential-pattern families had no matches in selected source. Committed blobs
+were compared with the immutable source snapshot after normal Git text
+normalization. The raw snapshot retains the original bytes.
 
-Preservation checks: 24 PowerShell syntax parses, 3
-JSON parses, 0 project XML parses and 15 Python AST
-parses passed. The selected files had zero matches in six common credential
-pattern families. These checks do not certify absence of every possible secret.
-No feature tests, compilation, Unity run, game launch, installation or gameplay
-acceptance was performed for this checkpoint. Existing validation claims and
-known limitations are retained as historical evidence, not retested claims.
+No feature tests, compilation, Unity/game run, installation or release-readiness
+validation was performed for this preservation pass. Historical validation and
+limitations remain evidence from their original work, not newly retested claims.
 
-No push, publication, release tag, history rewrite, source fix, folder move,
-archive or deletion was performed by this preservation operation.
+An isolated index and snapshot folder supplied this commit. Active development
+HEAD, branch, normal index and live source were not modified by preservation.
+Only the existing local preservation ref was advanced with an expected-old-ref
+check. No push, publication, tag, history rewrite, archive, move or deletion of
+user files was performed. Keep the active project folders for ongoing work.

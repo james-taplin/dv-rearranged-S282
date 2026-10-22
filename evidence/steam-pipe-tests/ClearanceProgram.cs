@@ -39,12 +39,12 @@ internal static class ClearanceProgram
                 // These two old families lacked the common cylinder frame in
                 // the recorded build. Recompute their upper socket with the
                 // same production normalization used by the new candidate.
-                if(id==3||id==34||id>=27&&id<=30)
+                if((args.Length<5||args[4]!="recorded")&&(id==3||id==34||id>=27&&id<=30))
                 {
                     float s=id>=27&&id<=30?.84f:1.2879f,offset=id>=27&&id<=30?1.1f:-2.1f;
                     position.y-=id>=27&&id<=30?-.11f:.21f;
                     position=CylinderCasingShape.NormalizePrairie(position,s,s);
-                    position=new(position.x,position.y*s,position.z*s+offset);scale=s;
+                    position=new(position.x,position.y*s,position.z*s+offset);scale=Math.Max(.55f,Math.Min(1f,s));
                 }
                 t.localPosition=position;
                 return new SteamPipePresentation.Cylinder{Part=t,Side=p.GetProperty("side").GetInt32(),Scale=scale,Car=car};
@@ -54,10 +54,11 @@ internal static class ClearanceProgram
             if(actor.Error!=null)throw new Exception(record.GetProperty("name").GetString()+": "+actor.Error);
             output.Add(new{id,name=record.GetProperty("name").GetString(),articulated,
                 sockets=nodes.Select(n=>new[]{n.Part.position.x,n.Part.position.y,n.Part.position.z}).ToArray(),
+                boilers=actor.ConnectionPoints.Select(p=>new[]{p.Boiler.x,p.Boiler.y,p.Boiler.z}).ToArray(),
                 meshes=go.GetComponentsInChildren<MeshFilter>(true).Where(f=>f.sharedMesh.vertexCount!=0).Select(f=>new{name=f.name,vertices=f.sharedMesh.vertices.Select(p=>body.InverseTransformPoint(f.transform.TransformPoint(p))).Select(p=>new[]{p.x,p.y,p.z}).ToArray(),triangles=f.sharedMesh.triangles}).ToArray()});
             actor.Release();
         }
-        File.WriteAllText(args[3],JsonSerializer.Serialize(new{captureVersion=capture.RootElement.GetProperty("version").GetString(),cases=output,
+        File.WriteAllText(args[3],JsonSerializer.Serialize(new{captureVersion=capture.RootElement.GetProperty("version").GetString(),correctedSockets=args.Length<5||args[4]!="recorded",cases=output,
             limits="Production pipe geometry using recorded body-space sockets; corrected rigid sockets recomputed from production normalization. Neutral pose; no measured live articulation clearance or complete game scene."}));
         Console.WriteLine("Exported "+output.Count+" recorded arrangement pipe presentations");
     }

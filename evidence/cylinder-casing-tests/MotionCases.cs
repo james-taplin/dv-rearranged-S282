@@ -33,7 +33,7 @@ internal static partial class PrairieProgram
                 {
                     var data=fittings.RootElement.GetProperty("parts").EnumerateArray().Single(p=>p.GetProperty("name").GetString()=="native-lod0-guide-"+(guide.name.EndsWith("_l")?"left":"right"));
                     var points=data.GetProperty("vertices").EnumerateArray().Select(V).Select(p=>guide.InverseTransformPoint(r.body.TransformPoint(p))).ToArray();
-                    var mesh=new Mesh{name="actual native guide",vertices=points};mesh.RecalculateBounds();_=new MeshFilter(guide,mesh);
+                    var mesh=new Mesh{name="actual native guide",vertices=points};mesh.RecalculateBounds();guide.GetComponent<MeshFilter>().sharedMesh=mesh;
                 }
                 foreach(var d in new[]{r.w.driveL,r.w.driveR})
                     foreach(string path in paths)
