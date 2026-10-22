@@ -1,3 +1,22 @@
+## 1.22.3 test installed at James's request - 22 Oct 2026
+
+User confirmed game closed; process check also found no DerailValley process.
+Installed the exact previously audited TEST ZIP, without rebuilding or changing
+source. All43package files hash-verified against archive. All40non-package files
+(including settings, existing diagnostics and cache) hash-verified unchanged.
+No backups/rollbacks created. No game launch/runtime acceptance claimed.
+
+Installed1.22.3 DLL D48E09D26260626444CB7EEDA8C8A35840FF9A85A1FEE49FC858302F1E0AF4E1.
+Source ZIP SHA256 65ADB18E1030DF8EABAC28D2D14FD6342F435546C41AD7D50FD4F5D8260C2ABD.
+Install timestampUTC 2026-10-22T21:31:07.402235+00:00.
+Receipts: build/runtime-trial-1.22.3/installation-receipt.json and build-receipt.json;
+desktop build receipt updated too. Current1.22.3 TEST supersedes installed1.22.2.
+Still needs visual/curve testing, especially Prairie adapter finish/profile and
+articulated front pipe joints. Run structural diagnostic normally. Prior offline
+coverage/limits below remain applicable; installation is not new runtime proof.
+
+Earlier build and source notes follow:
+
 ## Source-derived steam duct extensions - 22 Oct 2026
 
 Local source checkpoint: codex/steam-duct-polish-20261022, child of reviewed

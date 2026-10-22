@@ -1,3 +1,7 @@
+Installed1.22.3 TEST on22October at James's request; exact audited ZIP,43files
+hash-verified,40local files retained. No new game test performed. Earlier
+not-installed statements below describe the build-time audit, not current state.
+
 # Current pipe extension audit - 22 Oct 2026
 
 Candidate1.22.3 now includes the guide/casing fixes below AND source-derived
