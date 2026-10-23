@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.23.1',
+    [string]$Version = '1.23.2',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$OutputDirectory,
     [string]$CandidateDirectory,
@@ -88,6 +88,9 @@ if ([version]$Version -ge [version]'1.23.1') {
     $receipt.features = @('Compact articulated steam header and side entries; small local fitting overlap permitted, original profile/material and minimum bore retained',
         'Fixed 2-4-4-4-0 stock fallback when the second hinge lies just behind the native bar-frame end; native hinge and driver positions unchanged',
         'Powered tender uses independent inactive source templates; returning to Erie after other arrangements no longer depends on disposable shared Mallet parts') + $receipt.features
+}
+if ([version]$Version -ge [version]'1.23.2') {
+    $receipt.features = @('Hide optional Franklin assets before native rear/tender template cloning; prevent four extra cylinders breaking Angus/Great Northern/Erie and appearing on powered tenders; retain strict structural checks') + $receipt.features
 }
 if ($Install) {
     if (Get-Process -Name DerailValley -ErrorAction SilentlyContinue) { throw 'Close Derail Valley before installing the prepared test ZIP.' }

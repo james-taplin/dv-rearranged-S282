@@ -109,6 +109,7 @@ namespace RearrangedS282
             var state = row["tender"] as JObject;
             if (tender && ((bool?)row["hasSupportedTender"] != true || (bool?)state?["attached"] != true ||
                 (bool?)state?["sourceReady"] != true || ((int?)state?["sourceStaticCount"] ?? 0) <= 0 ||
+                ((int?)state?["unexpectedFranklinAssemblies"] ?? -1) != 0 ||
                 (bool?)state?["exhaustOutlet"] != true || (bool?)state?["visualEffects"] != true || (bool?)state?["audioEffects"] != true))
                 throw new InvalidOperationException("Powered tender geometry, source cache, exhaust, particle or audio bindings are missing.");
             if (!tender && state != null) throw new InvalidOperationException("Ordinary-tender case retained a powered engine.");

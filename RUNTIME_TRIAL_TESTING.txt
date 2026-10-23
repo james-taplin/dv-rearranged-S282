@@ -1,4 +1,12 @@
-Rearranged S282 B99 1.23.1 test
+Rearranged S282 B99 1.23.2 test
+
+Changes from 1.23.1
+- Fixed four extra Franklin cylinder assemblies inherited by rear-drive/tender
+  templates when optional powered-tender parts were prepared before other layouts.
+  Hide the optional source assets before cloning, retaining the native Walschaerts
+  engine and all physics. This fixes the eight-found/four-expected conversion error
+  on Angus, Great Northern and Erie; the strict cylinder-count test is retained.
+- Structural reports also reject unexpected active Franklin assemblies on tenders.
 
 Changes from 1.23.0
 - Fixed compact 2-4-4-4-0 conversion restoring a stock Mikado when its second

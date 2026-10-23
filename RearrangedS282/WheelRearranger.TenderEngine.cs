@@ -60,6 +60,11 @@ namespace RearrangedS282
             try
             {
                 EnsureArticulatedAssets();
+                // Hide the freshly created optional Franklin variants BEFORE
+                // cloning a Walschaerts rear drive. Their clones are not in
+                // articulatedAssets, so hiding the originals afterwards leaves
+                // four stray cylinders in the shared rear/tender templates.
+                foreach (var asset in articulatedAssets) if (asset != null) asset.gameObject.SetActive(false);
                 tenderNativeCylinderFront = MeasureNativeCylinderFront();
                 tenderLayout = MeasureBigMallet(WheelArrangementType.s28882);
                 EnsureBigMalletAssets(tenderLayout);
@@ -77,8 +82,6 @@ namespace RearrangedS282
                     clone.name = source.name;
                     tenderStaticMaps.Add(clone, MalletBody.worldToLocalMatrix * source.localToWorldMatrix);
                 }
-                // Asset construction must not expose Franklin parts on a rigid host.
-                foreach (var asset in articulatedAssets) if (asset != null) asset.gameObject.SetActive(false);
             }
             catch
             {
@@ -275,6 +278,8 @@ namespace RearrangedS282
             ["selected"] = poweredTenderSelected, ["hostArrangement"] = (int)currentWA,
             ["sourceReady"] = tenderSourceRoot != null && tenderSourceL != null && tenderSourceR != null && tenderStaticMaps.Count != 0,
             ["sourceStaticCount"] = tenderStaticMaps.Count,
+            ["unexpectedFranklinAssemblies"] = tenderEngineRoot == null ? 0 : tenderEngineRoot.GetComponentsInChildren<Transform>(true)
+                .Count(t => t.gameObject.activeInHierarchy && (t.name == "franklin_type_b(Clone)" || t.name == "franklin_type_b_4444(Clone)")),
             ["driverRadiusM"] = tenderLayout != null ? .712f * tenderLayout.Scale : (float?)null,
             ["tender"] = tenderEngineCar != null ? tenderEngineCar.ID : null, ["attached"] = tenderEngineRoot != null,
             ["exhaustOutlet"] = TenderExhaustOutlet != null, ["visualEffects"] = ArticulatedEffects.TenderParticlesReady(GetComponent<TrainCar>()),

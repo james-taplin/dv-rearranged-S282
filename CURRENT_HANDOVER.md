@@ -1,3 +1,42 @@
+## 1.23.2 installed: fix active Franklin copies in rear/tender templates - 23 October 2026
+
+James reported the1.23.1 structural run failed. Actual JSON version1.23.1.0:
+85/91main cases pass. IDs41/42/43 (Angus/Great Northern/Erie), both tender modes,
+fail conversion with8cylinders found/4expected. Three Erie return checks fail
+for same cause; other3returns pass. New ID47 passes with6cylinder sockets,
+3active engines and intended4bar-frame pieces. Final stock restoration and
+saved tender preference preservation pass. This is a real conversion error,
+not permission to loosen the4cylinder expectation. Logs confirm8casing meshes.
+Focused findings/hash under build/runtime-trial-1.23.2/previous-run-findings.json;
+original capture left untouched in mod folder.
+
+Cause: EnsurePoweredTenderSource calls EnsureArticulatedAssets, which creates
+both Franklin variants active under each native drive. It cloned the shared
+8-coupled rear drives before hiding those source assets. Four active Franklin
+cylinders were inherited by the copies, outside the original assets list. These
+rear drives break the3four-axle-rear Mallets, and also contaminate powered tender
+visuals despite their previous binding checks passing. Corrected only ordering:
+hide optional articulated assets before rear/tender cloning. Native Walschaerts,
+accepted pipe geometry and all force/boiler/adhesion calculations unchanged.
+Added tender report unexpectedFranklinAssemblies, requiring0during structural
+powered cases. Existing strict cylinder counts retained.
+
+Regression fixture now models both live source variants and deep clone active
+states. Actual1.23.1 source fails new assertion before fix; corrected source
+passes853checks including40cache-regeneration cycles. Structural validator1081
+checks/91cases pass. Clean net48 game-reference build0warnings/errors; compiled
+preservation286checks/124protected methods plus force/tick/layout checks unchanged
+against1.23.1. No geometry or driving-physics redesign.
+
+Installed exact1.23.2-Test ZIP after process check:36files byte/hash verified,
+settings/current captures retained; no backup copies/push/publication. Structural
+button retains91main cases and6direct Erie returns. Ask James to repeat full run;
+1.23.2 live acceptance pending. DLL C4C216972DE6687E2F4A2C3FF5862AACFAFEDC5852CC22636EFA278C77D73A1A.
+
+## 1.23.2 installed for James - 23 October 2026
+
+Installed the exact previously audited test ZIP after verifying DerailValley was closed. All36 packaged files match the archive byte-for-byte; DLL SHA256 C4C216972DE6687E2F4A2C3FF5862AACFAFEDC5852CC22636EFA278C77D73A1A. Settings.xml and previous diagnostic captures preserved. Removed only retired shipped diagnostic/export instructions and Tools/TractiveTable.ps1. No backups or rollback copies. Build/delivery/installation receipts updated under build/runtime-trial-1.23.2. Runtime acceptance remains pending; not published.
+
 ## 1.23.1 compact pipes, conversion fixes and structural matrix - 23 October 2026
 
 Installed exact final test ZIP after game-closed check; all36files verified,
