@@ -61,6 +61,9 @@ namespace RearrangedS282
 
 		internal void ReapplyFromSettings()
 		{
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
+            if (Stage2RuntimeChecks.Running) { ReapplyStatus = "Wait for the structural test to finish before reapplying."; return; }
+#endif
 			var target = SettingsTarget;
 			if (target == null || target.carType != TrainCarType.LocoSteamHeavy || signalOrigin == null ||
 				(target.transform.position - signalOrigin.position).magnitude > SIGNAL_RANGE)
@@ -317,6 +320,9 @@ namespace RearrangedS282
 		//Gets called when we click with the comms radio
 		public void OnUse()
 		{
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
+            if (Stage2RuntimeChecks.Running) return;
+#endif
 			if (SettingsMenuOpen) return;
 			switch (CurrentState)
 			{

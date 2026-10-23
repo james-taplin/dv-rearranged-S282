@@ -30,8 +30,17 @@ try {
    $compared.Add($method.FullName)
   }
  }
- foreach($retired in @('Stage2RuntimeChecks','PowerDiagnostics','PowerDiagnosticsTick','TractiveDiagnostics')) { Check ($null -eq (FindType $new $retired)) "Diagnostic recorder excluded: $retired" }
+ foreach($retired in @('PowerDiagnostics','PowerDiagnosticsTick')) { Check ($null -eq (FindType $new $retired)) "Power recorder excluded: $retired" }
+ if([version]$new.Assembly.Name.Version -ge [version]'1.23.1') {
+  Check ($null -ne (FindType $new Stage2RuntimeChecks)) 'Manual structural test is included'
+  $runner=@($new.GetTypes() | Where-Object {$_.Name.StartsWith('<RunAll>')} | ForEach-Object Methods | Where-Object Name -EQ MoveNext)
+  Check ($runner.Count -eq 1 -and (CallNames $runner[0]) -contains 'StructuralCases') 'Structural runner uses the full arrangement/tender matrix'
+  Check ((CallNames $runner[0]) -contains 'TrySwitchStructural') 'Structural runner uses per-locomotive temporary tender override'
+ }
  $owner=FindType $new WheelRearranger
+ foreach($name in @('ApplyTenderForce','TickTenderEngine','MeasureTriplex','MeasureBigMallet')) {
+  Check ((NormalizedMethod (Method $owner $name)) -ceq (NormalizedMethod (Method (FindType $old WheelRearranger) $name))) "Existing force/traction/layout calculation retained: $name"
+ }
  foreach($getter in @('RequestedDriverPitchM','RequestedDriverRearwardM')) {
   $method=Method $owner $getter
   Check (-not @($method.Body.Instructions | Where-Object {$_.Operand -and $_.Operand.ToString() -like '*Main::get_settings*'}).Count) "Baked geometry ignores saved sliders: $getter"
@@ -39,6 +48,12 @@ try {
  Check ((CallNames (Method $owner SelectPoweredTender)) -contains 'ConfigureTender') 'Tender selection uses the existing native auxiliary engine'
  Check ((CallNames (Method $owner SelectPoweredTender)) -contains 'ApplyTender') 'Tender-only sizing remains reduction-only'
  Check ((CallNames (Method $owner AttachTenderEngine)) -contains 'Initialize') 'Tender attachment creates its native presentation clock'
+ if([version]$new.Assembly.Name.Version -ge [version]'1.23.1') {
+  Check ((CallNames (Method $owner AttachTenderEngine)) -contains 'CloneTenderStatics') 'Attachment clones frozen tender statics'
+  foreach($method in @((Method $owner AttachTenderEngine),(Method $owner CloneTenderStatics))) {
+   Check (-not @($method.Body.Instructions | Where-Object {$_.Operand -and $_.Operand.ToString() -like '*::bigMalletStatics'}).Count) 'Tender attachment does not read the disposable host static cache'
+  }
+ }
  Check ((CallNames (Method $owner RestoreConventionalStock)) -contains 'DetachTenderEngine') 'Stock/pooling restoration releases the tender on the other car'
  Check ((CallNames (Method (FindType $new 'ArticulatedSimulation') ConfigureTender)) -notcontains 'Apply') 'Tender selection does not recalibrate host engine'
  Check ((CallNames (Method (FindType $new Main) Load)) -notcontains 'Update') 'No diagnostic update loop registered'

@@ -456,12 +456,21 @@ namespace RearrangedS282
                                 split=ArticulatedFrameClipper.Clip(remaining,point,normal,true);
                                 var rest=ArticulatedFrameClipper.Clip(remaining,point,normal,false);
                                 articulatedMeshes.Add(split); articulatedMeshes.Add(rest);
-                                if(split.triangles.Length==0 || rest.triangles.Length==0)
+                                // The compact six-axle triplex's second hinge is
+                                // about 5 cm behind the native bar-frame end. The
+                                // rear engine therefore has no bar-frame slice;
+                                // the separate firebox subframe remains in place.
+                                // Keep the measured hinge and wheel positions.
+                                bool shortRearEnd = id == ArticulatedSimulation.SixAxleTriplexId &&
+                                    piece == pins.Count - 1 && split.triangles.Length != 0 && rest.triangles.Length == 0 &&
+                                    ArticulatedFrameClipper.EndsJustAheadOfPin(remaining, point, normal, .10f);
+                                if(split.triangles.Length==0 || rest.triangles.Length==0 && !shortRearEnd)
                                     throw new InvalidOperationException("S282 frame does not span its measured articulation pin: "+name+
                                         " (local pin "+point.ToString("F3")+", mesh bounds "+mesh.bounds.min.ToString("F3")+".."+mesh.bounds.max.ToString("F3")+")");
                                 remaining=rest;
                             }
                             else split=remaining;
+                            if(split.triangles.Length==0) continue;
                             var part=Object.Instantiate(source.gameObject,source.parent).transform;
                             part.name="[Rearranged "+owners[piece].label+" frame "+id+"] "+name;
                             part.GetComponent<MeshFilter>().sharedMesh=split;
@@ -711,6 +720,24 @@ namespace RearrangedS282
     // subdivision. The hidden joint cut is uncapped; collision remains native.
     internal static class ArticulatedFrameClipper
     {
+        // A visual bar may finish just before a hinge. This does not move the
+        // native articulation or create a synthetic length of chassis.
+        internal static bool EndsJustAheadOfPin(Mesh source, Vector3 point, Vector3 normal, float maximumGap)
+        {
+            if(source == null || !source.isReadable || normal.sqrMagnitude < 1e-12f || maximumGap < 0f) return false;
+            normal = normal.normalized;
+            var vertices = source.vertices;
+            if(vertices.Length == 0) return false;
+            float nearest = float.PositiveInfinity;
+            foreach(var vertex in vertices)
+            {
+                float distance = Vector3.Dot(vertex - point, normal);
+                if(float.IsNaN(distance) || float.IsInfinity(distance) || distance < -1e-5f) return false;
+                nearest = Math.Min(nearest, distance);
+            }
+            return nearest <= maximumGap;
+        }
+
         private struct Vertex
         {
             internal Vector3 position, normal;

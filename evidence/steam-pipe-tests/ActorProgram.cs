@@ -116,10 +116,10 @@ internal static class ActorProgram
             {
                 var points = f.sharedMesh.vertices;
                 // Source contract: each combined per-side mesh contains a
-                // horizontal header at body X +/-1.45,Y2.05, with two closed
+                // horizontal header at body X +/-1.30,Y2.05, with two closed
                 // end caps. Feed/branch geometry shares this mesh, so its full
                 // AABB is not the header's own centreline.
-                float x=points.Average(p=>p.x)>=0?1.45f:-1.45f;
+                float x=points.Average(p=>p.x)>=0?1.30f:-1.30f;
                 var centerIds = Enumerable.Range(0,points.Length).Where(i=>Math.Abs(points[i].x-x)<.001f&&Math.Abs(points[i].y-2.05f)<.001f).ToArray();
                 Check(centerIds.Length>=2,"Header end cap centres missing");
                 Check(centerIds.Count(id=>f.sharedMesh.triangles.Count(i=>i==id)>=8)>=2,"Header bore remains open");

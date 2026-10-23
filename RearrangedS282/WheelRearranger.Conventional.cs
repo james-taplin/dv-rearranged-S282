@@ -23,6 +23,16 @@ namespace RearrangedS282
         internal int ExplosionMaterialRendererCount => explosionMaterials?.Count ?? 0;
         internal bool ConventionalSetupBlocked => conventionalFault;
         internal string LastConventionalError { get; private set; }
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
+        private bool? structuralTenderOverride;
+        internal bool TrySwitchStructural(int id, bool tender)
+        {
+            if (!Stage2RuntimeChecks.Running || tender && !PoweredTenderPolicy.Supports(id)) return false;
+            structuralTenderOverride = tender;
+            try { return TrySwitchStage2(id); }
+            finally { structuralTenderOverride = null; }
+        }
+#endif
 
         private bool TrySwitchConventional(int id)
         {
@@ -40,6 +50,9 @@ namespace RearrangedS282
                 return false;
             }
             bool wantsTender = Main.settings != null && Main.settings.PoweredTenderEnabled(id);
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
+            if (Stage2RuntimeChecks.Running && structuralTenderOverride.HasValue) wantsTender = structuralTenderOverride.Value;
+#endif
             if (stockGeometry == null && id == 10 && !wantsTender) return true;
             LastConventionalError = null;
             skipWheelArrangementChange = true;

@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.23.0',
+    [string]$Version = '1.23.1',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$OutputDirectory,
     [string]$CandidateDirectory,
@@ -72,15 +72,22 @@ $receipt = [ordered]@{
 if ([version]$Version -ge [version]'1.22.3') { $receipt.features = @('Source-derived steam duct extensions with circular elbows, original collars/UV/materials, seated rigid branches, compact lower collars, Prairie offset casting and measured articulated side ports; protected physics unchanged','Common motion-frame casing and guide alignment for resized rigid families, including twelve-driver layouts; live acceptance pending') + $receipt.features }
 if ([version]$Version -ge [version]'1.22.4') { $receipt.features = @('Erie tender native chuff/loop and cylinder-cock audio, rear-exhaust seating, LP presentation profile, coupling-driven audio cleanup/rebind and diagnostic readiness; driving/boiler physics preserved') + $receipt.features }
 if ($playerBuild) {
-    $receipt.diagnosticsIncluded = $false
+    $receipt.diagnosticsIncluded = $true
+    $receipt.structuralDiagnosticsIncluded = $true
+    $receipt.powerDiagnosticsIncluded = $false
     $receipt.resizeControlsIncluded = $false
     $receipt.features = @('48 arrangements; new native-constraint 2-4-4-4-0 articulated locomotive triplex with six driving axles and ordinary tender',
         'Optional Erie powered S282 tender for 43 compatible rigid and two-engine articulated layouts; UMM per-arrangement choices, Erie on by default, safe reapply',
         'Native tender RPM adapted to host/tender wheel-radius ratio without writing shared host RPM; separate tender force/steam demand retained',
         'Native tender driving-gear clanks, chuffs/loops, cylinder-cock audio and existing exhaust/cock/drip visuals',
         'Accepted Mogul, 2-4-0, Prairie and American proportions fixed; cylinder normalization retained; no granular resizing UI',
-        'Diagnostic recorder classes, UI, tick hook and exporter tools excluded; no structural/power recordings in this build',
+        'Manual structural-only test button and JSON report; power recorders, power UI, tick hook and exporter tools excluded',
         'Existing native boiler, cylinder calibration, adhesion, braking, curving and rod animation retained; no true compound simulation enabled')
+}
+if ([version]$Version -ge [version]'1.23.1') {
+    $receipt.features = @('Compact articulated steam header and side entries; small local fitting overlap permitted, original profile/material and minimum bore retained',
+        'Fixed 2-4-4-4-0 stock fallback when the second hinge lies just behind the native bar-frame end; native hinge and driver positions unchanged',
+        'Powered tender uses independent inactive source templates; returning to Erie after other arrangements no longer depends on disposable shared Mallet parts') + $receipt.features
 }
 if ($Install) {
     if (Get-Process -Name DerailValley -ErrorAction SilentlyContinue) { throw 'Close Derail Valley before installing the prepared test ZIP.' }

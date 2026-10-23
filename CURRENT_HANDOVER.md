@@ -1,3 +1,66 @@
+## 1.23.1 compact pipes, conversion fixes and structural matrix - 23 October 2026
+
+Installed exact final test ZIP after game-closed check; all36files verified,
+settings and existing captures unchanged; no backups, push or publication.
+DLL7886B6403837907503EF715EC1EBB278438E42A1DA341F980420A4ACF9EDE302.
+ZIP77CE46B934CFBCFD1327850B9BE9E0184FDCA31BA49F611E501B70F81704E67E.
+Receipts under build/runtime-trial-1.23.1; Desktop1.23.1-Test holds the archive.
+
+James reported excessive outboard pipe ends, new2-4-4-4-0 falling back to Mikado,
+and Erie tender remaining ordinary after other layouts. Player.log confirms
+frame split failures at18525/18573/18602: second pin localZ-1.721 while main bar
+ends-1.670. Only ID47's final rear slice may be empty when the frame ends within
+.10m ahead of the measured hinge. No hinge/driver relocation; no fabricated frame
+extension or global exception suppression. Native pin/aim articulation retained.
+
+Erie attaches at18289 then fails18909 with dictionary KeyNotFoundException on
+return. Shared Mallet static parts can be rebuilt; tender poses were keyed by
+disposable transforms. Tender now owns one inactive template root with independent
+drive/static copies and frozen native matrices. Attachment no longer reads the
+shared static cache. Partial source construction cleans up before retry.
+
+Pipe headerX1.45->1.30m, compact side entries with35mm buried socket overlap,
+shorter riser-to-header turn and single diagonal rear manifold connection. James
+explicitly accepts small local fitting overlap; avoid long visibly buried runs.
+Original profile/collars/UV/materials and minimum bore retained. No physics edit.
+
+James then requested ONLY structural diagnostics restored and the full powered-
+tender matrix. Default EnableStructuralDiagnostics=true is separate from disabled
+EnableDiagnostics/full-power recording. One UMM structural button; no power tick,
+recorder, exporters or sizing UI. Stage2+read-only TractiveDiagnostics compiled;
+JSON only, no structural CSV exporter call. Runtime force/handling unchanged.
+
+Run uses two stationary stock S282s, subject with ordinary supported S282 tender
+coupled behind; control has no powered tender active. Per-subject temporary
+TrySwitchStructural override never writes saved preferences or saves.91main cases:
+48ordinary +43powered, excluding33/36 novelty/prototype and38/40/47 locomotive
+triplexes from powered mode. Frame count/actual ID/active engine count, private
+source cache, tender geometry/exhaust/particle/audio bindings, native tender
+bogie active-state restoration and control isolation checked. Restores ordinary
+stock after every case, including stock+powered mode. Six direct switches
+43on->46off->47off->43on->0off->43on reproduce return-to-Erie. Final stock,
+tender/control restoration and unchanged UMM preference array required for pass.
+Power/resize controls remain absent. Close UMM during test. New run not yet done.
+
+Validation: clean game-reference net48 build0warnings/errors; frame3987 checks,
+tender source846/40regeneration cycles; compact layout19; structural matrix1038
+checks/91cases; pipe validator12; UMM/radio274checks/18cases. Compiled integration
+286checks,124protected methods unchanged vs1.23.0, plus existing tender force,
+tick and layout calculations unchanged. Pipe pure/lifecycle suites pass;44neutral
+recorded layouts and76neutral/imposed poses generate without errors, neutral and
++/-6degree static checks have no crossings.12imposed +/-12degree poses show contacts
+across8layouts; these are synthetic, not game curve measurements. New ID47 lacks
+a recorded geometry capture; no full in-game visual/audio/constraint acceptance
+claimed. Test all91cases then look/listen on curves; clipping polish remains manual.
+
+## 1.23.1 installed for James - 23 October 2026
+
+Installed the exact previously audited test ZIP after verifying DerailValley was closed. All36 packaged files match the archive byte-for-byte; DLL SHA256 7886B6403837907503EF715EC1EBB278438E42A1DA341F980420A4ACF9EDE302. Settings.xml and previous diagnostic captures preserved. Removed only retired shipped diagnostic/export instructions and Tools/TractiveTable.ps1. No backups or rollback copies. Build/delivery/installation receipts updated under build/runtime-trial-1.23.1. Runtime acceptance remains pending; not published.
+
+## 1.23.0 installed for James - 23 October 2026
+
+Installed the exact previously audited test ZIP after verifying DerailValley was closed. All36 packaged files match the archive byte-for-byte; DLL SHA256 EA18CEFE3EC13664C708CDA3BA66CAD0A71EC3FB2FB9CB0EBEBD8B9DD7E852DE. Settings.xml and previous diagnostic captures preserved. Removed only retired shipped diagnostic/export instructions and Tools/TractiveTable.ps1. No backups or rollback copies. Build/delivery/installation receipts updated under build/runtime-trial-1.23.0. Runtime acceptance remains pending; not published.
+
 ## 1.23.0 triplex and optional powered tender test - 23 October 2026
 
 James requested a more usable articulated 2-4-4-4-0 with all engines on the loco,

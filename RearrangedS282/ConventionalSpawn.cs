@@ -90,7 +90,7 @@ namespace RearrangedS282
                 string.Equals(state.Guid, car.CarGUID, StringComparison.Ordinal) && state.PendingId.HasValue)
             {
                 if (
-#if B99_DIAGNOSTICS
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
                     !Stage2RuntimeChecks.Running &&
 #endif
                     ReadyToSwitch())

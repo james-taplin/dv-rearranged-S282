@@ -30,6 +30,7 @@ namespace RearrangedS282
         private BigMalletLayout tenderLayout;
         private float tenderNativeCylinderFront;
         private readonly Dictionary<Transform, Matrix4x4> tenderStaticMaps = new Dictionary<Transform, Matrix4x4>();
+        private Transform tenderSourceRoot, tenderSourceL, tenderSourceR;
         private bool poweredTenderSelected;
         internal bool PoweredTenderSelected => poweredTenderSelected;
         private Transform tenderEngineRoot, tenderDriveL, tenderDriveR;
@@ -62,12 +63,29 @@ namespace RearrangedS282
                 tenderNativeCylinderFront = MeasureNativeCylinderFront();
                 tenderLayout = MeasureBigMallet(WheelArrangementType.s28882);
                 EnsureBigMalletAssets(tenderLayout);
+                // Shared Mallet parts can be destroyed/rebuilt for a later
+                // layout. Keep our own inactive templates and their frozen
+                // native poses instead of keys into that disposable cache.
+                tenderSourceRoot = new GameObject("[Rearranged tender source]").transform;
+                tenderSourceRoot.SetParent(MalletBody, false);
+                tenderSourceRoot.gameObject.SetActive(false);
+                tenderSourceL = CloneEngineDrive(bigMalletRearL, lfAnimator, "[Rearranged tender source L]", tenderSourceRoot, d => { });
+                tenderSourceR = CloneEngineDrive(bigMalletRearR, rfAnimator, "[Rearranged tender source R]", tenderSourceRoot, d => { });
                 foreach (var source in bigMalletStatics[WheelArrangementType.s28882].Statics)
-                    tenderStaticMaps[source] = MalletBody.worldToLocalMatrix * source.localToWorldMatrix;
+                {
+                    var clone = Object.Instantiate(source.gameObject, tenderSourceRoot).transform;
+                    clone.name = source.name;
+                    tenderStaticMaps.Add(clone, MalletBody.worldToLocalMatrix * source.localToWorldMatrix);
+                }
                 // Asset construction must not expose Franklin parts on a rigid host.
                 foreach (var asset in articulatedAssets) if (asset != null) asset.gameObject.SetActive(false);
             }
-            catch { tenderLayout = null; tenderStaticMaps.Clear(); throw; }
+            catch
+            {
+                if (tenderSourceRoot != null) Object.Destroy(tenderSourceRoot.gameObject);
+                tenderSourceRoot = tenderSourceL = tenderSourceR = null;
+                tenderLayout = null; tenderStaticMaps.Clear(); throw;
+            }
         }
 
         private void SelectPoweredTender(bool selected)
@@ -129,7 +147,8 @@ namespace RearrangedS282
 
         private void AttachTenderEngine(TrainCar tender)
         {
-            if (bigMalletRearL == null || bigMalletRearR == null) throw new InvalidOperationException("The rear engine has not been built.");
+            if (tenderSourceL == null || tenderSourceR == null || tenderStaticMaps.Count == 0)
+                throw new InvalidOperationException("The powered tender source has not been built.");
             tenderEngineCar = tender;
             float s = tenderLayout.Scale;
             float cylinderFront = tenderNativeCylinderFront;
@@ -139,8 +158,8 @@ namespace RearrangedS282
             tenderEngineRoot.SetParent(tender.transform, false);
 
             // Drives: copies of the configured four-axle rear engine.
-            tenderDriveL = CloneEngineDrive(bigMalletRearL, lfAnimator, "[Rearranged tender drivetrain L]", tenderEngineRoot, d => { });
-            tenderDriveR = CloneEngineDrive(bigMalletRearR, rfAnimator, "[Rearranged tender drivetrain R]", tenderEngineRoot, d => { });
+            tenderDriveL = CloneEngineDrive(tenderSourceL, lfAnimator, "[Rearranged tender drivetrain L]", tenderEngineRoot, d => { });
+            tenderDriveR = CloneEngineDrive(tenderSourceR, rfAnimator, "[Rearranged tender drivetrain R]", tenderEngineRoot, d => { });
             foreach (var (drive, mirrored) in new[] { (tenderDriveL, true), (tenderDriveR, false) })
             {
                 drive.localPosition = new Vector3(0f, 0f, offset);
@@ -153,17 +172,7 @@ namespace RearrangedS282
             // the rear-to-tender engine offset (body frame = tender frame axes).
             var body = MalletBody;
             var shift = Matrix4x4.Translate(new Vector3(0f, 0f, offset - tenderLayout.RearOffset));
-            foreach (var source in bigMalletStatics[WheelArrangementType.s28882].Statics.Where(t => t != null))
-            {
-                var bodyPose = shift * tenderStaticMaps[source];
-                var clone = Object.Instantiate(source.gameObject, tenderEngineRoot).transform;
-                clone.name = "[Rearranged tender] " + source.name.Replace("[Rearranged eight-coupled rear] ", "");
-                if (PacificHudsonAffine.TryDecompose(bodyPose, source.lossyScale, out var position, out var rotation, out var scale))
-                { clone.localPosition = position; clone.localRotation = rotation; clone.localScale = scale; }
-                else clone.localPosition = bodyPose.MultiplyPoint3x4(Vector3.zero);
-                clone.gameObject.SetActive(true);
-                EnableGeneratedRenderers(clone);
-            }
+            CloneTenderStatics(tenderEngineRoot, shift);
 
             // The tender's own bogie wheels and frames give way to the engine,
             // except the rearmost wheelset, which becomes the trailing truck.
@@ -200,6 +209,22 @@ namespace RearrangedS282
             RefreshSteamConnectionsForTender();
             Main.Logger.Log($"Erie triplex: tender engine attached to {tender.ID}; {2f * tenderLayout.Radius:0.00} m drivers, " +
                 $"cylinders at {TenderCylinderFrontZ:0.00}, drivers {offset + s * firstLeftDriveWheel.localPosition.z:0.00}..{offset + s * fourthLeftDriveWheel.localPosition.z:0.00} (tender z).");
+        }
+
+        private void CloneTenderStatics(Transform parent, Matrix4x4 shift)
+        {
+            foreach (var entry in tenderStaticMaps)
+            {
+                var source = entry.Key;
+                var bodyPose = shift * entry.Value;
+                var clone = Object.Instantiate(source.gameObject, parent).transform;
+                clone.name = "[Rearranged tender] " + source.name.Replace("[Rearranged eight-coupled rear] ", "");
+                if (PacificHudsonAffine.TryDecompose(bodyPose, source.lossyScale, out var position, out var rotation, out var scale))
+                { clone.localPosition = position; clone.localRotation = rotation; clone.localScale = scale; }
+                else clone.localPosition = bodyPose.MultiplyPoint3x4(Vector3.zero);
+                clone.gameObject.SetActive(true);
+                EnableGeneratedRenderers(clone);
+            }
         }
 
         private void DetachTenderEngine()
@@ -248,6 +273,8 @@ namespace RearrangedS282
         internal JObject TenderEngineReport() => !poweredTenderSelected ? null : new JObject
         {
             ["selected"] = poweredTenderSelected, ["hostArrangement"] = (int)currentWA,
+            ["sourceReady"] = tenderSourceRoot != null && tenderSourceL != null && tenderSourceR != null && tenderStaticMaps.Count != 0,
+            ["sourceStaticCount"] = tenderStaticMaps.Count,
             ["driverRadiusM"] = tenderLayout != null ? .712f * tenderLayout.Scale : (float?)null,
             ["tender"] = tenderEngineCar != null ? tenderEngineCar.ID : null, ["attached"] = tenderEngineRoot != null,
             ["exhaustOutlet"] = TenderExhaustOutlet != null, ["visualEffects"] = ArticulatedEffects.TenderParticlesReady(GetComponent<TrainCar>()),

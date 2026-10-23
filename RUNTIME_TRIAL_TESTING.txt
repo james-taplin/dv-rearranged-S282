@@ -1,4 +1,17 @@
-Rearranged S282 B99 1.23.0 test
+Rearranged S282 B99 1.23.1 test
+
+Changes from 1.23.0
+- Fixed compact 2-4-4-4-0 conversion restoring a stock Mikado when its second
+  hinge is just behind the native visible bar-frame end. Hinge/driver positions
+  and native constraints are retained; the empty rear bar slice is omitted.
+- Powered tenders keep independent source parts, so returning to Erie after
+  other layouts cannot lose its source parts when the shared Mallet cache rebuilds.
+- Brought articulated headers 15 cm inward, shortened outboard cylinder entries
+  and replaced the rear manifold dogleg with one rounded diagonal connection.
+  Small local fitting overlaps are intentional; original style and bore retained.
+- Restored just the manual structural-test button:91 arrangement/tender cases
+  plus repeated returns to Erie, with current frame/cache/binding expectations.
+  Power recording and resizing controls remain absent.
 
 48 arrangements, including the new 2-4-4-4-0 articulated triplex.
 It has three two-axle locomotive engines, a leading axle and no trailing axle.
@@ -34,10 +47,31 @@ values are ignored. Valve-gear, trailing-truck, curving, oilcup and random-spawn
 preferences remain. The new arrangement is excluded from random spawns until
 its own random-spawn checkbox is selected.
 
-This build has no structural/power diagnostic recorder or temporary sizing
-sliders. Normal game/error logging remains. No diagnostic exporter is bundled.
+Structural test
+UMM > Rearranged S282 > RUN STRUCTURAL TEST - two stationary S282s.
+Use two stock 2-8-2 S282s in a sandbox, both stopped with regulators shut.
+At least the test loco needs a regular S282 tender coupled behind it. The second
+locomotive is the isolation control and must not have a powered tender active.
+The test temporarily selects powered/unpowered tenders without changing saved
+UMM preferences, then leaves the test locomotive in stock with an ordinary tender.
+Close UMM after pressing the button so native simulation and effects can tick.
+It runs 91 cases: all48 layouts with ordinary tenders plus43 compatible layouts
+with powered tenders, then six direct switches checking repeated returns to Erie.
+Three-engine locomotive triplexes, unpowered4-0-4 and unfinished giant2-2-2 retain
+their powered-tender exclusions. JSON records each mode separately, frame pieces,
+active engines, tender source/bindings, native bogie restoration and isolation.
+Read stage2-runtime-checks.json in this mod folder after completion.
+Small fitting overlaps and an empty final bar slice on2-4-4-4-0 are intentional.
+This is a stationary structural test; listening, visible clipping, moving rods,
+loaded power, curves, save/reload and distant LODs still require manual testing.
+Power recording and temporary sizing sliders remain removed. Normal game/error
+logging remains. No diagnostic exporter is bundled.
 
 Manual test suggestions
+- Select 2-4-4-4-0 from stock, then after another articulated layout. Confirm all
+  three pairs of drivers and all three cylinder groups appear on the locomotive.
+- Select Erie, switch through a rigid, a Mallet and the new triplex, then return
+  to Erie. Check the powered tender returns each time. Repeat reapply and reload.
 - New triplex: inspect all six drivers, both sides, rods/gear/oilcups/pipes; run
   forward/reverse at several cutoffs, on curves and at a distance.
 - Optional tender: try stock 2-8-2 and 2-6-6-0; check all tender wheels turn,

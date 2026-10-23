@@ -68,7 +68,7 @@ namespace RearrangedS282
             internal Cylinder[] Cylinders;
         }
         internal const float MinimumVisualScale = .8f;
-        private const float HeaderX = 1.45f, HeaderY = 2.05f;
+        private const float HeaderX = 1.30f, HeaderY = 2.05f;
         private static Mesh manifoldAsset, transferAsset;
         private static SteamDuctMesh.Template ductTemplate;
         private readonly List<Mesh> owned = new List<Mesh>();
@@ -388,21 +388,24 @@ namespace RearrangedS282
                         var inlet = transform.InverseTransformPoint(c.Manifold.TransformPoint(SteamPipeShape.NativeManifoldInlet));
                         var lead = inlet + forward * .35f;
                         var joint = new Vector3(x, HeaderY, lead.z);
-                        Rounded(b, new[] { inlet, lead, new Vector3(x, inlet.y, lead.z), joint }, r);
+                        // One rounded turn into a short diagonal casting. A
+                        // second right angle would force the header outboard.
+                        Rounded(b, new[] { inlet, lead, joint }, r);
                         EndGap(b, inlet, joint); b.Collar(inlet + forward * .022f, forward, r); joints.Add(joint);
                     }
                     else
                     {
                         var outward = Unit(c.Previous.MultiplyVector(c.Outward));
-                        float outerX = c.Side * Math.Max(1.65f, Math.Abs(socket.x) + .22f);
-                        // Keep the riser outside the steps, reservoir and board.
-                        // A short rearward diagonal gives the header joint room
-                        // for its elbow even when the engine swings past it.
+                        float outerX = c.Side * Math.Max(HeaderX, Math.Abs(socket.x) + Math.Max(.10f, 1.6f * r));
+                        // Compact side entry, with a small buried overlap at
+                        // the casting. James accepts local fitting overlap;
+                        // a long exposed loop around the board looks worse.
+                        var entry = socket - outward * .035f;
                         var lower = socket + outward * ((outerX - socket.x) / outward.x);
                         var upper = new Vector3(lower.x, HeaderY, lower.z);
-                        var joint = new Vector3(x, HeaderY, lower.z - .40f);
-                        Rounded(b, new[] { socket, lower, upper, joint }, r);
-                        EndGap(b, socket, joint); b.Collar(socket + outward * .02f, outward, r); joints.Add(joint);
+                        var joint = new Vector3(x, HeaderY, lower.z - .30f);
+                        Rounded(b, new[] { entry, lower, upper, joint }, r);
+                        EndGap(b, entry, joint); b.Collar(socket + outward * .008f, outward, r); joints.Add(joint);
                     }
                 }
                 // Keep a horizontal header above every branch. A rear cylinder

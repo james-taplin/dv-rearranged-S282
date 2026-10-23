@@ -58,6 +58,18 @@ internal static class Program
     private static Vector4 Uv(Vector3 p,int channel)=>new Vector4(p.x+channel*2,p.z-channel,p.x+p.z,channel+.25f);
     private static void Main(string[] args)
     {
+        // Runtime 1.23.0 reproduction: the second triplex pin is 51 mm
+        // behind the native bar-frame end. An empty rear bar is legitimate;
+        // moving the hinge or swallowing unrelated bad cuts is not.
+        var bar=Make(new[]{new Vector3(.403f,.649f,-1.670f),new Vector3(.609f,.649f,-1.670f),
+            new Vector3(.609f,.915f,6.477f),new Vector3(.403f,.915f,6.477f)},new[]{0,1,2,0,2,3});
+        var pin=new Vector3(0,0,-1.721f);var forward=new Vector3(0,0,1);
+        Check(ArticulatedFrameClipper.Clip(bar,pin,forward,false).GetTriangles(0).Length==0,"Reproduce empty rear bar at reported compact-triplex pin");
+        Check(ArticulatedFrameClipper.EndsJustAheadOfPin(bar,pin,forward,.10f),"Compact-triplex 51 mm frame-end gap accepted");
+        Check(!ArticulatedFrameClipper.EndsJustAheadOfPin(bar,new Vector3(0,0,-2f),forward,.10f),"Large out-of-frame pin still rejected");
+        Check(!ArticulatedFrameClipper.EndsJustAheadOfPin(bar,Vector3.zero,forward,.10f),"A genuinely spanning bar still requires a split");
+        Check(!ArticulatedFrameClipper.EndsJustAheadOfPin(bar,pin,forward*-1f,.10f),"Wrong-side gap rejected");
+        Partition(bar,new Vector3(0,0,2.0367f),forward,"Compact triplex first frame cut");
         var square=Make(new[]{new Vector3(-1,0,-1),new Vector3(1,0,-1),new Vector3(1,0,1),new Vector3(-1,0,1)},new[]{0,2,1},new[]{0,3,2});
         square.normals=Enumerable.Repeat(new Vector3(0,1,0),4).ToArray();
         square.tangents=Enumerable.Repeat(new Vector4(1,0,0,-1),4).ToArray();

@@ -94,10 +94,10 @@ namespace RearrangedS282
 					"Stock 2-8-2 and 2-8-4 only. Close the regulator before switching.\n" +
 					"Selections are temporary and are not written to saves.");
 #endif
-#if B99_DIAGNOSTICS
+#if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
 					GUILayout.Label(Stage2RuntimeChecks.Status);
 					if (!Stage2RuntimeChecks.Running
-#if B99_ALL_STANDARD
+#if B99_ALL_STANDARD && B99_DIAGNOSTICS
 						&& !PowerDiagnostics.Recording
 #endif
 						&& GUILayout.Button("RUN STRUCTURAL TEST — two stationary S282s"))

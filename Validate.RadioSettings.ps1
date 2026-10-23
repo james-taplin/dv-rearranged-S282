@@ -4,7 +4,7 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force|Out-Null
 $fixture=Join-Path $PSScriptRoot 'evidence\radio-settings-tests'
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
+<PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD;B99_STRUCTURAL_DIAGNOSTICS</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
 <ItemGroup><Compile Include="$PSScriptRoot\RearrangedS282\Main.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\CommsRadioS282Rearranger.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelArrangement.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\PoweredTenderPolicy.cs"/><Compile Include="$fixture\Stubs.cs"/><Compile Include="$fixture\Program.cs"/></ItemGroup>
 </Project>
 "@
