@@ -23,7 +23,9 @@ namespace RearrangedS282
 			SelectWheelArrangement,
 		}
 
-		public static CommsRadioController Controller;
+		// Radios are per-player objects. Resolve this mode's owner before copying
+		// its display, sounds and laser origin; another radio may be awake too.
+		private CommsRadioController Controller => GetComponent<CommsRadioController>();
 
 		public ButtonBehaviourType ButtonBehaviour { get; private set; }
 
@@ -74,10 +76,9 @@ namespace RearrangedS282
 			var rearranger = target.GetOrAddComponent<WheelRearranger>();
 			int id = (int)rearranger.currentWA;
 			Main.Logger.Log($"UMM reapply requested: {target.ID}, {WheelArrangement.WheelArrangementNames[id]}; " + SettingsSelectionStatus);
-			bool applied = rearranger.TrySwitchStage2(id);
-			if (applied) ConventionalSpawn.RecordApplied(target, id);
-			ReapplyStatus = applied ? $"Reapplied {WheelArrangement.WheelArrangementNames[id]} to {target.ID}."
-				: "Reapply refused: " + (rearranger.LastConventionalError ?? "stop, repair and close the regulator; let driving force and wheel slip settle first");
+			bool applied = MultiplayerSync.RequestChange(target, id, out var reason);
+			ReapplyStatus = MultiplayerSync.IsClient ? reason : applied ? $"Reapplied {WheelArrangement.WheelArrangementNames[id]} to {target.ID}."
+				: "Reapply refused: " + reason;
 			Main.Logger.Log(ReapplyStatus);
 			ResetState();
 		}
@@ -168,6 +169,9 @@ namespace RearrangedS282
 		public void SetStartingDisplay()
 		{
 			string content = "Select an S282 to rearrange its wheels.";
+#if B99_ALL_STANDARD
+			if (MultiplayerSync.InSession) content += "\n" + MultiplayerSync.Status;
+#endif
 			display.SetDisplay("WHEEL REARRANGER", content, "");
 		}
 
@@ -320,6 +324,7 @@ namespace RearrangedS282
 		//Gets called when we click with the comms radio
 		public void OnUse()
 		{
+			CommsRadio_Awake_Patch.rearranger = this;
 #if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
             if (Stage2RuntimeChecks.Running) return;
 #endif
@@ -410,9 +415,12 @@ namespace RearrangedS282
 			}
 
 #if B99_STAGE2 || B99_ALL_STANDARD
-			bool applied = SelectedCar.GetOrAddComponent<WheelRearranger>().TrySwitchStage2(selectedWheelArrangement);
 #if B99_ALL_STANDARD
-			if (applied) ConventionalSpawn.RecordApplied(SelectedCar, selectedWheelArrangement);
+			bool applied = MultiplayerSync.RequestChange(SelectedCar, selectedWheelArrangement, out var reason);
+			ReapplyStatus = reason ?? (applied ? "Arrangement applied." : "Arrangement refused.");
+			if (!applied) Main.Logger.Warning(ReapplyStatus);
+#else
+			bool applied = SelectedCar.GetOrAddComponent<WheelRearranger>().TrySwitchStage2(selectedWheelArrangement);
 #endif
 			return applied;
 #else
@@ -444,9 +452,10 @@ namespace RearrangedS282
 
 		static void Postfix(CommsRadioController __instance, List<ICommsRadioMode> ___allModes)
 		{
-			CommsRadioS282Rearranger.Controller = __instance;
-			rearranger = __instance.gameObject.AddComponent<CommsRadioS282Rearranger>();
-			___allModes.Add(rearranger);
+			var mode = __instance.GetComponent<CommsRadioS282Rearranger>();
+			if (mode == null) mode = __instance.gameObject.AddComponent<CommsRadioS282Rearranger>();
+			rearranger = mode;
+			if (!___allModes.Contains(mode)) ___allModes.Add(mode);
 		}
 	}
 }

@@ -23,6 +23,7 @@ namespace RearrangedS282
         internal int ExplosionMaterialRendererCount => explosionMaterials?.Count ?? 0;
         internal bool ConventionalSetupBlocked => conventionalFault;
         internal string LastConventionalError { get; private set; }
+        internal bool LastSwitchRestoredStock { get; private set; }
 #if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
         private bool? structuralTenderOverride;
         internal bool TrySwitchStructural(int id, bool tender)
@@ -36,20 +37,25 @@ namespace RearrangedS282
 
         private bool TrySwitchConventional(int id)
         {
+            LastSwitchRestoredStock = false;
             if (!WheelArrangement.IsSupportedId(id) || skipWheelArrangementChange || conventionalFault) return false;
             loco = GetComponent<TrainCar>();
             var sim = loco?.SimController;
-            if (loco == null || loco.carType != TrainCarType.LocoSteamHeavy || loco.derailed || loco.isExploded ||
-                Mathf.Abs(loco.GetForwardSpeed()) > .01f || sim?.simFlow == null ||
-                !sim.simFlow.TryGetPort("throttle.EXT_IN", out var throttle) || throttle.Value > .001f ||
-                sim.drivingForce == null || Mathf.Abs(sim.drivingForce.generatedForce) > 500f ||
-                sim.wheelslipController == null || sim.wheelslipController.IsWheelslipping ||
-                loco.adhesionController.IsWheelSliding)
+            // Replicas may first see the host's settled choice while already in
+            // motion or derailed. Only host-validated replay bypasses these
+            // operating checks; native graph/entity readiness still applies.
+            bool remote = MultiplayerSync.ApplyingRemote;
+            if (loco == null || loco.carType != TrainCarType.LocoSteamHeavy || sim?.simFlow == null ||
+                !sim.simFlow.TryGetPort("throttle.EXT_IN", out var throttle) ||
+                sim.drivingForce == null || sim.wheelslipController == null || loco.adhesionController == null ||
+                (!remote && (loco.derailed || loco.isExploded || Mathf.Abs(loco.GetForwardSpeed()) > .01f ||
+                    throttle.Value > .001f || Mathf.Abs(sim.drivingForce.generatedForce) > 500f ||
+                    sim.wheelslipController.IsWheelslipping || loco.adhesionController.IsWheelSliding)))
             {
                 Main.Logger.Warning("Use a repaired, stationary S282 with its regulator closed and wheel slip/driving force settled before switching.");
                 return false;
             }
-            bool wantsTender = Main.settings != null && Main.settings.PoweredTenderEnabled(id);
+            bool wantsTender = ArrangementSettings != null && ArrangementSettings.PoweredTenderEnabled(id);
 #if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
             if (Stage2RuntimeChecks.Running && structuralTenderOverride.HasValue) wantsTender = structuralTenderOverride.Value;
 #endif
@@ -141,19 +147,19 @@ namespace RearrangedS282
                             {
                                 // One retarget owns the existing Prairie span plus
                                 // temporary spacing after final scaling. Polish reads that frame.
-                                ApplyPacificHudsonValveGear(Main.settings.polishedPacificHudsonValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.polishedPacificHudsonValveGear);
                             }
                             else if (UsesReservoirClearance(id))
-                                ApplyPacificHudsonValveGear(Main.settings.show282BigValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.show282BigValveGear);
                             else if (id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464)
-                                ApplyPacificHudsonValveGear(Main.settings.polishedPacificHudsonValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.polishedPacificHudsonValveGear);
                             else if (id == (int)WheelArrangementType.s440 || id == (int)WheelArrangementType.s442 ||
                                 id == (int)WheelArrangementType.s444 || id == (int)WheelArrangementType.s240)
-                                ApplyPacificHudsonValveGear(Main.settings.show4CoupledValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.show4CoupledValveGear);
                             else if (id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s260)
-                                ApplyPacificHudsonValveGear(Main.settings.show6CoupledValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.show6CoupledValveGear);
                             else if (id >= (int)WheelArrangementType.s0120 && id <= (int)WheelArrangementType.s4122)
-                                ApplyPacificHudsonValveGear(Main.settings.show12CoupledValveGear);
+                                ApplyPacificHudsonValveGear(ArrangementSettings.show12CoupledValveGear);
                             AlignAdditionalPoweredAxles(id);
                         }
                     }
@@ -216,7 +222,14 @@ namespace RearrangedS282
             {
                 LastConventionalError = ex.Message;
                 Main.Logger.LogException("Conventional trial conversion failed; restoring stock", ex);
-                try { if (stockGeometry != null) RestoreConventionalStock(); }
+                try
+                {
+                    if (stockGeometry != null)
+                    {
+                        RestoreConventionalStock();
+                        LastSwitchRestoredStock = true;
+                    }
+                }
                 catch (Exception restore) { Main.Logger.LogException("Stock restoration failed", restore); }
                 // An incomplete setup must never be repeated over partially generated geometry.
                 conventionalFault = stockGeometry != null && preparedGeometry == null;
@@ -272,6 +285,7 @@ namespace RearrangedS282
 
         private void OnDestroy()
         {
+            MultiplayerSync.Forget(GetComponent<TrainCar>());
             cylinderCalibration?.Restore();
             ClearBigEndCups();
             SuspendSteamConnections();

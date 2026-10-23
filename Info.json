@@ -1,7 +1,8 @@
 {
   "Id": "RearrangedS282",
-  "Version": "2.0-beta",
-  "DisplayName": "Rearranged S282 - B99 Beta",
+  "Version": "2.0.1-mp.alpha.1",
+  "DisplayName": "Rearranged S282 - Multiplayer Alpha",
+  "MultiplayerCompatibility": "All",
   "Author": "SatiricRug (original); JimTaplin (B99 port)",
   "EntryMethod": "RearrangedS282.Main.Load",
   "ManagerVersion": "0.27.3",
@@ -12,6 +13,7 @@
     "Gauge",
     "DVCarChanger",
     "S282ModelTweaks",
-    "MultiCylinderChuffFix"
+    "MultiCylinderChuffFix",
+    "Multiplayer"
   ]
 }

@@ -22,7 +22,19 @@ namespace RearrangedS282
         internal bool TrySwitchStage2(int id)
         {
 #if B99_ALL_STANDARD
-            return TrySwitchConventional(id);
+            var car = GetComponent<TrainCar>();
+            if (!MultiplayerSync.BeforeSwitch(car, id)) return false;
+            bool applied = false;
+            try
+            {
+                applied = TrySwitchConventional(id);
+                if (applied) MultiplayerSync.OnApplied(car, id);
+                return applied;
+            }
+            finally
+            {
+                if (!applied) MultiplayerSync.OnSwitchFailed(car);
+            }
 #else
             if (id != (int)WheelArrangementType.s282 && id != (int)WheelArrangementType.s284)
             {

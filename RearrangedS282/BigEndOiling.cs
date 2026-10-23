@@ -78,6 +78,7 @@ namespace RearrangedS282
 
         private static void HoldUnusedFull(ManualOilingPoints __instance)
         {
+            if (!MultiplayerSync.IsSimulationAuthority) return;
             var points = __instance.oilingPoints;
             if (points == null || points.Length <= BigEndOilingPlan.NativePoints) return;
             States.TryGetValue(__instance, out var state);

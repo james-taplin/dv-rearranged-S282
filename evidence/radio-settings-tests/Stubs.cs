@@ -76,13 +76,14 @@ namespace UnityEngine
     }
     public static class Debug {public static void LogError(string s){} }
     public static class Application {public static event Action quitting;}
+    public static class GUI {public static bool enabled=true;}
     public static class GUILayout
     {
         public static readonly List<string> Labels=new(),Buttons=new();public static readonly HashSet<string> Clicks=new();
         public static bool ToggleValue;
         public static void Label(string value)=>Labels.Add(value);public static void Space(float value){}
         public static bool Button(string value){Buttons.Add(value);return Clicks.Remove(value);}
-        public static bool Toggle(bool value,string label)=>ToggleValue;
+        public static bool Toggle(bool value,string label)=>GUI.enabled?ToggleValue:value;
         public static void Clear(){Labels.Clear();Buttons.Clear();Clicks.Clear();ToggleValue=false;}
     }
 }
@@ -94,7 +95,7 @@ namespace UnityModManagerNet
         public sealed class ModEntry
         {
             public sealed class InfoData{public string Id="fixture",DisplayName="fixture";}
-            public sealed class ModLogger{public readonly List<string> Rows=new();public void Log(string s)=>Rows.Add(s);public void Error(string s)=>Rows.Add(s);public void LogException(string s,Exception e)=>Rows.Add(s+e.Message);}
+            public sealed class ModLogger{public readonly List<string> Rows=new();public void Log(string s)=>Rows.Add(s);public void Warning(string s)=>Rows.Add(s);public void Error(string s)=>Rows.Add(s);public void LogException(string s,Exception e)=>Rows.Add(s+e.Message);}
             public InfoData Info=new();public ModLogger Logger=new();public string Path=".";
             public Action<ModEntry> OnGUI,OnSaveGUI;public Action<ModEntry,float> OnUpdate;public Func<ModEntry,bool> OnUnload;
         }
@@ -131,11 +132,26 @@ namespace DV.Utils
 }
 namespace RearrangedS282
 {
+    internal static class MultiplayerSync
+    {
+        internal static bool IsClient,InSession,AllowClientRequest;
+        internal static int Requests,Updates;
+        internal static string Status="fixture multiplayer";
+        internal static void Initialize(){}internal static void Tick()=>Updates++;internal static void Draw(){}
+        internal static bool RequestChange(TrainCar car,int id,out string reason)
+        {
+            Requests++;reason=null;
+            if(IsClient){reason=AllowClientRequest?"Requested from host":"Host locked";return AllowClientRequest;}
+            var wheel=car.GetComponent<WheelRearranger>()??car.gameObject.AddComponent<WheelRearranger>();
+            bool applied=wheel.TrySwitchStage2(id);if(applied)ConventionalSpawn.RecordApplied(car,id);else reason=wheel.LastConventionalError??"stop, repair";return applied;
+        }
+    }
     public sealed class Settings
     {
+        internal readonly List<bool> DrawEnabled=new();
         public int[] poweredTenderArrangements=new[]{43}; internal bool PoweredTenderEnabled(int id)=>poweredTenderArrangements.Contains(id);
         public static T Load<T>(UnityModManagerNet.UnityModManager.ModEntry e)where T:new()=>new();
-        public bool MigrateSpawnPool()=>false;public void Save(UnityModManagerNet.UnityModManager.ModEntry e){}public void OnChange(){}public void Draw(UnityModManagerNet.UnityModManager.ModEntry e){}
+        public bool MigrateSpawnPool()=>false;public void Save(UnityModManagerNet.UnityModManager.ModEntry e){}public void OnChange(){}public void Draw(UnityModManagerNet.UnityModManager.ModEntry e)=>DrawEnabled.Add(UnityEngine.GUI.enabled);
     }
     internal sealed class WheelRearranger:UnityEngine.MonoBehaviour
     {

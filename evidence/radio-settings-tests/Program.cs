@@ -6,6 +6,7 @@ using System.Text.Json;
 using RearrangedS282;
 using UnityEngine;
 using UMM=UnityModManagerNet.UnityModManager;
+using Core=RearrangedS282.Main;
 
 static class Program
 {
@@ -28,7 +29,7 @@ static class Program
             deleter.signalOrigin=go.transform;deleter.display=go.AddComponent<CommsRadioDisplay>();deleter.selectionMaterial=new Material();deleter.deleteMaterial=new Material();
             deleter.trainHighlighter=new GameObject("native highlighter");deleter.trainHighlighter.AddComponent<MeshRenderer>();
             deleter.hoverOverCar=new AudioClip();deleter.warningSound=new AudioClip();deleter.confirmSound=new AudioClip();deleter.cancelSound=new AudioClip();
-            CommsRadioS282Rearranger.Controller=controller;radio.Awake();radio.SetStartingDisplay();CommsRadio_Awake_Patch.rearranger=radio;
+            radio.Awake();radio.SetStartingDisplay();CommsRadio_Awake_Patch.rearranger=radio;
             a=Car("A",10);b=Car("B",20);wa=a.gameObject.AddComponent<WheelRearranger>();wb=b.gameObject.AddComponent<WheelRearranger>();
         }
         static TrainCar Car(string id,float z){var go=new GameObject(id);var car=go.AddComponent<TrainCar>();car.ID=id;go.transform.position=new Vector3(0,0,z);go.AddComponent<ExplosionModelHandler>();return car;}
@@ -44,6 +45,20 @@ static class Program
     {
         var entry=new UMM.ModEntry();var loaded=(bool)typeof(Main).GetMethod("Load",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{entry});
         Check(loaded&&entry.OnGUI!=null,"actual Main.Load installs GUI callback");
+        {
+            cases++;var first=new Rig();var second=new Rig();
+            Check(first.radio.display!=second.radio.display&&first.radio.signalOrigin!=second.radio.signalOrigin,"Two radio modes copy each owner's display and signal origin");
+            Check(first.radio.HoverCarSound!=second.radio.HoverCarSound&&first.radio.ConfirmSound!=second.radio.ConfirmSound,"Two radios keep each owner's audio clips");
+            Check(first.radio.trainHighlighter!=second.radio.trainHighlighter&&first.radio.selectionMaterial!=second.radio.selectionMaterial,"Two radios own separate highlighters and materials");
+            var postfix=typeof(CommsRadio_Awake_Patch).GetMethod("Postfix",BindingFlags.Static|BindingFlags.NonPublic);var firstModes=new System.Collections.Generic.List<ICommsRadioMode>();var secondModes=new System.Collections.Generic.List<ICommsRadioMode>();
+            foreach(var rig in new[]{first,second}){var modes=rig==first?firstModes:secondModes;var controller=rig.radio.GetComponent<CommsRadioController>();postfix.Invoke(null,new object[]{controller,modes});postfix.Invoke(null,new object[]{controller,modes});}
+            Check(firstModes.Count==1&&ReferenceEquals(firstModes[0],first.radio)&&secondModes.Count==1&&ReferenceEquals(secondModes[0],second.radio),"Repeated controller Awake registers one mode per owning radio");
+            first.SelectA();second.Point(second.b);second.radio.OnUse();second.Point(second.b);
+            Check(first.radio.SettingsTarget==first.a&&second.radio.SettingsTarget==second.b,"Two radios keep independent selected cars");
+            int old=Selected(first.radio);second.radio.ButtonBCustomAction();Check(Selected(first.radio)==old,"Cycling one radio does not change another selection");
+            Check(CommsRadio_Awake_Patch.rearranger==second.radio,"UMM pointer follows most recently used radio");
+            first.radio.OnUse();Check(CommsRadio_Awake_Patch.rearranger==first.radio,"Using first radio restores its UMM pointer");
+        }
         {
             cases++;var r=new Rig();r.SelectA();int selected=Selected(r.radio),updates=r.radio.display.Updates,sounds=CommsRadioController.Sounds,calls=Physics.Calls;
             UMM.UI.Instance.Opened=true;Physics.Hit=r.b.transform;r.radio.OnUpdate();r.radio.OnUse();
@@ -112,6 +127,17 @@ static class Program
             Check(GUILayout.Buttons.Count(x=>x.Contains("RUN STRUCTURAL TEST"))==(running?0:1),"One manual structural button when idle");
         }
         {cases++;var r=new Rig();int starts=Stage2RuntimeChecks.Starts;GUILayout.Clicks.Add("RUN STRUCTURAL TEST — two stationary S282s");entry.OnGUI(entry);Check(Stage2RuntimeChecks.Starts==starts+1,"Manual structural button invokes Begin");}
+        {
+            cases++;var r=new Rig();MultiplayerSync.IsClient=MultiplayerSync.InSession=true;MultiplayerSync.AllowClientRequest=false;int records=ConventionalSpawn.Records.Count;
+            r.SelectA();r.radio.OnUse();Check(r.wa.Calls.Count==0&&ConventionalSpawn.Records.Count==records,"Locked guest radio cannot convert locally");
+            Stage2RuntimeChecks.Running=false;r.SelectA();MultiplayerSync.AllowClientRequest=true;r.radio.OnUse();
+            Check(r.wa.Calls.Count==0&&ConventionalSpawn.Records.Count==records&&CommsRadioS282Rearranger.ReapplyStatus.Contains("Requested"),"Permitted guest radio routes request without local conversion");
+            GUILayout.Clicks.Add("RUN STRUCTURAL TEST — two stationary S282s");int starts=Stage2RuntimeChecks.Starts;entry.OnGUI(entry);Check(Stage2RuntimeChecks.Starts==starts&&!GUILayout.Buttons.Any(x=>x.Contains("RUN STRUCTURAL TEST")),"Multiplayer session hides stationary structural test");
+            GUILayout.ToggleValue=true;int[] tenderChoices=Core.settings.poweredTenderArrangements.ToArray();entry.OnGUI(entry);
+            Check(Core.settings.DrawEnabled.Last()==false&&GUI.enabled,"Guest global settings are drawn disabled and previous GUI state restored");
+            Check(Core.settings.poweredTenderArrangements.SequenceEqual(tenderChoices),"Guest powered-tender controls cannot mutate local global policy");
+            MultiplayerSync.IsClient=MultiplayerSync.InSession=false;GUILayout.Clear();
+        }
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"Main.cs","CommsRadioS282Rearranger.cs","WheelArrangement.cs"},limitations="Managed stand-ins test actual mod state/input guards and GUI callback wiring only; they do not reproduce native CanScroll, hotbar input, Unity/UMM rendering, VR, native conversion, save persistence or the reported in-game cycle failure."};
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0])));File.WriteAllText(args[0],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"Radio/settings integration passed {checks} checks across {cases} cases.");return 0;

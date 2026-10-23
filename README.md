@@ -1,4 +1,12 @@
-# Rearranged S282 — B99 2.0-beta
+# Rearranged S282 — multiplayer development
+
+This checkout is the `codex/s282-multiplayer` development branch, based on the current 2.0-beta source checkpoint. The first external test package is **2.0.1-mp.alpha.1**. Multiplayer has not been installed or tested live on the development PC.
+
+All players use their own Wheel Rearranger radio to request changes. The host validates each request and distributes the arrangement and its settings. Host UMM controls allow all guests, lock all guests, or lock selected players for the session. Locked players continue receiving arrangement updates. All players must install the identical package; mismatched builds are refused. See [the testing instructions](MULTIPLAYER_TESTING.txt) and [current handover](CURRENT_HANDOVER.md) for validation and remaining live tests.
+
+`Build.Multiplayer.ps1` builds and packages the alpha using the retained 2.0-beta release as its asset baseline. It uses the Multiplayer API as a build-only reference. The optional adapter loads only when Multiplayer is active; native Multiplayer handles transport, simulation ports and train movement.
+
+The existing 2.0-beta feature documentation follows.
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 

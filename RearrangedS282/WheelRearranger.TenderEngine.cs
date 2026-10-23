@@ -254,6 +254,7 @@ namespace RearrangedS282
         // Pull at the tender's rails, limited by the tender's own adhesion.
         private void ApplyTenderForce(TrainCar loco)
         {
+            if (!MultiplayerSync.IsSimulationAuthority) return;
             var tender = tenderEngineCar;
             if (tender == null || tender.massController == null) return;
             float radius = .712f * tenderLayout.Scale;

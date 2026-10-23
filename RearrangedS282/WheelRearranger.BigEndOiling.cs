@@ -73,7 +73,7 @@ namespace RearrangedS282
 
         private (List<BigEndSite> sites, int[] allocation) PlanBigEnds(TrainCar car, out int dropped)
         {
-            bool enabled = Main.settings == null || Main.settings.bigEndOiling;
+            bool enabled = ArrangementSettings == null || ArrangementSettings.bigEndOiling;
             var sites = enabled ? BigEndSites() : new List<BigEndSite>();
             var allocation = BigEndOilingPlan.Allocate(sites.Select(s => new BigEndOilingPlan.BigEnd(s.Left,
                 car.transform.InverseTransformPoint(s.PinWorld).z, s.NativeCup)).ToList(), out dropped);

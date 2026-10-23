@@ -44,6 +44,7 @@ namespace RearrangedS282
 
         private static void Schedule(TrainCar candidate)
         {
+            if (MultiplayerSync.DeferAutomatic(candidate)) return;
             var owner = For(candidate);
             if (owner == null) return;
             owner.state.SelectInitial(Main.settings, Random);
@@ -60,6 +61,7 @@ namespace RearrangedS282
 
         private void StartPending()
         {
+            if (MultiplayerSync.DeferAutomatic(car)) { CancelPending(); return; }
             // Newly instantiated/native-pooled stock needs no geometry or sim
             // edit, even if loaded with its regulator open or while derailed.
             if (state.PendingId == (int)WheelArrangementType.s282 && !(Main.settings?.PoweredTenderEnabled((int)WheelArrangementType.s282) ?? false) && car != null &&
@@ -89,6 +91,7 @@ namespace RearrangedS282
             while (car != null && car.logicCar != null &&
                 string.Equals(state.Guid, car.CarGUID, StringComparison.Ordinal) && state.PendingId.HasValue)
             {
+                if (MultiplayerSync.DeferAutomatic(car)) break;
                 if (
 #if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
                     !Stage2RuntimeChecks.Running &&
@@ -153,6 +156,7 @@ namespace RearrangedS282
             private static bool Prefix(TrainCar __instance)
             {
                 if (__instance == null || __instance.carType != TrainCarType.LocoSteamHeavy) return true;
+                MultiplayerSync.Forget(__instance);
                 var owner = __instance.GetComponent<ConventionalSpawn>();
                 if (owner != null)
                 {
@@ -199,6 +203,7 @@ namespace RearrangedS282
         {
             private static void Postfix(TrainCar spawnedCar, JObject simCarState)
             {
+                if (MultiplayerSync.DeferAutomatic(spawnedCar)) return;
                 var owner = For(spawnedCar);
                 if (owner == null) return;
                 owner.CancelPending();

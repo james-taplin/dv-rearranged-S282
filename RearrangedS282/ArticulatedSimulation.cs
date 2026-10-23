@@ -290,7 +290,10 @@ namespace RearrangedS282
             // Every visual engine group uses the same native powered-wheel phase.
             engine.crankRotation = MainEngine.crankRotation;
             engine.prevCrankRotation = MainEngine.crankRotation;
-            engine.crankRotationReadOut.Value = MainEngine.crankRotationReadOut.Value;
+            // A late replica may already have the host's port snapshot. Keep
+            // that phase; the host's dirty-port stream need not resend it.
+            if (MultiplayerSync.IsSimulationAuthority)
+                engine.crankRotationReadOut.Value = MainEngine.crankRotationReadOut.Value;
             engine.Active = true;
         }
 
@@ -302,7 +305,7 @@ namespace RearrangedS282
             if (middle != null) middle.TenderMode = false;
             // Clear the last aggregate immediately, before the next native Tick.
             // All sums subsequently pass the unmodified main engine through.
-            if (MainEngine == null) return;
+            if (MainEngine == null || !MultiplayerSync.IsSimulationAuthority) return;
             if (torqueSum != null) torqueSum.Value = MainEngine.torqueOut.Value;
             if (exhaustSum != null) exhaustSum.Value = MainEngine.exhaustFlowReadOut.Value;
             if (intakeSum != null) intakeSum.Value = MainEngine.intakeFlowReadOut.Value;
@@ -384,7 +387,7 @@ namespace RearrangedS282
         }
         public override void Tick(float delta)
         {
-            if (!Active) return;
+            if (!Active || !MultiplayerSync.IsSimulationAuthority) return;
             if (TenderMode) { torqueOut.Value = TenderTorque; exhaustFlowReadOut.Value = TenderExhaust; }
             // One owned input adapter for unequal host/tender wheel diameters.
             // Repoint only this engine's reference during its synchronous native
@@ -408,6 +411,10 @@ namespace RearrangedS282
         {
             Active = false;
             TenderTorque = TenderExhaust = 0f;
+            // Only the simulation owner clears live outputs. Replicas retain
+            // values from native Multiplayer port snapshots across geometry
+            // setup, reapply and tender attachment changes.
+            if (!MultiplayerSync.IsSimulationAuthority) return;
             torqueOut.Value = 0f;
             torqueVelocity = 0f;
             intakeFlowReadOut.Value = intakeFlowNormalizedReadOut.Value = 0f;

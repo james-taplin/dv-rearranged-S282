@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>RearrangedS282.Multiplayer</AssemblyName>
+    <RootNamespace>RearrangedS282.Multiplayer</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <GamePath Condition="'$(GamePath)' == ''">B:\SteamLibrary\steamapps\common\Derail Valley</GamePath>
+    <ManagedPath>$(GamePath)\DerailValley_Data\Managed</ManagedPath>
+    <MultiplayerApiPath Condition="'$(MultiplayerApiPath)' == ''">$(MSBuildThisFileDirectory)..\..\dads-decals\lib\MultiplayerAPI.dll</MultiplayerApiPath>
+    <NuGetAudit>false</NuGetAudit>
+    <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RearrangedS282\RearrangedS282.csproj" Private="false" />
+    <!-- Multiplayer supplies its own API at runtime. Never copy it into a release. -->
+    <Reference Include="MultiplayerAPI" HintPath="$(MultiplayerApiPath)" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ManagedPath)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ManagedPath)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="$(ManagedPath)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityModManager" HintPath="$(ManagedPath)\UnityModManager\UnityModManager.dll" Private="false" />
+  </ItemGroup>
+  <Target Name="RequireMultiplayerApi" BeforeTargets="ResolveReferences" Condition="!Exists('$(MultiplayerApiPath)')">
+    <Error Text="Provide -p:MultiplayerApiPath=...\MultiplayerAPI.dll from DV Multiplayer 0.1.16.0 (API 1.1). This is a build-only reference; do not package it." />
+  </Target>
+</Project>

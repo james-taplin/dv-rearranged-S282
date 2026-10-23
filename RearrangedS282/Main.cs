@@ -59,11 +59,17 @@ namespace RearrangedS282
 				ArticulatedEffects.Register(stage2Harmony);
 				DeltaTrailingTruckCompatibility.Register(stage2Harmony);
 				ConventionalSpawn.RegisterPatches(stage2Harmony);
+				MultiplayerSync.Initialize();
+				modEntry.OnUpdate = (entry, delta) => {
+					MultiplayerSync.Tick();
+#if B99_DIAGNOSTICS
+					PowerDiagnostics.Update();
+#endif
+				};
 				stage2Harmony.CreateClassProcessor(typeof(WheelRearranger.CurveSquealPatch)).Patch();
 #if B99_DIAGNOSTICS
 				PowerDiagnostics.CurveSampler = CurveDiagnostics.Sample;
 				PowerDiagnostics.CurveSessionInfo = CurveDiagnostics.SessionInfo;
-				modEntry.OnUpdate = (entry, delta) => PowerDiagnostics.Update();
 				Application.quitting += () => PowerDiagnostics.Stop("game exiting");
 #endif
 				// Live geometry and save owners cannot safely outlive their Harmony hooks.
@@ -73,6 +79,7 @@ namespace RearrangedS282
 				modEntry.OnGUI = entry => {
                     GUILayout.Label("Running Rearranged S282 " + RunningVersion);
 #if B99_ALL_STANDARD
+					MultiplayerSync.Draw();
 					GUILayout.Label("48 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +
 						"Selections are saved with each locomotive. Loaded arrangements wait until switching is safe.\n" +
@@ -85,7 +92,10 @@ namespace RearrangedS282
 							GUILayout.Button("REAPPLY CURRENT ARRANGEMENT — highlighted S282")) radio.ReapplyFromSettings();
 						if (GUILayout.Button("RESET WHEEL-ARRANGER RADIO SELECTION")) radio.ResetSelectionFromSettings();
 					}
+					bool settingsEnabled = GUI.enabled;
+					GUI.enabled = settingsEnabled && !MultiplayerSync.IsClient;
 					DrawPoweredTenderSettings();
+					GUI.enabled = settingsEnabled;
 					if (CommsRadioS282Rearranger.ReapplyStatus != null) GUILayout.Label(CommsRadioS282Rearranger.ReapplyStatus);
 					if (DeltaTrailingTruckCompatibility.Status != null) GUILayout.Label(DeltaTrailingTruckCompatibility.Status);
 #if B99_DIAGNOSTICS
@@ -108,6 +118,9 @@ namespace RearrangedS282
 #if B99_DIAGNOSTICS || B99_STRUCTURAL_DIAGNOSTICS
 					GUILayout.Label(Stage2RuntimeChecks.Status);
 					if (!Stage2RuntimeChecks.Running
+#if B99_ALL_STANDARD
+						&& !MultiplayerSync.InSession
+#endif
 #if B99_ALL_STANDARD && B99_DIAGNOSTICS
 						&& !PowerDiagnostics.Recording
 #endif
@@ -120,7 +133,10 @@ namespace RearrangedS282
 					if (showArrangementSettings)
 					{
 						GUILayout.Label("Random spawning affects new S282s only. Saved choices are kept. An empty pool uses stock 2-8-2.");
+						bool oldEnabled = GUI.enabled;
+						GUI.enabled = oldEnabled && !MultiplayerSync.IsClient;
 						settings.Draw(entry);
+						GUI.enabled = oldEnabled;
 					}
 #endif
 				};

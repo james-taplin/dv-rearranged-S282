@@ -517,3 +517,8 @@ evidence/steam-duct-tests/*
 evidence/tender-audio-tests/*
 !evidence/tender-audio-tests/*.cs
 !evidence/tender-audio-tests/README.md
+
+!evidence/multiplayer-tests/
+evidence/multiplayer-tests/*
+!evidence/multiplayer-tests/*.cs
+!evidence/multiplayer-tests/README.md

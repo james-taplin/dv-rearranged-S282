@@ -62,7 +62,18 @@ internal static class GraphProbe {
   bool busy=false;try{owner.ConfigureTender(true,1f);}catch(InvalidOperationException){busy=true;}
   Check(busy && owner.IsMiddleActive && !owner.IsTenderEngine, "Powered tender refuses to steal an engine from a three-group locomotive");
   owner.ConfigureTender(false,1f);Check(owner.IsMiddleActive && !owner.IsTenderEngine, "Unchecked tender does not stop the triplex middle group"); owner.Restore();
-  var old=new JObject{["steamEngine"]=new JObject{["cylCracked"]=true},["other"]=7};var arguments=new object[]{owner.Flow,old};Hook("LoadLegacyState",arguments);var migrated=(JObject)arguments[1];Check(!ReferenceEquals(old,migrated)&&old[ArticulatedSimulation.RearEngineId]==null&&((JObject)migrated[ArticulatedSimulation.RearEngineId]).Count==0&&((JObject)migrated[ArticulatedSimulation.MiddleEngineId]).Count==0&&migrated["steamEngine"].Value<bool>("cylCracked"),"Legacy save migration clones caller data and adds empty uncracked rear and middle state only");
+  var replicatedPorts=owner.Flow.OrderedSimComps.SelectMany(c=>c.ports).ToArray();
+  for(int i=0;i<replicatedPorts.Length;i++)replicatedPorts[i].Value=i+.125f;
+  var replicatedValues=replicatedPorts.Select(p=>p.Value).ToArray();
+  MultiplayerSync.IsSimulationAuthority=false;
+  try{
+   owner.Apply(38);Check(owner.IsActive&&owner.IsMiddleActive,"Guest triplex replay configures active engine flags");
+   owner.Restore();Check(!owner.IsActive&&!owner.IsMiddleActive,"Guest restore configures dormant engine flags");
+   owner.ConfigureTender(true,1.4f);owner.SetTenderEngine(true);Check(owner.IsTenderEngine&&owner.IsMiddleActive,"Guest tender replay configures engine mode and attachment flags");
+   owner.SetTenderEngine(false);owner.Restore();
+   Check(replicatedPorts.Select(p=>p.Value).SequenceEqual(replicatedValues),"Guest activation, restore and tender replay preserve every received native port value");
+  }finally{MultiplayerSync.IsSimulationAuthority=true;}
+  var old=new JObject{["steamEngine"]=new JObject{["cylCracked"]=true},["other"]=7};var arguments=new object[]{owner.Flow,old};Hook("LoadLegacyState",arguments);var migrated=(JObject)arguments[1];Check(!ReferenceEquals(old,migrated)&&old[ArticulatedSimulation.RearEngineId]==null&&((JObject)migrated[ArticulatedSimulation.MiddleEngineId]).Count==0&&((JObject)migrated[ArticulatedSimulation.RearEngineId]).Count==0&&migrated["steamEngine"].Value<bool>("cylCracked"),"Legacy save migration clones caller data and adds empty uncracked rear and middle state only");
   var current=new JObject{[ArticulatedSimulation.RearEngineId]=new JObject{["cylCracked"]=true},[ArticulatedSimulation.MiddleEngineId]=new JObject{["cylCracked"]=true}};var currentArgs=new object[]{owner.Flow,current};Hook("LoadLegacyState",currentArgs);Check(ReferenceEquals(current,currentArgs[1])&&current[ArticulatedSimulation.RearEngineId].Value<bool>("cylCracked")&&current[ArticulatedSimulation.MiddleEngineId].Value<bool>("cylCracked"),"Existing rear and middle crack save data is preserved unchanged");
   var duplexSave=new JObject{[ArticulatedSimulation.RearEngineId]=new JObject{["cylCracked"]=true}};var duplexArgs=new object[]{owner.Flow,duplexSave};Hook("LoadLegacyState",duplexArgs);var upgraded=(JObject)duplexArgs[1];Check(!ReferenceEquals(duplexSave,upgraded)&&duplexSave[ArticulatedSimulation.MiddleEngineId]==null&&upgraded[ArticulatedSimulation.RearEngineId].Value<bool>("cylCracked")&&((JObject)upgraded[ArticulatedSimulation.MiddleEngineId]).Count==0,"1.5 saves keep rear crack state and gain an empty uncracked middle state");
   a.Init();Check(a.sim.connectionsDefinition==graph&&a.damage.mechanicalPTDamagerPortIds.Length==3&&a.sim.connectionsDefinition.executionOrder.Length==11&&!ArticulatedSimulation.Ensure(a.car).IsActive,"Repeated native initialization reuses one owned graph without duplicate definitions or damage IDs");

@@ -1,3 +1,94 @@
+## Multiplayer development branch - 23 October 2026
+
+James requested a new development branch for shared radios, optional per-player
+arrangement lockout, and synchronized physics/visuals. Multiplayer is not installed
+on this PC; external players will test the first package. No local Multiplayer
+installation is required or authorized by this development task.
+
+Work in B:\GitHub repo\rearranged-s282-multiplayer on codex/s282-multiplayer.
+It is an isolated native Git worktree of the canonical S282 repository, based on
+30c2a80 (the current source and latest handover). All 213 source/config/model
+entries checked against that checkpoint matched the live source before branching.
+The original b99-port checkout and its index were not switched or staged. The
+Codex worktree attachment tool cannot attach this externally created worktree.
+
+Initial package version: 2.0.1-mp.alpha.1. This is a multiplayer alpha, not a
+replacement public 2.0-beta release. Build.Multiplayer.ps1 preserves the assets
+and licences from the verified 2.0-beta ZIP, builds the main mod plus its optional
+MPAPI adapter, and creates the external tester ZIP/checklist/hash receipt.
+
+Native-first decision: inspected the current source/handover, installed S282,
+Dad's Decals multiplayer adapter, and AMacro/dv-multiplayer primary source before
+implementing. Use the supported serializable custom-packet API, stable CarGUID,
+and existing MP host-only native simulation/port replication. Do not add another
+transport, custom train movement replication, server, or replacement radio API.
+The small optional adapter assembly isolates MPAPI from single-player loading.
+MultiplayerAPI.dll remains a build-only reference and is not shipped.
+The compiled main assembly has no Multiplayer/MPAPI assembly reference. With
+Multiplayer absent or inactive, Initialize/Tick never load the adapter; ordinary
+single-player radios, automatic selection and native forces keep their authority.
+
+Confirmed target: DV Multiplayer 0.1.16.0, MPAPI 1.1.0.0. Primary beta source
+inspected at 1a5aeae20c66c88c10f38a531daabab656afac41; release tag points to
+d142f90519b53e8b1af4eba4b85a2873b5c4da65. Important upstream references:
+https://github.com/AMacro/dv-multiplayer/tree/beta/MultiplayerAPI
+https://github.com/AMacro/dv-multiplayer/blob/beta/MultiplayerAPI%20Tests/TestComponents/ServerTest.cs
+https://github.com/AMacro/dv-multiplayer/blob/beta/MultiplayerAPI%20Tests/Packets/SimplePacketWithNetId.cs
+
+Host validates operating conditions and request revision. Each accepted change
+includes a per-car copy of host settings (including powered tender and gear
+presentation). Clients never save these settings over their own preferences.
+Host settings edits affect that car on reapply. Client random/saved local choices
+are deferred to host state. Revisions handle reliable unordered packets; queued
+GUID snapshots cover late car creation and joining an already-moving train.
+Only validated replica replay bypasses the stationary/regulator operation check.
+Native readiness and geometry guards remain. Custom auxiliary steam ticks and
+extra curve/tender forces execute only on the simulation authority; native
+mirrored ports continue to drive guest animation/effects/audio.
+
+Per-radio ownership replaces the static radio-controller source. The host can
+allow all guests or lock individual guests in UMM. Locks are session scoped and
+cleared on disconnect because native player byte IDs are reused. MP's native
+compatibility metadata checks mod IDs, so the adapter additionally requires exact
+protocol and main/adapter DLL hashes; mismatching or non-handshaking guests are
+removed. Never offer a local-only gameplay fallback in an incompatible session.
+
+The native MP port stream can precede custom arrangement state and contain a
+non-four powered-axle count. The replica baseline fix accepts the untouched
+per-car four-axle definition only when the independent physical baseline remains
+six total/four powered axles. Other inconsistent baselines are rejected with
+actual values logged. This source evidence does not retrospectively establish
+the cause of the historical tester failures below.
+
+Guest setup also preserves already-received crank/steam/chuff/oiling ports;
+native dirty-only updates may otherwise never resend those stationary values.
+Confirmed conversion rollback broadcasts actual stock with its tender disabled.
+A failed guest conversion reports the error and disconnects that guest instead
+of leaving a known inconsistent replica in play.
+
+Validation: both net48 projects compile with zero warnings/errors. Offline
+checks passed: 182 bridge/packet checks in 16 cases; 287 radio/settings checks in
+20 cases; 78 core policy/profile/revision/queue/fallback checks in 10 cases, in
+build/multiplayer-validation/core-validation.json; 92 native-engine checks,
+58 graph/lifecycle checks, 305 physics assertions and 42 oiling checks. The
+explicit absent/disabled-Multiplayer test uses a missing adapter file and still
+allows offline changes. The real main DLL's assembly references contain no
+Multiplayer/MPAPI dependency. Fixtures clearly label their managed boundaries.
+Oversized-packet testing caught an uncaught InvalidDataException; the explicit
+decoder catch is now covered by the passing codec tests.
+
+External ZIP and build-receipt.json are under Desktop/Derail Valley Mods/
+RearrangedS282-B99-2.0.1-mp.alpha.1-Test. Build.Multiplayer.ps1 verifies all
+32 protected seed-package members byte-for-byte and excludes MPAPI from the
+runtime payload. The receipt records the exact source commit, source hashes,
+two DLL hashes and final ZIP hash. Source/docs/tests are committed locally on
+this branch before the final package build. Nothing is installed, pushed or
+published. Original b99-port remains the active branch of its own checkout.
+
+Live host/client, ownership changes, latency, late joins, audio/effects and saves
+remain external acceptance tests in MULTIPLAYER_TESTING.txt. Do not infer live
+multiplayer readiness from compilation or offline harnesses.
+
 ## Historical tester log review - 23 October 2026
 
 Reviewed three supplied Player logs from Downloads; captured session reports

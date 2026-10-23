@@ -27,7 +27,7 @@ namespace RearrangedS282
         {
             var car = loco != null ? loco : GetComponent<TrainCar>();
             TickTenderEngine(car);
-            bool drag = Main.settings != null && Main.settings.curveDrag, squeal = Main.settings != null && Main.settings.curveSqueal;
+            bool drag = ArrangementSettings != null && ArrangementSettings.curveDrag, squeal = ArrangementSettings != null && ArrangementSettings.curveSqueal;
             float dt = Time.fixedDeltaTime;
             if (car == null || (!drag && !squeal) || currentWA == WheelArrangementType.s282 || car.derailed ||
                 car.Bogies == null || car.Bogies.Length == 0 || car.massController == null)
@@ -62,7 +62,7 @@ namespace RearrangedS282
             }
             CurveExtraN = Smooth(CurveExtraN, curveTargetN, dt);
             CurveSqueal = Smooth(CurveSqueal, curveSquealTarget, dt);
-            if (!drag || CurveExtraN <= 0f) return;
+            if (!MultiplayerSync.IsSimulationAuthority || !drag || CurveExtraN <= 0f) return;
             // Follow native rolling resistance: none while wheelslipping. Ramp to
             // zero at standstill so it can only ever oppose motion, never propel.
             if (car.SimController?.wheelslipController != null && car.SimController.wheelslipController.IsWheelslipping) return;
@@ -109,7 +109,7 @@ namespace RearrangedS282
 
         internal JObject CurveDragReport() => new JObject
         {
-            ["enabled"] = Main.settings != null && Main.settings.curveDrag, ["squealEnabled"] = Main.settings != null && Main.settings.curveSqueal,
+            ["enabled"] = ArrangementSettings != null && ArrangementSettings.curveDrag, ["squealEnabled"] = ArrangementSettings != null && ArrangementSettings.curveSqueal,
             ["curvaturePerM"] = curveCurvature, ["groups"] = new JArray((curveGroups ?? Array.Empty<CurveDragModel.Axle[]>())
                 .Select(g => new JArray(g.Select(a => new JObject { ["z"] = a.Z, ["flanged"] = a.Flanged, ["freeM"] = a.FreeM })))),
             ["scrubN"] = curveModel.ScrubN, ["flangeN"] = curveModel.FlangeN,

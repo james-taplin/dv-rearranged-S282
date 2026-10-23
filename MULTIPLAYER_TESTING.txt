@@ -1,0 +1,166 @@
+Rearranged S282 B99 2.0.1-mp.alpha.1
+Initial multiplayer compatibility test
+23 October 2026
+
+Status
+
+This is an initial test package. The Multiplayer mod is not installed on the
+development PC. Offline checks and compilation cannot confirm live multiplayer
+physics, visuals, audio, native train ownership or save behaviour. The checks
+below must be run by external testers before multiplayer support is accepted.
+
+The host chooses and validates the final arrangement. Guests use their own
+Wheel Rearranger radios to request a change. The accepted arrangement and its
+relevant host settings are sent to all compatible players. Multiplayer itself
+continues to replicate native train motion and simulation. This mod does not
+create a second train-motion network protocol.
+
+Preparation
+
+Use a disposable sandbox save. Every participant must install this exact ZIP,
+including both RearrangedS282 DLLs, and the same Multiplayer version. The build
+reference was Multiplayer 0.1.16.0, API 1.1. Start with that version and record
+the actual version from each log. Multiplayer supplies MultiplayerAPI.dll;
+do not copy the build-only API into this mod or replace Multiplayer's API.
+LocoMeshSplitter remains required. Test without Realistic Firing initially so
+that any failure has a useful baseline. Retain the full Player.log from host
+and every client for each failing session.
+
+Use one host and at least two guests when possible. Have two ordinary S282s
+with S282 tenders. Keep one locomotive untouched as an isolation control.
+Before manual arrangement changes stop, shut the regulator and let driving
+force and wheel slip settle. A refusal should name a useful reason and leave
+the locomotive unchanged. Note the locomotive ID and arrangement in reports.
+
+1. Single-player fallback
+
+With Multiplayer disabled or absent, load the package in an ordinary save.
+Confirm the mod and radio load without a missing MultiplayerAPI error. Select
+a rigid arrangement, a Mallet and stock again. Save and reload. This confirms
+the optional bridge has not made Multiplayer a single-player dependency.
+
+2. Host and all guest radios
+
+Start a fresh multiplayer session with identical packages. Check the mod's
+UMM status on every PC. Guest changes must wait for the matching-build
+handshake. Each player should then be able to highlight the same locomotive,
+choose an arrangement with their own radio and confirm it. Observe every PC
+after each change. All must show the same layout; the second locomotive must
+stay unchanged. Repeat from two different guest radios and the host radio.
+
+Have two guests select different arrangements from the same starting state
+and confirm almost together. The host should accept one current request;
+any outdated request should be refused or require another confirmation. No
+player should keep a different layout after the final host update arrives.
+
+3. Host access controls
+
+On the host open UMM > Rearranged S282. Under Multiplayer arrangement
+permissions (this session), turn off one player's may change arrangements
+toggle. That guest should see a locked status and be unable to change the
+layout. The other guest and host must still be able to use their radios.
+The locked guest must still see arrangements changed by the others.
+
+Restore that player's toggle and confirm their radio works again. Turn off
+Allow guests to change arrangements and check both guests are locked while
+host changes still work. Turn it back on. Retest a previously locked player's
+individual toggle. Permissions are session controls, not saved accounts.
+
+Disconnect a locked guest, then have a different player connect. The new
+player must not inherit that lock if Multiplayer reuses the departed ID.
+Reconnect the original guest and check the handshake and current snapshot.
+
+4. Settings and late join
+
+Set deliberately different guest powered-tender, valve-gear and visual
+preferences. Let the host choose a layout and reapply its current arrangement.
+Compare the resulting locomotive and tender on every PC. Guests must show
+the host's accepted configuration for that locomotive. Changing a guest's
+local options must not silently change the shared locomotive.
+
+Use a guest that joins after the layout has already changed. First join while
+the train is stopped, then repeat while it is moving steadily. The joining
+guest must eventually receive the current layout after the native car and
+mesh are ready, without needing another radio change. There must be no local
+random layout applied before the host snapshot. Repeat with a newly spawned
+S282 after all players are connected and with host random arrangements on.
+
+5. Physics and native simulation
+
+Compare the same locomotive on host and clients using stock 2-8-2, a rigid
+layout with a different number of drivers, a two-engine Mallet, the three-
+engine 2-4-4-4-0 and Erie with its powered tender. Start each case stationary.
+Check driver count, radius, visible cylinder groups, rods, valve gear, pipes
+and tender engine. Then drive forward and reverse at several cutoffs, brake,
+start on a grade, induce brief slip and run through curves.
+
+Check that train speed, position, pull, braking, boiler/steam behaviour and
+wheel/rod motion remain coherent across PCs. No client should add a second
+driving force or drain the shared boiler twice. Run the same route with host
+and guest at the controls if Multiplayer permits ownership changes. Record
+the current simulation owner if the Multiplayer UI exposes it. Repeat after
+changing ownership; look for force jumps, stalled engines and duplicate audio.
+
+For the powered tender, compare coupled, uncoupled, reconnected and ordinary
+tender states. The rear engine, exhaust, cylinder cocks, sound and wheel motion
+must appear and disappear together on every PC. Confirm another locomotive's
+tender is unaffected. Inspect both close and distant LODs on host and guest.
+
+A matching arrangement display alone is not a physics pass. Record sustained
+driving, steam use and ownership results separately from visual results.
+
+If a guest cannot initialize the accepted arrangement, it should report the
+failure to the host, lock further changes and be disconnected. Record logs
+from both peers. Do not accept a session continuing with that guest driving
+different geometry after an initialization failure.
+
+6. Save, unload and reconnection
+
+With several different arrangements present, save the host game and reload
+the session. Reconnect all guests and compare the restored locomotives. Drive
+far enough away to unload a locomotive, return and inspect its arrangement
+and tender. Delete a modified locomotive, spawn another and check that no old
+arrangement, settings, revisions or powered tender leak to the new car.
+
+Disconnect and reconnect guests after several changes. Stop the server and
+start another session with the same game process when supported. Recheck
+permissions, handshake, snapshots, default stock cars and guest radios.
+
+7. Refusals and version mismatch
+
+Try a manual request while the locomotive is moving, while it is damaged and
+while its native parts are still loading. An unsafe request must be refused
+before conversion. Return to a safe state and retry from each player's radio.
+
+If conversion fails after it has begun, a confirmed stock restoration must be
+sent to the other players as a rollback. Keep both logs and report the failure
+before testing that locomotive further.
+
+In a separate test session, deliberately use a different Rearranged package
+on one guest. The host must tell that guest the builds differ and disconnect
+them after the rejection message. A ready guest with an older same-ID mod that
+never confirms a matching build must be disconnected after 45 seconds. The
+host enforces this because native Multiplayer's mod list checks IDs, while
+different S282 DLLs can have different geometry and physics. Check that a
+different player reusing a departed player's ID is not disconnected by the
+old pending timeout. Restore the exact package before continuing. Mixed
+builds are not a supported play setup.
+
+8. Evidence to return
+
+Return the ZIP filename and build-receipt.json, game build, Multiplayer version,
+API version, other active mods and which PC was host or guest. For each failure
+give the locomotive ID, layout before/after, tender option, which player used
+the radio, expected result, actual result and a short sequence to reproduce.
+Include all relevant Player.log files and screenshots or a short recording
+from both affected peers. A pass should identify which numbered cases ran.
+
+The historical 20 October logs had native baseline-guard conversion failures,
+but their cause was not established. Preserve any new B99PhysicsState baseline
+details. Do not assume those messages prove a Multiplayer or Realistic Firing
+cause without the matching current test evidence.
+
+Do not run the existing automated structural test during multiplayer sessions.
+Use ordinary single-player for that stationary test until multiplayer runtime
+behaviour has been accepted. This alpha does not install Multiplayer, push a
+repository, publish a release or claim live multiplayer acceptance.

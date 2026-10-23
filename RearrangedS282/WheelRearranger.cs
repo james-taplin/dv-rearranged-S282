@@ -35,6 +35,11 @@ namespace RearrangedS282
 {
 	internal partial class WheelRearranger : MonoBehaviour
 	{
+#if B99_ALL_STANDARD
+		private Settings ArrangementSettings => MultiplayerSync.SettingsFor(loco != null ? loco : GetComponent<TrainCar>());
+#else
+		private Settings ArrangementSettings => Main.settings;
+#endif
 		private TrainCar loco;
 		private S282AMeshLoader splitS282A = null;
 
@@ -265,7 +270,7 @@ namespace RearrangedS282
 			{
 				SwitchWheelArrangement(savedWA);
 			}
-			else if (Main.settings.spawnRandomWA)
+			else if (ArrangementSettings.spawnRandomWA)
 			{
 				SwitchWheelArrangementRandom();
 			}
@@ -921,13 +926,13 @@ namespace RearrangedS282
 
 		public void SwitchWheelArrangementRandom()
 		{
-			if (Main.settings.RandomWAs.Count == 0)
+			if (ArrangementSettings.RandomWAs.Count == 0)
 			{
 				SwitchWheelArrangement((int)WheelArrangementType.s282);
 				return;
 			}
-			int wa = rand.Next(Main.settings.RandomWAs.Count);
-			SwitchWheelArrangement((int) Main.settings.RandomWAs[wa]);
+			int wa = rand.Next(ArrangementSettings.RandomWAs.Count);
+			SwitchWheelArrangement((int) ArrangementSettings.RandomWAs[wa]);
 		}
 
 		public void SwitchWheelArrangement(int wa)
@@ -1065,7 +1070,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s280:
 				case WheelArrangementType.s282:
 				case WheelArrangementType.s284:
-					if (!Main.settings.show8CoupledValveGear)
+					if (!ArrangementSettings.show8CoupledValveGear)
 					{
 						HideValveGear();
 					}
@@ -1103,7 +1108,7 @@ namespace RearrangedS282
 			{
 			//two trailing wheels:
 				case WheelArrangementType.s442:
-					switch (Main.settings.x42Options)
+					switch (ArrangementSettings.x42Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsFor4CoupledVanilla();
@@ -1117,7 +1122,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s462:
-					switch (Main.settings.x62Options)
+					switch (ArrangementSettings.x62Options)
 					{
 						case Settings.X102Options.vanilla:
 							ShowTwoTrailingWheelsFor6CoupledVanilla();
@@ -1129,7 +1134,7 @@ namespace RearrangedS282
 					break;
 				case WheelArrangementType.s082:
 				case WheelArrangementType.s282:
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsVanilla();
@@ -1143,7 +1148,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s282Big: //don't want the alternate position for S282Big
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsVanilla();
@@ -1154,7 +1159,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s482:
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsFor10CoupledVanilla();
@@ -1167,7 +1172,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s0102:
 				case WheelArrangementType.s2102:
 				case WheelArrangementType.s4102:
-					switch (Main.settings.x102Options)
+					switch (ArrangementSettings.x102Options)
 					{
 						case Settings.X102Options.vanilla:
 							ShowTwoTrailingWheelsFor10CoupledVanilla();
@@ -1371,7 +1376,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s280:
 				case WheelArrangementType.s282:
 				case WheelArrangementType.s284:
-					if (!Main.settings.show8CoupledValveGear)
+					if (!ArrangementSettings.show8CoupledValveGear)
 					{
 						HideValveGear();
 					}
@@ -1412,7 +1417,7 @@ namespace RearrangedS282
 					ShowTwoTrailingWheels();
 					break;
 				case WheelArrangementType.s442:
-					switch (Main.settings.x42Options)
+					switch (ArrangementSettings.x42Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsFor4CoupledVanilla();
@@ -1427,7 +1432,7 @@ namespace RearrangedS282
 					break;
 				case WheelArrangementType.s462:
 				case WheelArrangementType.s262:
-					switch (Main.settings.x62Options)
+					switch (ArrangementSettings.x62Options)
 					{
 						case Settings.X102Options.vanilla:
 							ShowTwoTrailingWheelsFor6CoupledVanilla();
@@ -1439,7 +1444,7 @@ namespace RearrangedS282
 					break;
 				case WheelArrangementType.s082:
 				case WheelArrangementType.s282:
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsVanilla();
@@ -1453,7 +1458,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s282Big: //don't want the alternate position for S282Big
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsVanilla();
@@ -1464,7 +1469,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s482:
-					switch (Main.settings.x82Options)
+					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
 							ShowTwoTrailingWheelsFor10CoupledVanilla();
@@ -1477,7 +1482,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s0102:
 				case WheelArrangementType.s2102:
 				case WheelArrangementType.s4102:
-					switch (Main.settings.x102Options)
+					switch (ArrangementSettings.x102Options)
 					{
 						case Settings.X102Options.vanilla:
 							ShowTwoTrailingWheelsFor10CoupledVanilla();
@@ -2080,7 +2085,7 @@ namespace RearrangedS282
 			driveR.Find("LubricatorParts").gameObject.SetActive(false);
 
 			//hide or show valve gear
-			if (!Main.settings.show4CoupledValveGear)
+			if (!ArrangementSettings.show4CoupledValveGear)
 				HideValveGear();
 
 			Transform leftConnectingRod = leftSideRod.Find("s282_mech_push_rod_to_connect");
@@ -2186,7 +2191,7 @@ namespace RearrangedS282
 			driveR.Find("LubricatorParts").gameObject.SetActive(false);
 
 			//hide or show valve gear
-			if (!Main.settings.show6CoupledValveGear)
+			if (!ArrangementSettings.show6CoupledValveGear)
 				HideValveGear();
 
 			leftFirstBrakeCaliper.gameObject.SetActive(false);
@@ -2289,7 +2294,7 @@ namespace RearrangedS282
 			spark5R.gameObject.SetActive(true);
 
 			//hide or show valve gear
-			if (!Main.settings.show8CoupledValveGear)
+			if (!ArrangementSettings.show8CoupledValveGear)
 				HideValveGear();
 		}
 
@@ -2321,7 +2326,7 @@ namespace RearrangedS282
 			rLiftingArmSupport.gameObject.SetActive(false);
 
 			//hide or show valve gear
-			if (!Main.settings.show282BigValveGear)
+			if (!ArrangementSettings.show282BigValveGear)
 				HideValveGear();
 
 			rightFirstBrakeCaliper.localPosition = new Vector3(0, 0.06f, 0.235f);
@@ -2399,7 +2404,7 @@ namespace RearrangedS282
 			spark5R.gameObject.SetActive(true);
 
 			//hide or show valve gear
-			if (!Main.settings.show10CoupledValveGear)
+			if (!ArrangementSettings.show10CoupledValveGear)
 				HideValveGear();
 
 			//show brake calipers
@@ -2505,7 +2510,7 @@ namespace RearrangedS282
 			rLiftingArmSupport.gameObject.SetActive(false);
 
 			//hide or show valve gear
-			if (!Main.settings.show12CoupledValveGear)
+			if (!ArrangementSettings.show12CoupledValveGear)
 				HideValveGear();
 
 			//show brake calipers

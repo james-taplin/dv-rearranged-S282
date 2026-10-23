@@ -44,4 +44,4 @@ namespace LocoSim.Implementations {
  }
  public sealed class SimulationFlow {public List<SimComponent> OrderedSimComps;private Dictionary<string,Port> ports;public SimulationFlow(SimConnectionDefinition graph){OrderedSimComps=graph.executionOrder.Select(d=>d.InstantiateImplementation()).ToList();ports=OrderedSimComps.SelectMany(c=>c.ports).ToDictionary(p=>p.id);}public bool TryGetPort(string s,out Port p)=>ports.TryGetValue(s,out p);public void SetSaveStateData(JObject j){} }
 }
-namespace RearrangedS282 {internal static class Main{internal static Logger Logger=new();}internal sealed class Logger{internal List<string> warnings=new();internal void Warning(string s){warnings.Add(s);}}}
+namespace RearrangedS282 {internal static class MultiplayerSync{internal static bool IsSimulationAuthority=true;}internal static class Main{internal static Logger Logger=new();}internal sealed class Logger{internal List<string> warnings=new();internal void Warning(string s){warnings.Add(s);}}}

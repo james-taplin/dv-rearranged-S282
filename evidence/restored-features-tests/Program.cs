@@ -66,6 +66,53 @@ internal static class Program
         Check(!disabled.SimController.drivingForce.enabled,"pre-existing disabled native force remains disabled");
         var geometry=new GeometryFixture();geometry.Apply();
         Check(geometry.Parts.Length==30&&geometry.Parts.All(t=>!t.gameObject.activeSelf),"actual no-driver geometry hides both mechanisms, 24 brake parts and four powered axles");
+        MultiplayerBaselines();
+    }
+    private static void MultiplayerBaselines()
+    {
+        void Refuse(TrainCar car,string label)
+        {
+            bool refused=false;
+            try { new B99PhysicsState(car); }
+            catch(InvalidOperationException ex)
+            {
+                refused=ex.Message.Contains(car.ID)&&ex.Message.Contains("entity axles=")&&ex.Message.Contains("powered-axle port=");
+            }
+            Check(refused,label);
+        }
+        foreach(float mirroredCount in new[]{0f,2f,6f,10f})
+        {
+            var replica=TrainCar.Create();
+            replica.SimController.simFlow.ports["powered"].Value=mirroredCount;
+            Refuse(replica,"offline baseline rejects non-stock live port with diagnostic counts");
+            MultiplayerSync.IsClient=true;
+            try
+            {
+                Refuse(replica,"guest local request cannot reinterpret non-stock live port");
+                MultiplayerSync.ApplyingRemote=true;
+                var captured=new B99PhysicsState(replica);
+                Near(replica.SimController.simFlow.ports["powered"].Value,mirroredCount,"replica baseline capture does not overwrite received host port");
+                captured.Restore();
+                Near(replica.SimController.simFlow.ports["powered"].Value,4,"replica stock restoration uses independently verified native definition");
+            }
+            finally { MultiplayerSync.IsClient=false;MultiplayerSync.ApplyingRemote=false; }
+        }
+        MultiplayerSync.IsClient=MultiplayerSync.ApplyingRemote=true;
+        try
+        {
+            var inconsistent=TrainCar.Create();
+            inconsistent.SimController.simFlow.ports["powered"].Value=8;
+            inconsistent.numberOfAxles=7;
+            Refuse(inconsistent,"replica baseline rejects mismatched physical car count");
+            inconsistent.numberOfAxles=6;
+            inconsistent.SimController.poweredWheels.poweredWheels=inconsistent.SimController.poweredWheels.poweredWheels.Take(3).ToArray();
+            Refuse(inconsistent,"replica baseline rejects non-stock powered registration");
+            var alteredDefinition=TrainCar.Create();
+            alteredDefinition.SimController.simFlow.ports["powered"].Value=8;
+            alteredDefinition.transform.Find("[sim]/poweredAxles").GetComponent<LocoSim.Definitions.ConfigurablePortDefinition>().value=8;
+            Refuse(alteredDefinition,"replica baseline rejects modified configurable definition");
+        }
+        finally { MultiplayerSync.IsClient=MultiplayerSync.ApplyingRemote=false; }
     }
     private static void Explosions(bool alreadyCached)
     {
