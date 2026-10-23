@@ -4,7 +4,7 @@ Give the S282 a different character with 48 wheel arrangements, articulated Mall
 
 FULL DESCRIPTION
 
-# Rearranged S282 — B99
+# Rearranged S282 — B99 2.0-beta
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 
@@ -110,10 +110,10 @@ B99 fork: https://github.com/james-taplin/dv-rearranged-S282
 FILE INFORMATION
 
 FILE NAME
-Rearranged S282 B99 1.23.2 Beta
+Rearranged S282 B99 2.0-beta
 
 VERSION
-1.23.2
+2.0-beta
 
 FILE DESCRIPTION
 48 arrangements including the new 2-4-4-4-0 triplex and optional powered tenders for 43 layouts. Updated running gear, compact steam pipes, tender sounds and effects. Includes the structural test button.
@@ -124,29 +124,19 @@ Install through Unity Mod Manager with the game closed. Requires Derail Valley B
 
 CHANGELOG
 
+2.0-beta
 changes since public 1.22.2
 
-1.23.2
-fixed extra franklin cylinders being copied into rear and tender running gear breaking angus great northern and erie conversions and added a tender check for them
-
-1.23.1
-brought articulated steam headers and cylinder connections closer to the body with shorter matching bends and fittings
-fixed the new 2-4-4-4-0 falling back to a mikado and the powered tender disappearing after switching arrangements
-restored the structural test button with 91 ordinary and powered tender cases plus repeated returns to erie
-
-1.23.0
-added the 2-4-4-4-0 articulated triplex with three paired driver groups on the locomotive and an ordinary tender bringing the catalogue to 48
+added the 2-4-4-4-0 articulated triplex with three two-axle driver groups on the locomotive and an ordinary tender bringing the catalogue to 48
 added optional erie powered tenders for 43 compatible arrangements through umm including the option to disable the erie tender engine
-added powered tender driving gear clanks and matched its wheel speed and reverser animation to its own running gear
+added native powered tender chuffs running loops cylinder cock sounds and driving gear clanks with matched wheel speed reverser motion and coupling cleanup
 kept powered tender pull and steam demand separate while using the existing locomotive boiler and controls
-baked in the accepted running gear proportions and removed the temporary resizing controls and diagnostic recorders
+aligned cylinders valve spindles guides and crossheads on twelve driver and related four and six coupled layouts including hidden gear settings
+extended the original steam pipe set with matching bends adapters reducers and collars and brought articulated headers and cylinder connections closer to the body
+fixed the new triplex falling back to a mikado and the erie powered tender staying ordinary after switching arrangements
+fixed extra franklin cylinders breaking angus great northern and erie conversions and contaminating powered tender running gear
+baked in the accepted running gear proportions and removed the temporary resizing controls and power recorders
+restored the structural test button covering all 48 arrangements and 43 powered tender combinations plus repeated returns to erie
+updated the readme options guide and credits including discorddraconequus for the verde sound tuning reference
 
-1.22.4
-added native erie tender chuffs running loops and cylinder cock sounds with correct source positions and cleanup when coupling or changing arrangements
-
-1.22.3
-aligned cylinders valve spindles guides and crossheads on the twelve driver and related four and six coupled layouts including hidden gear settings
-extended the original pipe set with matching elbows adapters reducers and collars for better seating and clearance around the body reservoirs steps and air plumbing
-corrected the verde reference credit to discorddraconequus
-
-the existing arrangement physics calibration and stock s282 behaviour are retained with the powered tender option off
+existing arrangement physics calibration and stock s282 behaviour retained with the powered tender option off

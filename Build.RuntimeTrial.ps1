@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.23.2',
+    [string]$Version = '2.0-beta',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$OutputDirectory,
     [string]$CandidateDirectory,
@@ -7,7 +7,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$playerBuild = [version]$Version -ge [version]'1.23.0'
+if ($Version -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$') { throw 'Invalid build version.' }
+$numericVersion = [version]($Version -replace '-.*$', '')
+$playerBuild = $numericVersion -ge [version]'1.23.0'
 $candidate = if ($CandidateDirectory) { $CandidateDirectory } else { Join-Path $root "build\runtime-trial-$Version" }
 if (-not $OutputDirectory) { $OutputDirectory = "C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-$Version-Test" }
 $bin = Join-Path $candidate 'bin'
@@ -23,7 +25,7 @@ Copy-Item -LiteralPath (Join-Path $root 'release-copy\CREDITS.txt') -Destination
 $infoPath = Join-Path $mod 'Info.json'
 $info = Get-Content -LiteralPath $infoPath -Raw | ConvertFrom-Json
 $info.Version = $Version
-$info.DisplayName = 'Rearranged S282 - B99 Expanded Trial'
+$info.DisplayName = if ($Version -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99 Expanded Trial' }
 $info.LoadAfter = @('Gauge','DVCarChanger','S282ModelTweaks','MultiCylinderChuffFix')
 $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoPath -Encoding utf8
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination $mod
@@ -31,13 +33,13 @@ Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destinatio
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination (Join-Path $mod 'MANUAL_TEST_CHECKLIST.txt') -Force
 if (-not $playerBuild) {
 Copy-Item -LiteralPath (Join-Path $root 'ARTICULATED_TEST_STATUS.txt') -Destination $mod
-if ([version]$Version -ge [version]'1.22.3') { Copy-Item -LiteralPath (Join-Path $root 'GEOMETRY_TEST_STATUS.txt') -Destination $mod }
-if ([version]$Version -ge [version]'1.22.4') { Copy-Item -LiteralPath (Join-Path $root 'AUDIO_STEAM_TEST_STATUS.txt') -Destination $mod }
+if ($numericVersion -ge [version]'1.22.3') { Copy-Item -LiteralPath (Join-Path $root 'GEOMETRY_TEST_STATUS.txt') -Destination $mod }
+if ($numericVersion -ge [version]'1.22.4') { Copy-Item -LiteralPath (Join-Path $root 'AUDIO_STEAM_TEST_STATUS.txt') -Destination $mod }
 Copy-Item -LiteralPath (Join-Path $root 'TRACTIVE_DIAGNOSTICS.txt') -Destination $mod
-if ([version]$Version -ge [version]'1.21.0') {
+if ($numericVersion -ge [version]'1.21.0') {
     Copy-Item -LiteralPath (Join-Path $root 'PHYSICS_BASELINE.md') -Destination $mod
-    if ([version]$Version -ge [version]'1.21.1') { Copy-Item -LiteralPath (Join-Path $root 'FOA_REFINEMENT.md') -Destination $mod }
-    if ([version]$Version -ge [version]'1.21.2') { Copy-Item -LiteralPath (Join-Path $root 'FOA_BALANCE.md') -Destination $mod }
+    if ($numericVersion -ge [version]'1.21.1') { Copy-Item -LiteralPath (Join-Path $root 'FOA_REFINEMENT.md') -Destination $mod }
+    if ($numericVersion -ge [version]'1.21.2') { Copy-Item -LiteralPath (Join-Path $root 'FOA_BALANCE.md') -Destination $mod }
 }
 New-Item -ItemType Directory -Path (Join-Path $mod 'Tools') -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'Tools\TractiveTable.ps1') -Destination (Join-Path $mod 'Tools')
@@ -69,8 +71,8 @@ $receipt = [ordered]@{
     features=@('Erie tender rear exhaust pipe using original transfer mesh/materials and native tender LOD; native white-steam plume driven by tender pressure/chuff; tender cylinder-cock/drip/crack particles with detach/delete cleanup; physics and audio unchanged','Stock-relative FoA restriction removed; bounded machinery-sensitive ceilings span both sides of stock where original cylinders permit; 2-2-2 prototype remains unchanged and excluded','Rated 124 t resource-independent design shares and cylinder sizing; machinery-sensitive nominal factor of adhesion ceiling translated to native mean pressure; stock exact, reduction-only capacity; separate 50 t/.8 Erie tender cylinder design','Dense collar-preserving shaft bends, compact two-cylinder pipe routes, minimum .8-native pipe/manifold size, original UV/material reuse, Erie tender LP supply internal','Structural null-string false failure fixed with genuine error/gap/collider/count rejection retained; running assembly version displayed in UMM','Rear five-axle engine rotation follower retention and per-clone binding, with structural phase checks','Preliminary family/capped effective adhesive loads based on total mass; reduction-only native bore/area/volume calibration to stock reference pull/grip ceiling; exact instance restore; no mass or shared-definition changes; Erie tender engine excluded','Curve load matches effective driver share; diagnostics disclose native stationary adhesion update eligibility','Visual steam inlet reconnection using native boiler fittings and original MIT Franklin manifolds; collar-preserving branches follow existing locomotive articulation; Erie tender supply internal; native LOD and teardown ownership; no steam physics changes','PHYS-A read-only grip, mass/resource and active-cylinder observations in structural JSON/CSV and live JSONL; native-cutoff mean-force comparison with separate Erie tender data; Markdown/BBCode table exporter; no traction rebalance','Requested Mogul pitch/rearward .18/.12, 2-4-0 .20/.14, Prairie .22/.12; Prairie-only pitch cap raised to .22 m; temporary controls retained pending final proportions','Temporary Prairie 2-6-2 and American 4-4-0 pitch and driver-group displacement controls, both new defaults zero; one combined precision retarget for Prairie; fixed accepted cylinder positions, sizes and native physics; tuning UI intended for removal after fixed proportions accepted','Main connecting rod spacing on 2-6-0 and 2-4-0: 0 to 0.25 m driver group rearward controls, fixed cylinders, measured 3.15 and 1.56 m pins, shaft-only native-clock mesh deformation and retained physics','Direct UMM reapply and radio selection reset; menu input guards; cycling fault original cause unconfirmed','Coupling rod spacing on 2-6-0 and 2-4-0 with 0 to 0.20 m extra pitch controls and 0.15 m defaults; fixed main driver, native rotation followers, matched fittings and both LODs','Complete Prairie cylinders, mechanism and drivers translated rearward 0.70 m from 1.13.5 with wheel size and retarget span retained','Measured reservoir-clear large drivers on high-speed 2-8-0/2-8-2/2-8-4 and Prairie, approximately 1.58 m with matching native mechanism and simulation radius','Prairie front driver is forward 0.80 m and rear casing datum 0.10 m behind its earlier zero offset using existing native-clock rod retarget','Oil-cup guide seating and proxy alignment plus unload/pool/delete cleanup and structural count diagnostics','Full cylinder casing normalization for Prairie, Pacific, Hudson and rigid 4-4-0/4-4-2/4-4-4/2-4-0 with native-length bodies, matching fittings and retained motion axes','4-14-4 drivers a further 0.25 m rearward with fixed cylinders and carrying trucks, existing rod retarget and crosshead cup alignment','47 retained arrangements including Prairie, Big Mallets and Erie tender-engine trial','Other arrangements retain the previous barrel-only casing treatment','Pacific/Hudson Walschaerts geometry alignment with native animation','Adjustable collider-free 2-2-2 clearance visuals','Native explosion materials for added and inactive running gear','Native DV pin/aim constraints and bogies','Native auxiliary steam engines with boiler/torque/exhaust accounting','Per-engine and curve diagnostics including failed native updates','Curve drag and squeal','Big-end oiling trial','Native rolling-audio axle-cache refresh','Optional random spawns and saved arrangements','LateUpdate rod synchronization','Delta trailing truck compatibility')
     sourceHashes=@(Get-ChildItem (Join-Path $root 'RearrangedS282') -Recurse -File -Filter '*.cs' | Where-Object FullName -NotMatch '\\(bin|obj)\\' | Get-FileHash | Select-Object Path,Hash)
 }
-if ([version]$Version -ge [version]'1.22.3') { $receipt.features = @('Source-derived steam duct extensions with circular elbows, original collars/UV/materials, seated rigid branches, compact lower collars, Prairie offset casting and measured articulated side ports; protected physics unchanged','Common motion-frame casing and guide alignment for resized rigid families, including twelve-driver layouts; live acceptance pending') + $receipt.features }
-if ([version]$Version -ge [version]'1.22.4') { $receipt.features = @('Erie tender native chuff/loop and cylinder-cock audio, rear-exhaust seating, LP presentation profile, coupling-driven audio cleanup/rebind and diagnostic readiness; driving/boiler physics preserved') + $receipt.features }
+if ($numericVersion -ge [version]'1.22.3') { $receipt.features = @('Source-derived steam duct extensions with circular elbows, original collars/UV/materials, seated rigid branches, compact lower collars, Prairie offset casting and measured articulated side ports; protected physics unchanged','Common motion-frame casing and guide alignment for resized rigid families, including twelve-driver layouts; live acceptance pending') + $receipt.features }
+if ($numericVersion -ge [version]'1.22.4') { $receipt.features = @('Erie tender native chuff/loop and cylinder-cock audio, rear-exhaust seating, LP presentation profile, coupling-driven audio cleanup/rebind and diagnostic readiness; driving/boiler physics preserved') + $receipt.features }
 if ($playerBuild) {
     $receipt.diagnosticsIncluded = $true
     $receipt.structuralDiagnosticsIncluded = $true
@@ -84,12 +86,12 @@ if ($playerBuild) {
         'Manual structural-only test button and JSON report; power recorders, power UI, tick hook and exporter tools excluded',
         'Existing native boiler, cylinder calibration, adhesion, braking, curving and rod animation retained; no true compound simulation enabled')
 }
-if ([version]$Version -ge [version]'1.23.1') {
+if ($numericVersion -ge [version]'1.23.1') {
     $receipt.features = @('Compact articulated steam header and side entries; small local fitting overlap permitted, original profile/material and minimum bore retained',
         'Fixed 2-4-4-4-0 stock fallback when the second hinge lies just behind the native bar-frame end; native hinge and driver positions unchanged',
         'Powered tender uses independent inactive source templates; returning to Erie after other arrangements no longer depends on disposable shared Mallet parts') + $receipt.features
 }
-if ([version]$Version -ge [version]'1.23.2') {
+if ($numericVersion -ge [version]'1.23.2') {
     $receipt.features = @('Hide optional Franklin assets before native rear/tender template cloning; prevent four extra cylinders breaking Angus/Great Northern/Erie and appearing on powered tenders; retain strict structural checks') + $receipt.features
 }
 if ($Install) {

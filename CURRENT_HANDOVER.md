@@ -1,3 +1,36 @@
+## Corrected release identity: 2.0-beta - 23 October 2026
+
+James corrected the public release/version to exactly 2.0-beta. This supersedes
+the mistakenly named 1.23.2-Beta public package described below; do not upload it.
+The prior numeric versions remain valid internal build/test history only.
+
+Root Info.json, Stage3 project default, Build.RuntimeTrial/Package.Nexus defaults,
+README, all full Nexus copy, credits/options references, file info and changelog
+now use 2.0-beta. Changelog consolidates all changes since public 1.22.2 under
+one release heading. Current public docs: release-copy/2.0-beta.
+
+Installed UMM's actual ParseVersion accepts 2.0-beta as 2.0 and orders it above
+1.22.2. Standard CLR/file version is 2.0.0.0; informational version is exactly
+2.0-beta. Main's display and structural report read the informational version.
+No stale checkout hash is appended to this release's informational metadata.
+Clean net48 build: 0warnings/0errors. Full method comparison against 1.23.2:
+1720 methods identical after normalizing compiler-generated Main ordinals;
+only UMM display and structural report version calls differ, with one version
+getter added. All gameplay/geometry/physics methods unchanged.
+
+Final ZIP: release/2.0-beta/RearrangedS282-B99-2.0-beta.zip, also in Desktop
+Derail Valley Mods/RearrangedS282-B99-2.0-beta-Nexus with full copy and checksums.
+SHA256 4B83637FD4BBF44A6907261A45C4AE5DCCC64A4CA143B7438A368F5FCF0198FE.
+DLL SHA256 4B9437879C31C9677DE69C373B66C78ABF8D6A0250A1B1556F77428482E5D46B.
+Package audit 210checks/36files; old runtime assets/exporter/licences identical,
+no old release numbers in current public copy. Remove only superseded generated
+public package folders after confirming Desktop files match the old repo copy;
+retain internal test archives, diagnostic captures and historical handover text.
+Evidence: build/release-2.0-beta/{audit.json,version-il-check.json}; final inventory
+release/2.0-beta/release-manifest.json. Installed mod remains 1.23.2 test; this
+request did not install, launch the game, push or publish. No new runtime pass
+claimed. Local checkpoint follows 795eabe with active branch/index preserved.
+
 ## 1.23.2 Beta release copy and Nexus package prepared - 23 October 2026
 
 James requested a full new Nexus description, credits, file information and a

@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.23.2',
+    [string]$Version = '2.0-beta',
     [string]$ReleaseName = '',
     [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods'
 )
@@ -7,8 +7,8 @@ param(
 # same DLL, bundle, exporter and licences; test-only notes replaced by README,
 # CHANGELOG and CREDITS from release-copy\$ReleaseName. Uploads nothing.
 $ErrorActionPreference = 'Stop'
-if (-not $ReleaseName) { $ReleaseName = if ($Version -eq '1.23.2') { '1.23.2-Beta' } else { $Version } }
-if ($Version -notmatch '^\d+\.\d+\.\d+$' -or $ReleaseName -notmatch '^\d+\.\d+\.\d+(?:-Beta)?$') { throw 'Invalid version or release name.' }
+if (-not $ReleaseName) { $ReleaseName = $Version }
+if ($Version -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$' -or $ReleaseName -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$') { throw 'Invalid version or release name.' }
 $root = $PSScriptRoot
 $candidate = Join-Path $root "build\runtime-trial-$Version"
 $receipt = Get-Content -LiteralPath (Join-Path $candidate 'build-receipt.json') -Raw | ConvertFrom-Json
@@ -28,7 +28,7 @@ foreach ($doc in 'README.txt','CHANGELOG.txt','CREDITS.txt','UMM_OPTIONS.md') { 
 $infoPath = Join-Path $mod 'Info.json'
 $info = Get-Content -LiteralPath $infoPath -Raw | ConvertFrom-Json
 if ($info.Version -ne $Version) { throw "Info.json version $($info.Version) is not $Version." }
-$info.DisplayName = if ($ReleaseName.EndsWith('-Beta')) { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
+$info.DisplayName = if ($ReleaseName -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
 $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoPath -Encoding utf8
 $allowedObj = @('assets/franklin_casing.obj','assets/steam_manifold.obj','assets/steam_transfer.obj')
 $modBase = [IO.Path]::GetFullPath($mod).TrimEnd([char]92) + [char]92

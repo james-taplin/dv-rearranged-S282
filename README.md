@@ -1,4 +1,4 @@
-# Rearranged S282 — B99
+# Rearranged S282 — B99 2.0-beta
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 
@@ -106,9 +106,9 @@ B99 fork: https://github.com/james-taplin/dv-rearranged-S282
 The runtime project targets .NET Framework 4.8 and references the assemblies in your own Derail Valley installation. `Build.RuntimeTrial.ps1` builds and packages a development version; pass `-GamePath` if your game is installed elsewhere. Installation only happens when `-Install` is supplied and the game is closed.
 
 ```powershell
-.\Build.RuntimeTrial.ps1 -Version 1.23.2
+.\Build.RuntimeTrial.ps1 -Version 2.0-beta
 ```
 
 The existing custom drivetrain bundle is reused. Rebuilding its authored models is a separate asset workflow, documented in the original upstream project's README. Game assemblies and locally extracted game meshes are not included in the public package.
 
-See [the current options guide](release-copy/1.23.2-Beta/UMM_OPTIONS.md) and [changes since 1.22.2](release-copy/1.23.2-Beta/CHANGELOG.txt). Development evidence and outstanding work are recorded in `CURRENT_HANDOVER.md` and `TODO.md`.
+See [the current options guide](release-copy/2.0-beta/UMM_OPTIONS.md) and [changes since 1.22.2](release-copy/2.0-beta/CHANGELOG.txt). Development evidence and outstanding work are recorded in `CURRENT_HANDOVER.md` and `TODO.md`.

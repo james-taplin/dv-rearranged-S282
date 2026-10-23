@@ -120,7 +120,7 @@ namespace RearrangedS282
             var results = new JArray();
             var cases = StructuralCases();
             var tenderPreferences = Main.settings?.poweredTenderArrangements?.ToArray() ?? Array.Empty<int>();
-            var report = new JObject { ["build"] = "articulated-trial", ["version"] = typeof(Main).Assembly.GetName().Version.ToString(), ["subject"] = subject.ID,
+            var report = new JObject { ["build"] = "articulated-trial", ["version"] = Main.RunningVersion, ["subject"] = subject.ID,
                 ["control"] = control.ID, ["passed"] = false, ["started"] = true, ["expectedCases"] = cases.Length,
                 ["supportedArrangements"] = WheelArrangement.SupportedCount, ["arrangements"] = results };
             report["tractiveReference"] = TractiveDiagnostics.ReferenceInfo();

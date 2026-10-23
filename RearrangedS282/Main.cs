@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using UnityModManagerNet;
@@ -11,6 +12,16 @@ namespace RearrangedS282
 		public static UnityModManager.ModEntry.ModLogger Logger { get; private set; }
 		public static string ModPath { get; private set; }
 		public static Settings settings { get; private set; }
+
+		internal static string RunningVersion
+		{
+			get
+			{
+				var build = (AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
+					typeof(Main).Assembly, typeof(AssemblyInformationalVersionAttribute));
+				return build?.InformationalVersion.Split('+')[0] ?? typeof(Main).Assembly.GetName().Version.ToString();
+			}
+		}
 
 		public static bool IsGaugeModInstalled { get; private set; }
 #if B99_ALL_STANDARD
@@ -60,7 +71,7 @@ namespace RearrangedS282
 #endif
 				stage2Harmony.CreateClassProcessor(typeof(CommsRadio_Awake_Patch)).Patch();
 				modEntry.OnGUI = entry => {
-                    GUILayout.Label("Running Rearranged S282 " + typeof(Main).Assembly.GetName().Version);
+                    GUILayout.Label("Running Rearranged S282 " + RunningVersion);
 #if B99_ALL_STANDARD
 					GUILayout.Label("48 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +

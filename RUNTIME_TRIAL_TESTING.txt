@@ -1,4 +1,8 @@
-Rearranged S282 B99 1.23.2 test
+Rearranged S282 B99 2.0-beta
+
+Public release name corrected to 2.0-beta. The earlier version numbers below
+identify internal development builds. Gameplay is unchanged from the 1.23.2
+candidate; the running version label and structural JSON now show 2.0-beta.
 
 Changes from 1.23.1
 - Fixed four extra Franklin cylinder assemblies inherited by rear-drive/tender

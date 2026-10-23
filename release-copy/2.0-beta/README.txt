@@ -1,4 +1,4 @@
-# Rearranged S282 — B99
+# Rearranged S282 — B99 2.0-beta
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 

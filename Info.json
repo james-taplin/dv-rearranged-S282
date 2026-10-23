@@ -1,15 +1,17 @@
 {
   "Id": "RearrangedS282",
-  "Version": "1.3.0",
-  "DisplayName": "Rearranged S282 - B99 Stage 1 Baseline",
-  "Author": "SatiricRug",
+  "Version": "2.0-beta",
+  "DisplayName": "Rearranged S282 - B99 Beta",
+  "Author": "SatiricRug (original); JimTaplin (B99 port)",
   "EntryMethod": "RearrangedS282.Main.Load",
   "ManagerVersion": "0.27.3",
-  "HomePage": "https://www.nexusmods.com/derailvalley/mods/752",
   "Requirements": [
     "LocoMeshSplitter"
   ],
   "LoadAfter": [
-    "Gauge"
+    "Gauge",
+    "DVCarChanger",
+    "S282ModelTweaks",
+    "MultiCylinderChuffFix"
   ]
 }
