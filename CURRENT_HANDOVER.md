@@ -1,3 +1,20 @@
+## Nexus copy converted to BBCode - 23 October 2026
+
+James requires Nexus copy in BBCode. Current release-copy/2.0-beta now contains
+DESCRIPTION_BBCODE.txt, CREDITS_BBCODE.txt and NEXUS_DESCRIPTION_BBCODE.txt (full
+description plus complete credits, ready for one paste into the Nexus BBCode
+editor). NEXUS_RELEASE_COPY.txt now uses BBCode too, retaining the separate
+summary/file info/changelog sections. Markdown tables became labelled family
+paragraphs; headings/bold/italics/lists/links use standard BBCode, with no Markdown
+backticks or escaped line breaks. Link targets preserved; balanced tags checked.
+
+All four files copied to the repo release folder and Desktop Nexus folder.
+Package.Nexus.ps1 carries these BBCode files alongside other release copy on
+future packaging. Root README and Markdown source docs stay Markdown. Runtime
+ZIP remains byte-identical (SHA256 4B83637FD4BBF44A6907261A45C4AE5DCCC64A4CA143B7438A368F5FCF0198FE);
+no rebuild/install/push/upload. Evidence: build/release-2.0-beta/bbcode-audit.json.
+Local documentation checkpoint follows3f22270; active checkout/index preserved.
+
 ## Corrected release identity: 2.0-beta - 23 October 2026
 
 James corrected the public release/version to exactly 2.0-beta. This supersedes

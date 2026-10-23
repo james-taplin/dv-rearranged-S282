@@ -1,0 +1,29 @@
+[b]Altfuture[/b] / [i]Derail Valley;[/i]
+[b]SatiricRug / Peter Schinske[/b] / [i]the original Rearranged S282, its custom running gear and assets, and Locomotive Mesh Splitter;[/i]
+[b]discorddraconequus[/b] / [i]the Verde stage-specific chuff reference that informed the Mallet and Erie sound tuning;[/i]
+[b]Dad's Derailroader[/b] / [i]reference tooling for the B99 driver, wheel-radius and adhesion conversion approach;[/i]
+[b]thomas404dk[/b] / [i]detailed testing, videos, logs and bug reports;[/i]
+[b]SPRINTEREX[/b] / [i]the independently selectable powered-tender request;[/i]
+[b]the Nexus testers and bug reporters[/b] / [i]feedback and help improving the mod;[/i]
+[b]Derail Valley Modding[/b] / [i]the original mod template;[/i]
+[b]Dummiesman[/b] / [i]Runtime OBJ Importer;[/i]
+[b]Radu, Perfare, aelurum and contributors[/b] / [i]AssetStudio and AssetStudioMod;[/i]
+[b]Milosz Krajewski and Yann Collet[/b] / [i]K4os.Compression.LZ4 and LZ4;[/i]
+[b]Jb Evain, Novell and contributors[/b] / [i]Mono.Cecil;[/i]
+[b]James Newton-King and contributors[/b] / [i]Json.NET;[/i]
+[b].NET Foundation, Microsoft and contributors[/b] / [i]the bundled .NET compatibility libraries;[/i]
+[b]Brotli Authors / Google[/b] / [i]embedded Brotli decompression;[/i]
+[b]Matthaus G. Chajdas[/b] / [i]embedded CSspv shader conversion;[/i]
+[b]Igor Pavlov[/b] / [i]the embedded public-domain LZMA SDK;[/i]
+
+[b]AND:[/b]
+[b]JimTaplin[/b] / [i]B99 continuation, arrangement development, physics calibration, integration, testing and releases;[/i]
+[b]Claude and Codex[/b] / [i]coding, investigation, geometry tooling and implementation assistance;[/i]
+
+The original mod is by SatiricRug / Peter Schinske and is distributed under the MIT licence. Its original copyright and licence text are retained in LICENSE. Bundled libraries keep their own licences; the complete notices are included in THIRD_PARTY_NOTICES.txt and licenses/.
+
+The Verde contribution is a reference for the sound-tuning technique; no Verde code, meshes or audio assets are bundled. Derailroader and MultiCylinderChuffFix are not bundled or required at runtime.
+
+[url=https://github.com/pjschinske/dv-rearranged-S282]Original source[/url]
+[url=https://www.nexusmods.com/derailvalley/mods/752]Original Nexus mod[/url]
+[url=https://github.com/james-taplin/dv-rearranged-S282]B99 fork[/url]
