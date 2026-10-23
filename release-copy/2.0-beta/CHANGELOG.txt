@@ -1,16 +1,13 @@
 2.0-beta
 changes since public 1.22.2
 
-added the 2-4-4-4-0 articulated triplex with three two-axle driver groups on the locomotive and an ordinary tender bringing the catalogue to 48
-added optional erie powered tenders for 43 compatible arrangements through umm including the option to disable the erie tender engine
-added native powered tender chuffs running loops cylinder cock sounds and driving gear clanks with matched wheel speed reverser motion and coupling cleanup
-kept powered tender pull and steam demand separate while using the existing locomotive boiler and controls
-aligned cylinders valve spindles guides and crossheads on twelve driver and related four and six coupled layouts including hidden gear settings
-extended the original steam pipe set with matching bends adapters reducers and collars and brought articulated headers and cylinder connections closer to the body
-fixed the new triplex falling back to a mikado and the erie powered tender staying ordinary after switching arrangements
-fixed extra franklin cylinders breaking angus great northern and erie conversions and contaminating powered tender running gear
-baked in the accepted running gear proportions and removed the temporary resizing controls and power recorders
-restored the structural test button covering all 48 arrangements and 43 powered tender combinations plus repeated returns to erie
-updated the readme options guide and credits including discorddraconequus for the verde sound tuning reference
+added the 2-4-4-4-0 articulated triplex with an ordinary tender, bringing the catalogue to 48
+added optional Erie powered tenders for 43 arrangements through UMM, including the option to disable the Erie tender engine
+added powered tender chuffs, running loops, cylinder cock sounds and driving gear clanks; matched wheel speed and reverser motion, with coupling cleanup and steam demand from the same S282 boiler
+fixed the new triplex falling back to a Mikado, missing Erie powered tenders after switching, and extra Franklin cylinders breaking Angus, Great Northern and Erie conversions
+aligned cylinders, valve rods, guides and crossheads on twelve-driver and related four- and six-coupled layouts; baked in the accepted running gear proportions
+expanded the original steam pipe set with matching bends and fittings, tighter clearances and more compact articulated headers and cylinder connections
+restored the structural test for all 48 arrangements and 43 powered tender combinations, including repeated returns to Erie; removed temporary resizing controls and power recorders
+updated the README, options guide and credits, including discorddraconequus for the Verde sound tuning reference
 
-existing arrangement physics calibration and stock s282 behaviour retained with the powered tender option off
+existing physics calibration and stock S282 behaviour retained with the powered tender option off

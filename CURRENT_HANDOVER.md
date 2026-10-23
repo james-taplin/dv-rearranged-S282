@@ -1,3 +1,16 @@
+## Compressed changelog since 1.22.2 - 23 October 2026
+
+James requested the changelog again with related entries merged, proper names
+capitalised, and light commas/semicolons/hyphens/colons allowed. Updated current
+release-copy/2.0-beta/CHANGELOG.txt and the changelog in the full BBCode Nexus
+copy; old1.23.2-Beta link remains retired. Eight change entries plus retained
+physics note, covering the same release scope. Repo/Desktop copies and packaged
+CHANGELOG.txt refreshed. Exact comparison: only CHANGELOG.txt changed in ZIP;
+plain README, DLL, assets and licences unchanged. Existing213 package checks pass.
+ZIP SHA256 48A4C061CE75423B6DE0760AE76DC652521940B93520111856E585580E4760C0.
+Desktop filename remains Rearranged S282 B99 Fork 2.0-beta.zip. Evidence:
+build/release-2.0-beta/changelog-audit.json. No rebuild/install/push/upload.
+
 ## Packaged README is plain text - 23 October 2026
 
 James requires the ZIP's README to have no special formatting. The actual
