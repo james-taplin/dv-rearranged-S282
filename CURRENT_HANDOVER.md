@@ -1,3 +1,25 @@
+## Packaged README is plain text - 23 October 2026
+
+James requires the ZIP's README to have no special formatting. The actual
+RearrangedS282/README.txt is now plain ASCII text with Windows line breaks,
+wrapped paragraphs, ordinary headings and plain URLs. No Markdown, BBCode,
+table syntax, styling markers or bullets. Source release-copy/2.0-beta/README.txt
+updated; repository README.md remains unchanged in Markdown. Nexus copy remains
+BBCode. Package.Nexus.ps1 rejects formatted READMEs and includes a standalone
+plain README alongside the Desktop release copy.
+
+Repackaged 2.0-beta without rebuilding or installing. Exact archive inventory
+comparison: README.txt is the ONLY changed member; DLL/assets/licences and all
+other members unchanged. Archive CRC and all213 existing package checks pass.
+New ZIP SHA256 B9CBF22338F1889350E4B6E5B9E1678C361FABD8CDE735A657DF57E53FAE6DD7.
+DLL remains4B9437879C31C9677DE69C373B66C78ABF8D6A0250A1B1556F77428482E5D46B.
+Repo archive: release/2.0-beta/RearrangedS282-B99-2.0-beta.zip.
+Preserved James's renamed Desktop filename: Derail Valley Mods/
+RearrangedS282-B99-2.0-beta-Nexus/Rearranged S282 B99 Fork 2.0-beta.zip.
+Desktop checksum uses that filename; manifests refreshed. No duplicate/stale
+Desktop ZIP, backups, install, push or publication. Evidence in
+build/release-2.0-beta/plain-readme-audit.json. Local checkpoint followsbf05dce.
+
 ## Nexus copy converted to BBCode - 23 October 2026
 
 James requires Nexus copy in BBCode. Current release-copy/2.0-beta now contains

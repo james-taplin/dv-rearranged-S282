@@ -16,6 +16,8 @@ $source = $receipt.package
 if (-not (Test-Path -LiteralPath (Join-Path $source 'RearrangedS282.dll'))) { throw "Built package not found: $source" }
 if ((Get-FileHash -LiteralPath (Join-Path $source 'RearrangedS282.dll')).Hash -ne $receipt.dllSHA256) { throw 'Built DLL differs from its receipt.' }
 $copy = Join-Path $root "release-copy\$ReleaseName"
+$plainReadme = Get-Content -LiteralPath (Join-Path $copy 'README.txt') -Raw
+if ($plainReadme -match '(?m)^#{1,6}\s|^\|.*\|\s*$|\*\*|`|\[[^\]]+\]\(https?://|\[/?(?:b|i|url|list)(?:=[^\]]*)?\]') { throw 'Packaged README.txt must be plain text without Markdown or BBCode.' }
 $out = Join-Path $root "release\$ReleaseName"
 New-Item -ItemType Directory -Path $out -Force | Out-Null
 $stage = Join-Path $root ('build\nexus-staging-' + [Guid]::NewGuid().ToString('N'))
@@ -61,7 +63,7 @@ if (-not $resolvedStage.StartsWith($buildBoundary, [StringComparison]::OrdinalIg
 Remove-Item -LiteralPath $resolvedStage -Recurse -Force
 $zipHash = (Get-FileHash -LiteralPath $zip).Hash
 "$zipHash  $zipName`r`n$($receipt.dllSHA256)  RearrangedS282/RearrangedS282.dll" | Set-Content -LiteralPath (Join-Path $out 'CHECKSUMS.txt') -Encoding ascii
-$publicDocs = @('NEXUS_RELEASE_COPY.txt','DESCRIPTION.md','CREDITS.md','CREDITS.txt','CHANGELOG.txt','FILE_INFO.txt','UMM_OPTIONS.md')
+$publicDocs = @('NEXUS_RELEASE_COPY.txt','DESCRIPTION.md','CREDITS.md','CREDITS.txt','CHANGELOG.txt','FILE_INFO.txt','UMM_OPTIONS.md','README.txt')
 $publicDocs += @('DESCRIPTION_BBCODE.txt','CREDITS_BBCODE.txt','NEXUS_DESCRIPTION_BBCODE.txt') | Where-Object { Test-Path -LiteralPath (Join-Path $copy $_) }
 foreach ($doc in $publicDocs) { Copy-Item -LiteralPath (Join-Path $copy $doc) -Destination $out -Force }
 $desk = Join-Path $DesktopDirectory "RearrangedS282-B99-$ReleaseName-Nexus"
