@@ -1,3 +1,20 @@
+## Historical tester log review - 23 October 2026
+
+Reviewed three supplied Player logs from Downloads; captured session reports
+20October/Rearranged metadata1.9.2/RF1.13.8/Multiplayer0.1.16/Utilities1.1.2.
+These are cumulative EXACT byte prefixes: Rearranged2606lines -> ON6696lines ->
+OFF18838lines. All load RF; no independent RF-free or cylinder-toggle A/B control.
+128 shared MissingField isEligibleForSleep errors point to Utilities.Update
+(already documented16Oct). Ten shared Rearranged B99PhysicsState baseline-guard
+conversion failures are genuine; current2.0 retains this safety guard. Which
+axle/port value failed is not logged; multiplayer/client lifecycle is a lead,
+not a confirmed cause. Distinct from the corrected extra-Franklin-source bug.
+Three unowned Animator.GotoState/invalid-layer warnings also worth tracking.
+RF logs boiler/flow/firebox changes but no RF exception or measured runaway
+power/resource trace; do not claim these files prove RF caused all symptoms.
+Review/line refs/hashes: evidence/tester-logs-20261020/REVIEW.txt. No raw log
+copies, code fixes, release changes, install, launch, push or publication.
+
 ## Compressed changelog since 1.22.2 - 23 October 2026
 
 James requested the changelog again with related entries merged, proper names

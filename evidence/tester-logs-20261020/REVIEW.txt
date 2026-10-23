@@ -1,0 +1,95 @@
+Tester Player logs reviewed 23 October 2026
+
+Scope
+Read-only review of three supplied logs. No runtime/source fixes, installations,
+new game runs, release repackaging or compatibility claims.
+
+Capture identity
+The session reports B99 build2702, Unity 2019.4.40f1, UMM 0.32.5.0,
+RearrangedS282 metadata 1.9.2, RealisticFiring 1.13.8, Multiplayer 0.1.16.0,
+and Utilities 1.1.2. An internal saved-mod timestamp is 20 October 2026.
+The loaded Rearranged DLL itself is not supplied/fingerprinted. Treat 1.9.2
+as reported mod metadata, not proof of an exact historical binary.
+
+The three files are cumulative snapshots, confirmed byte-for-byte:
+Player - Rearranged.log, 207245 bytes / 2606 physical lines, is an exact prefix
+of Player - Realistic Firing cylinder feature ON.log, 700472 bytes / 6696 lines.
+The entire ON file is an exact prefix of the OFF file, 2057575 bytes /18838 lines.
+All three load Realistic Firing; the Rearranged filename is not an RF-free control.
+No cylinder option-state message or change is logged. The later OFF snapshot
+includes leaving/reloading the multiplayer scene. Do not compare shared errors
+as independent ON/OFF reproductions, or count duplicates across the files.
+
+SHA256, supplied source files
+Rearranged: a071fec9f79dddd5850bba2b7fda55639094a4aaceb471ff43da941efff11c96
+ON: 52e8747cc216d75cc35d7258a918dc064f0b9614ab31e5ceb560d5552b7a4d6c
+OFF: fa7a3d168a7d613bda8bcb81f42b9ec06704f488936ff8b8a00feae351167520
+Originals remain in James's Downloads folder; no raw log copies added here.
+
+Confirmed findings and current relevance
+
+1 - DV Utilities API failure, already known
+128 occurrences in the shared prefix, starting physical line1405:
+MissingFieldException: Field 'TrainCar.isEligibleForSleep' not found.
+The next frame is UtilitiesMod.UtilitiesMod.Update. This identifies the faulty
+access in that Utilities build. It does not establish that DV's entire simulation
+tick or its boiler stops updating. The same attribution was recorded in the
+16 October handover; not a newly discovered Rearranged or RF cylinder defect.
+For a clean future comparison, omit this faulting Utilities build.
+
+2 - Rearranged native-baseline capture failure, unresolved in this environment
+Ten attempts, starting physical line3054 in ON/OFF, log:
+Conventional trial conversion failed; restoring stock:
+Stage 2 requires an unmodified four-driver S282 with consistent axle data.
+Stack: B99PhysicsState constructor -> WheelRearranger.TrySwitchConventional.
+These are ten attempts, not twenty; the logged exception header and stack's
+exception line also represent the same event.
+
+Current B99PhysicsState.cs:65-66 retains that exact guard, rejecting any of:
+native entity axle count differs from car.NumberOfAxles; powered registration
+length is not4; powered-axle port is not4. Current conventional setup captures
+this state before custom geometry is prepared, and refuses the conversion when
+it cannot establish a valid baseline. Do not remove this safety check blindly.
+The old log does not disclose the failed value or give the car ID on each error.
+It therefore cannot distinguish native initialization, pooling/recreation,
+multiplayer replication or another mod changing native data. Multiplayer is
+active on a client with many synchronization warnings; causation is unproved.
+This is a different failure from the recent extra-Franklin-cylinder template
+fix, so do not mark it resolved by that fix or claim a 2.0 reproduction.
+
+3 - Animator warning, owner unknown
+Three Animator.GotoState state-not-found warnings, first line6660, each followed
+by Invalid Layer Index '-1'. They occur shortly before L-020 derailment messages.
+No stack/object/controller information identifies the caller. Could affect
+presentation, but neither a Rearranged rod bug nor RF ownership is established.
+Keep a targeted motion/controller check open if seen again on current solo build.
+
+4 - Other background errors
+Mesh Splitter reports missing CustomizationPlacementMeshes on LocoDE6_Interior
+and missing customization LOD entries, beginning line574. These are separate
+mesh-customization warnings; no S282 conversion cause is demonstrated.
+The later OFF-only suffix has one Bolt.SceneVariables destruction exception
+during scene unloading, ten Multiplayer plate-update timeouts with empty car
+IDs, plus missing networked-car/snapshot/pit-stop warnings. These make this a
+poor isolated physics comparison; do not attribute all of them to Rearranged.
+Optional LoadAfter-mod absence messages are informational, not failed deps.
+
+Realistic Firing limits of this evidence
+Realistic Firing is active in every snapshot. Logs explicitly describe changes
+to boiler water/steam flow, safety valves, injector, blower, firebox and smoke;
+disabling its cylinder feature alone does not disable the rest of that model.
+No RF-origin exception stack, numerical NaN/Infinity fault or pressure/RPM/power
+trace proving runaway speed or frozen resources was found. Absence of a logged
+exception does not prove RF compatibility or correct physical behaviour.
+These files cannot establish that the cylinder toggle caused or removed those
+symptoms, and do not justify attributing all historic problems to RF.
+
+Smallest useful follow-up, if pursuing these symptoms
+One fresh singleplayer session with the current exact 2.0-beta package, no RF
+and no faulting Utilities build; try fresh spawn, reapply, save/reload and a
+pooled respawn. Record actual baseline axle/port values if the guard reproduces.
+Any RF cylinder comparison should then use separate restarts/captures with the
+option state confirmed, rather than cumulative log copies. No such tests run
+or requested as a blocker to this historical review.
+
+Private analysis receipts: build/tester-log-review-20261023/summary.json.
