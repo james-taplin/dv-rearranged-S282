@@ -62,7 +62,7 @@ namespace RearrangedS282
         {
             // Newly instantiated/native-pooled stock needs no geometry or sim
             // edit, even if loaded with its regulator open or while derailed.
-            if (state.PendingId == (int)WheelArrangementType.s282 && car != null &&
+            if (state.PendingId == (int)WheelArrangementType.s282 && !(Main.settings?.PoweredTenderEnabled((int)WheelArrangementType.s282) ?? false) && car != null &&
                 (car.GetComponent<WheelRearranger>() == null || car.GetComponent<WheelRearranger>().currentWA == WheelArrangementType.s282))
             {
                 state.RecordApplied((int)WheelArrangementType.s282);
@@ -89,7 +89,11 @@ namespace RearrangedS282
             while (car != null && car.logicCar != null &&
                 string.Equals(state.Guid, car.CarGUID, StringComparison.Ordinal) && state.PendingId.HasValue)
             {
-                if (!Stage2RuntimeChecks.Running && ReadyToSwitch())
+                if (
+#if B99_DIAGNOSTICS
+                    !Stage2RuntimeChecks.Running &&
+#endif
+                    ReadyToSwitch())
                 {
                     int id = state.PendingId.Value;
                     var rearranger = car.GetComponent<WheelRearranger>() ?? car.gameObject.AddComponent<WheelRearranger>();

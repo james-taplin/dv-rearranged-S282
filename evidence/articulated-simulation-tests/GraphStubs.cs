@@ -18,7 +18,7 @@ namespace DV.Damage {public sealed class DamageController:UnityEngine.MonoBehavi
 public sealed class TrainCar:UnityEngine.MonoBehaviour { public DV.ThingTypes.TrainCarType carType;public DV.Simulation.Cars.SimController SimController;}
 namespace DV.Simulation.Cars {public sealed class SimController:UnityEngine.MonoBehaviour {public LocoSim.Definitions.SimConnectionDefinition connectionsDefinition;public LocoSim.Implementations.SimulationFlow simFlow;public void Initialize(TrainCar c,DV.Damage.DamageController d){}} }
 namespace LocoSim.Definitions {
- public enum PortType {OUT,IN,EXTERNAL_IN,READONLY_OUT} public enum PortValueType{GENERIC,TORQUE,MASS_RATE}
+ public enum PortType {OUT,IN,EXTERNAL_IN,READONLY_OUT} public enum PortValueType{GENERIC,TORQUE,MASS_RATE,RPM}
  public sealed class PortReferenceDefinition {public string ID;public PortReferenceDefinition(PortValueType t,string id){ID=id;}}
  public sealed class PortDefinition {public string ID;public PortDefinition(PortType t,PortValueType v,string id){ID=id;}}
  public abstract class SimComponentDefinition:UnityEngine.MonoBehaviour {public string ID;public abstract LocoSim.Implementations.SimComponent InstantiateImplementation();}
@@ -31,12 +31,13 @@ namespace LocoSim.Definitions {
 }
 namespace LocoSim.Implementations {
  using LocoSim.Definitions;
- public class Port{public string id;private float value,previous;public float Value{get=>value;set{previous=this.value;this.value=value;if(value!=previous)ValueUpdatedInternally?.Invoke(value);}}public float Diff=>value-previous;public event Action<float> ValueUpdatedInternally;public Port(string s){id=s;}}
+ public class Port{public string id;private float value,previous;public float Value{get=>value;set{previous=this.value;this.value=value;if(value!=previous)ValueUpdatedInternally?.Invoke(value);}}public float Diff=>value-previous;public event Action<float> ValueUpdatedInternally;public Port(string s){id=s;}public Port(string c,PortDefinition d){id=c+"."+d.ID;}}
+ public class PortReference { public Port port; public float Value=>port?.Value??0f; }
  public abstract class SimComponent{public string id;public List<Port> ports=new();protected SimComponent(string s){id=s;}protected Port P(string s){var p=new Port(id+"."+s);ports.Add(p);return p;}public abstract void Tick(float delta);}
  public sealed class Empty:SimComponent{public Empty(string id):base(id){}public override void Tick(float delta){}}
  public sealed class Sum:SimComponent{public Sum(MultiplePortSumDefinition d):base(d.ID){P("OUT");}public override void Tick(float delta){}}
  public class ReciprocatingSteamEngine:SimComponent{
- public float crankRotation,prevCrankRotation,torqueVelocity,waterInCylindersDamageMeter;public int nativeTicks;
+ public PortReference crankRpm=new();public float crankRotation,prevCrankRotation,torqueVelocity,waterInCylindersDamageMeter;public int nativeTicks;
  public Port crankRotationReadOut,torqueOut,intakeFlowReadOut,intakeFlowNormalizedReadOut,exhaustFlowReadOut,exhaustPressureReadOut,exhaustTemperatureReadOut,chuffFrequencyReadOut,cylindersInletValveOpen,cylinderCockFlowNormalizedReadOut,cylinderCrackFlowNormalizedReadOut,generatedMechanicalDamageReadOut,ashesInPipesReadOut,healthStateExtIn,isCylinderCrackedReadOut;
  public ReciprocatingSteamEngine(ReciprocatingSteamEngineDefinition d):base(d.ID){crankRotationReadOut=P("CRANK_ROTATION");torqueOut=P("TORQUE_OUT");intakeFlowReadOut=P("INTAKE_FLOW");intakeFlowNormalizedReadOut=P("INTAKE_FLOW_NORMALIZED");exhaustFlowReadOut=P("EXHAUST_FLOW");exhaustPressureReadOut=P("EXHAUST_PRESSURE");exhaustTemperatureReadOut=P("EXHAUST_TEMPERATURE");chuffFrequencyReadOut=P("CHUFF_FREQUENCY");cylindersInletValveOpen=P("CYLINDERS_INLET_VALVE_OPEN");cylinderCockFlowNormalizedReadOut=P("CYLINDER_COCK_FLOW_NORMALIZED");cylinderCrackFlowNormalizedReadOut=P("CYLINDER_CRACK_FLOW_NORMALIZED");generatedMechanicalDamageReadOut=P("GENERATED_MECHANICAL_DAMAGE");ashesInPipesReadOut=P("ASHES_IN_PIPES");healthStateExtIn=P("HEALTH_STATE_EXT_IN");isCylinderCrackedReadOut=P("IS_CYLINDER_CRACKED");}
  public override void Tick(float delta){nativeTicks++;}

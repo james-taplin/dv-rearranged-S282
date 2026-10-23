@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '1.22.2',
+    [string]$Version = '1.23.0',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$OutputDirectory,
     [string]$CandidateDirectory,
@@ -7,6 +7,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+$playerBuild = [version]$Version -ge [version]'1.23.0'
 $candidate = if ($CandidateDirectory) { $CandidateDirectory } else { Join-Path $root "build\runtime-trial-$Version" }
 if (-not $OutputDirectory) { $OutputDirectory = "C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-$Version-Test" }
 $bin = Join-Path $candidate 'bin'
@@ -28,6 +29,7 @@ $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoPath -Encoding u
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination $mod
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination (Join-Path $mod 'README_BETA.txt') -Force
 Copy-Item -LiteralPath (Join-Path $root 'RUNTIME_TRIAL_TESTING.txt') -Destination (Join-Path $mod 'MANUAL_TEST_CHECKLIST.txt') -Force
+if (-not $playerBuild) {
 Copy-Item -LiteralPath (Join-Path $root 'ARTICULATED_TEST_STATUS.txt') -Destination $mod
 if ([version]$Version -ge [version]'1.22.3') { Copy-Item -LiteralPath (Join-Path $root 'GEOMETRY_TEST_STATUS.txt') -Destination $mod }
 if ([version]$Version -ge [version]'1.22.4') { Copy-Item -LiteralPath (Join-Path $root 'AUDIO_STEAM_TEST_STATUS.txt') -Destination $mod }
@@ -39,6 +41,7 @@ if ([version]$Version -ge [version]'1.21.0') {
 }
 New-Item -ItemType Directory -Path (Join-Path $mod 'Tools') -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'Tools\TractiveTable.ps1') -Destination (Join-Path $mod 'Tools')
+}
 $bundle = Join-Path $root 's282_drivetrain\ExportedProject\Assets\AssetBundles\s282_drivetrain'
 $bundleHash = '44A1B9EAE0DDA58BE97B9AEDF3877522FBFFAEC060FE02A8385158E095BDB22D'
 if ((Get-FileHash -LiteralPath $bundle).Hash -ne $bundleHash) { throw 'Original articulated drivetrain bundle differs from the assessed asset.' }
@@ -68,6 +71,17 @@ $receipt = [ordered]@{
 }
 if ([version]$Version -ge [version]'1.22.3') { $receipt.features = @('Source-derived steam duct extensions with circular elbows, original collars/UV/materials, seated rigid branches, compact lower collars, Prairie offset casting and measured articulated side ports; protected physics unchanged','Common motion-frame casing and guide alignment for resized rigid families, including twelve-driver layouts; live acceptance pending') + $receipt.features }
 if ([version]$Version -ge [version]'1.22.4') { $receipt.features = @('Erie tender native chuff/loop and cylinder-cock audio, rear-exhaust seating, LP presentation profile, coupling-driven audio cleanup/rebind and diagnostic readiness; driving/boiler physics preserved') + $receipt.features }
+if ($playerBuild) {
+    $receipt.diagnosticsIncluded = $false
+    $receipt.resizeControlsIncluded = $false
+    $receipt.features = @('48 arrangements; new native-constraint 2-4-4-4-0 articulated locomotive triplex with six driving axles and ordinary tender',
+        'Optional Erie powered S282 tender for 43 compatible rigid and two-engine articulated layouts; UMM per-arrangement choices, Erie on by default, safe reapply',
+        'Native tender RPM adapted to host/tender wheel-radius ratio without writing shared host RPM; separate tender force/steam demand retained',
+        'Native tender driving-gear clanks, chuffs/loops, cylinder-cock audio and existing exhaust/cock/drip visuals',
+        'Accepted Mogul, 2-4-0, Prairie and American proportions fixed; cylinder normalization retained; no granular resizing UI',
+        'Diagnostic recorder classes, UI, tick hook and exporter tools excluded; no structural/power recordings in this build',
+        'Existing native boiler, cylinder calibration, adhesion, braking, curving and rod animation retained; no true compound simulation enabled')
+}
 if ($Install) {
     if (Get-Process -Name DerailValley -ErrorAction SilentlyContinue) { throw 'Close Derail Valley before installing the prepared test ZIP.' }
     $destination = Join-Path $GamePath 'Mods\RearrangedS282'

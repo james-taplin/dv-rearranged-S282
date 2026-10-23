@@ -133,6 +133,7 @@ namespace RearrangedS282
 {
     public sealed class Settings
     {
+        public int[] poweredTenderArrangements=new[]{43}; internal bool PoweredTenderEnabled(int id)=>poweredTenderArrangements.Contains(id);
         public static T Load<T>(UnityModManagerNet.UnityModManager.ModEntry e)where T:new()=>new();
         public bool MigrateSpawnPool()=>false;public void Save(UnityModManagerNet.UnityModManager.ModEntry e){}public void OnChange(){}public void Draw(UnityModManagerNet.UnityModManager.ModEntry e){}
     }

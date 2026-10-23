@@ -56,6 +56,7 @@ namespace RearrangedS282
 		s262 = 44,
 		s2660 = 45,
 		s210102 = 46,
+		s24440 = 47,
 		/*s2680,
 		s4664*/
 	}
@@ -72,9 +73,9 @@ namespace RearrangedS282
 		public static bool IsArticulatedId(int id) => id == (int)WheelArrangementType.s2442 || id == (int)WheelArrangementType.s4444 ||
 			id == (int)WheelArrangementType.s2662 || id == (int)WheelArrangementType.s22222 || id == (int)WheelArrangementType.s02220 ||
 			id == (int)WheelArrangementType.s08880 || id == (int)WheelArrangementType.s2680 || id == (int)WheelArrangementType.s28882 ||
-			id == (int)WheelArrangementType.s2660 || id == (int)WheelArrangementType.s210102;
+			id == (int)WheelArrangementType.s2660 || id == (int)WheelArrangementType.s210102 || id == (int)WheelArrangementType.s24440;
 		public static bool IsSupportedId(int id) => IsConventionalId(id) || IsArticulatedId(id) || id == (int)WheelArrangementType.s404;
-		public const int SupportedCount = 47;
+		public const int SupportedCount = 48;
 
 		// Wheels physically on the locomotive car. The 2-8-8-8-2's third engine
 		// and trailing truck ride under the tender, a separate car.
@@ -163,6 +164,7 @@ namespace RearrangedS282
 			"2-6-2 Prairie",
 			"2-6-6-0 Articulated Mallet",
 			"2-10-10-2 Articulated Mallet",
+			"2-4-4-4-0 Articulated Triplex",
 			/*"2-6-8-0",
 			"4-6-6-4 Challenger"*/
 		};
@@ -216,6 +218,7 @@ namespace RearrangedS282
 			4,//"2-6-2 Prairie",
 			2,//"2-6-6-0 Articulated Mallet",
 			4,//"2-10-10-2 Articulated Mallet",
+			2,//"2-4-4-4-0 Articulated Triplex",
 		};
 	}
 }

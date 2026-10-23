@@ -27,9 +27,13 @@ namespace RearrangedS282
         private const float TenderDriverWeightShare = .8f, TenderEngineFriction = .24f;
 
         private TrainCar tenderEngineCar;
+        private BigMalletLayout tenderLayout;
+        private float tenderNativeCylinderFront;
+        private readonly Dictionary<Transform, Matrix4x4> tenderStaticMaps = new Dictionary<Transform, Matrix4x4>();
+        private bool poweredTenderSelected;
+        internal bool PoweredTenderSelected => poweredTenderSelected;
         private Transform tenderEngineRoot, tenderDriveL, tenderDriveR;
         private readonly List<GameObject> tenderHidden = new List<GameObject>();
-        private PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair[] tenderAnimatorsBefore;
         private float tenderForceN, tenderLimitN, tenderDemandN;
         private bool tenderSlipping;
         internal Transform TenderEffectsRoot => tenderEngineRoot != null && tenderEngineRoot.gameObject.activeInHierarchy ? tenderEngineRoot : null;
@@ -39,10 +43,58 @@ namespace RearrangedS282
         internal bool TryMapTenderOutlet(Vector3 nativeOrigin, Vector3 nativeCentre, out Vector3 local)
         {
             local = default;
-            if (bigMallet == null || !TryMapArticulatedOutlet(nativeOrigin, nativeCentre, 1, out local)) return false;
-            float offset = TenderCylinderFrontZ - bigMallet.Scale * MeasureNativeCylinderFront();
-            local += Vector3.forward * (offset - bigMallet.RearOffset);
+            if (tenderLayout == null || steamBody == null) return false;
+            var layout = tenderLayout;
+            var native = steamBody.InverseTransformPoint(nativeOrigin);
+            var centre = steamBody.InverseTransformPoint(nativeCentre);
+            var map = EngineMap(TenderCylinderFrontZ - layout.Scale * tenderNativeCylinderFront, layout.Scale);
+            local = native + map.MultiplyPoint3x4(centre) - centre;
             return true;
+        }
+
+        // Called only in the prepared native pose, before changing the host.
+        private void EnsurePoweredTenderSource()
+        {
+            if (tenderLayout != null) return;
+            try
+            {
+                EnsureArticulatedAssets();
+                tenderNativeCylinderFront = MeasureNativeCylinderFront();
+                tenderLayout = MeasureBigMallet(WheelArrangementType.s28882);
+                EnsureBigMalletAssets(tenderLayout);
+                foreach (var source in bigMalletStatics[WheelArrangementType.s28882].Statics)
+                    tenderStaticMaps[source] = MalletBody.worldToLocalMatrix * source.localToWorldMatrix;
+                // Asset construction must not expose Franklin parts on a rigid host.
+                foreach (var asset in articulatedAssets) if (asset != null) asset.gameObject.SetActive(false);
+            }
+            catch { tenderLayout = null; tenderStaticMaps.Clear(); throw; }
+        }
+
+        private void SelectPoweredTender(bool selected)
+        {
+            poweredTenderSelected = selected;
+            if (!selected)
+            {
+                DetachTenderEngine();
+                if (articulatedSimulation != null && !ArticulatedSimulation.IsTriplexId((int)currentWA))
+                    articulatedSimulation.ConfigureTender(false, 1f);
+                return;
+            }
+            if (tenderLayout == null) throw new InvalidOperationException("Powered tender source was not prepared.");
+            articulatedSimulation = ArticulatedSimulation.Ensure(loco);
+            float radius = .712f * tenderLayout.Scale;
+            articulatedSimulation.ConfigureTender(true, PoweredTenderPolicy.RpmRatio(loco.SimController.drivingForce.wheelRadius, radius));
+            cylinderCalibration.ApplyTender(articulatedSimulation.MiddleEngine, radius);
+        }
+
+        internal Vector3 TenderMechanismLocal
+        {
+            get
+            {
+                if (tenderDriveL == null || tenderEngineRoot == null) return Vector3.zero;
+                float z = Enumerable.Range(1, 4).Average(i => tenderDriveL.Find("s282_wheels_driving_" + i).localPosition.z);
+                return tenderEngineRoot.InverseTransformPoint(tenderDriveL.TransformPoint(new Vector3(0f, .7f, z)));
+            }
         }
 
         private static bool IsS282Tender(TrainCar car) =>
@@ -52,7 +104,7 @@ namespace RearrangedS282
         private void TickTenderEngine(TrainCar car)
         {
             TrainCar wanted = null;
-            if (car != null && currentWA == WheelArrangementType.s28882 && bigMallet != null && articulatedSimulation != null && !car.derailed)
+            if (car != null && poweredTenderSelected && tenderLayout != null && articulatedSimulation != null && !car.derailed)
             {
                 var other = car.rearCoupler != null && car.rearCoupler.coupledTo != null ? car.rearCoupler.coupledTo.train : null;
                 if (IsS282Tender(other) && !other.derailed) wanted = other;
@@ -79,8 +131,8 @@ namespace RearrangedS282
         {
             if (bigMalletRearL == null || bigMalletRearR == null) throw new InvalidOperationException("The rear engine has not been built.");
             tenderEngineCar = tender;
-            float s = bigMallet.Scale;
-            float cylinderFront = MeasureNativeCylinderFront();
+            float s = tenderLayout.Scale;
+            float cylinderFront = tenderNativeCylinderFront;
             // The tender is rail-level at its front coupler, like the body frame.
             float offset = TenderCylinderFrontZ - s * cylinderFront;
             tenderEngineRoot = new GameObject("[Rearranged tender engine]").transform;
@@ -100,10 +152,10 @@ namespace RearrangedS282
             // Cylinders, guides, brakes and springs: the rear engine's, moved by
             // the rear-to-tender engine offset (body frame = tender frame axes).
             var body = MalletBody;
-            var shift = Matrix4x4.Translate(new Vector3(0f, 0f, offset - bigMallet.RearOffset));
-            foreach (var source in bigMalletStatics[currentWA].Statics.Where(t => t != null))
+            var shift = Matrix4x4.Translate(new Vector3(0f, 0f, offset - tenderLayout.RearOffset));
+            foreach (var source in bigMalletStatics[WheelArrangementType.s28882].Statics.Where(t => t != null))
             {
-                var bodyPose = shift * body.worldToLocalMatrix * source.localToWorldMatrix;
+                var bodyPose = shift * tenderStaticMaps[source];
                 var clone = Object.Instantiate(source.gameObject, tenderEngineRoot).transform;
                 clone.name = "[Rearranged tender] " + source.name.Replace("[Rearranged eight-coupled rear] ", "");
                 if (PacificHudsonAffine.TryDecompose(bodyPose, source.lossyScale, out var position, out var rotation, out var scale))
@@ -131,20 +183,10 @@ namespace RearrangedS282
                 }
             }
 
-            // Drivers turn with the loco's wheel animation, in the native phase.
-            if (articulatedRotation != null)
-            {
-                tenderAnimatorsBefore = articulatedRotation.animatorSetups;
-                float Offset(Animator a) => tenderAnimatorsBefore.First(x => x.animator == a).startTimeOffset;
-                var pairs = new[] { (src: lfAnimator, dst: tenderDriveL.GetComponent<Animator>()), (src: rfAnimator, dst: tenderDriveR.GetComponent<Animator>()) };
-                articulatedRotation.animatorSetups = tenderAnimatorsBefore.Concat(pairs.Select(p =>
-                    new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair { animator = p.dst, startTimeOffset = Offset(p.src) })).ToArray();
-                foreach (var p in pairs)
-                {
-                    var state = p.src.GetCurrentAnimatorStateInfo(0);
-                    p.dst.Play(state.shortNameHash, 0, state.normalizedTime % 1f);
-                }
-            }
+            // Native controller and rods retained; tender animation uses its
+            // own engine frequency so different host diameters do not alter wheel speed.
+            var animationClock = tenderEngineRoot.gameObject.AddComponent<TenderDriveAnimation>();
+            animationClock.Initialize(articulatedSimulation, tenderDriveL.GetComponent<Animator>(), tenderDriveR.GetComponent<Animator>(), lfAnimator, rfAnimator);
             articulatedSimulation.SetTenderEngine(true);
             // Presentation failure must never remove a working tender engine.
             try
@@ -156,22 +198,13 @@ namespace RearrangedS282
             catch (Exception ex) { Main.Logger.LogException("Erie tender exhaust presentation", ex); }
             ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
             RefreshSteamConnectionsForTender();
-            Main.Logger.Log($"Erie triplex: tender engine attached to {tender.ID}; {2f * bigMallet.Radius:0.00} m drivers, " +
+            Main.Logger.Log($"Erie triplex: tender engine attached to {tender.ID}; {2f * tenderLayout.Radius:0.00} m drivers, " +
                 $"cylinders at {TenderCylinderFrontZ:0.00}, drivers {offset + s * firstLeftDriveWheel.localPosition.z:0.00}..{offset + s * fourthLeftDriveWheel.localPosition.z:0.00} (tender z).");
         }
 
         private void DetachTenderEngine()
         {
             articulatedSimulation?.SetTenderEngine(false);
-            if (articulatedRotation != null && tenderAnimatorsBefore != null)
-            {
-                // Also drops animators destroyed with a deleted tender (Unity null).
-                var ours = new[] { tenderDriveL != null ? tenderDriveL.GetComponent<Animator>() : null,
-                    tenderDriveR != null ? tenderDriveR.GetComponent<Animator>() : null };
-                articulatedRotation.animatorSetups = articulatedRotation.animatorSetups
-                    .Where(x => x.animator != null && !ours.Contains(x.animator)).ToArray();
-            }
-            tenderAnimatorsBefore = null;
             foreach (var go in tenderHidden) if (go != null) go.SetActive(true);
             tenderHidden.Clear();
             if (tenderEngineRoot != null) tenderEngineRoot.gameObject.SetActive(false);
@@ -195,7 +228,7 @@ namespace RearrangedS282
         {
             var tender = tenderEngineCar;
             if (tender == null || tender.massController == null) return;
-            float radius = .712f * bigMallet.Scale;
+            float radius = .712f * tenderLayout.Scale;
             tenderDemandN = radius > 0f ? articulatedSimulation.TenderTorque / radius : 0f;
             tenderLimitN = TenderEngineFriction * tender.massController.TotalMass * -Physics.gravity.y * TenderDriverWeightShare;
             tenderSlipping = Mathf.Abs(tenderDemandN) > tenderLimitN;
@@ -212,9 +245,10 @@ namespace RearrangedS282
             }
         }
 
-        internal JObject TenderEngineReport() => currentWA != WheelArrangementType.s28882 ? null : new JObject
+        internal JObject TenderEngineReport() => !poweredTenderSelected ? null : new JObject
         {
-            ["driverRadiusM"] = bigMallet != null ? .712f * bigMallet.Scale : (float?)null,
+            ["selected"] = poweredTenderSelected, ["hostArrangement"] = (int)currentWA,
+            ["driverRadiusM"] = tenderLayout != null ? .712f * tenderLayout.Scale : (float?)null,
             ["tender"] = tenderEngineCar != null ? tenderEngineCar.ID : null, ["attached"] = tenderEngineRoot != null,
             ["exhaustOutlet"] = TenderExhaustOutlet != null, ["visualEffects"] = ArticulatedEffects.TenderParticlesReady(GetComponent<TrainCar>()),
             ["audioEffects"] = ArticulatedEffects.TenderAudioReady(GetComponent<TrainCar>()),

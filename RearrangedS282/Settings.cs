@@ -47,7 +47,7 @@ namespace RearrangedS282
 		[Draw("x-10-2 trailing truck style:", DrawType.ToggleGroup)] public X102Options x102Options = X102Options.small_wheels;
 
 		[Header("Valve gear")]
-		[Draw("Near-vanilla cylinder casings (trial, reapply):")] public bool nearVanillaCylinderCasings = true;
+		[System.Xml.Serialization.XmlIgnore] internal bool nearVanillaCylinderCasings = true;
 		[Draw("Show x-4-x valve gear:", Height = HEIGHT)] public bool show4CoupledValveGear = false;
 		[Draw("Show x-6-x valve gear:", Height = HEIGHT)] public bool show6CoupledValveGear = false;
 		[Draw("Polished Walschaerts on 4-6-2 / 4-6-4 (reapply):", Height = HEIGHT)] public bool polishedPacificHudsonValveGear = true;
@@ -56,24 +56,14 @@ namespace RearrangedS282
 		[Draw("Show x-10-x valve gear:", Height = HEIGHT)] public bool show10CoupledValveGear = true;
 		[Draw("Show x-12-x valve gear:", Height = HEIGHT)] public bool show12CoupledValveGear = true;
 
-		[Header("Coupled driver spacing trial (reapply arrangement)")]
-		[Draw("2-6-0 extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
-		public float mogulExtraCoupledPitchMetres = .18f;
-		[Draw("2-4-0 extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
-		public float twoFortyExtraCoupledPitchMetres = .20f;
-		[Draw("2-6-2 Prairie extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .22, Precision = 2)]
-		public float prairieExtraCoupledPitchMetres = .22f;
-		[Draw("4-4-0 American extra pitch per driver gap (metres):", DrawType.Slider, Min = 0, Max = .20, Precision = 2)]
-		public float americanExtraCoupledPitchMetres = 0f;
-		[Header("Main connecting rod spacing trial (reapply arrangement)")]
-		[Draw("2-6-0 drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
-		public float mogulDriverRearwardMetres = .12f;
-		[Draw("2-4-0 drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
-		public float twoFortyDriverRearwardMetres = .14f;
-		[Draw("2-6-2 Prairie drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
-		public float prairieDriverRearwardMetres = .12f;
-		[Draw("4-4-0 American drivers rearward from cylinders (metres):", DrawType.Slider, Min = 0, Max = .25, Precision = 2)]
-		public float americanDriverRearwardMetres = 0f;
+		[System.Xml.Serialization.XmlIgnore] internal float mogulExtraCoupledPitchMetres = .18f;
+		[System.Xml.Serialization.XmlIgnore] internal float twoFortyExtraCoupledPitchMetres = .20f;
+		[System.Xml.Serialization.XmlIgnore] internal float prairieExtraCoupledPitchMetres = .22f;
+		[System.Xml.Serialization.XmlIgnore] internal float americanExtraCoupledPitchMetres = 0f;
+		[System.Xml.Serialization.XmlIgnore] internal float mogulDriverRearwardMetres = .12f;
+		[System.Xml.Serialization.XmlIgnore] internal float twoFortyDriverRearwardMetres = .14f;
+		[System.Xml.Serialization.XmlIgnore] internal float prairieDriverRearwardMetres = .12f;
+		[System.Xml.Serialization.XmlIgnore] internal float americanDriverRearwardMetres = 0f;
 
 		[Header("Curving (wheelbase): long rigid driver groups drag and squeal more on tight curves")]
 		[Draw("Extra curve drag for long rigid wheelbases:", Height = HEIGHT)] public bool curveDrag = true;
@@ -81,10 +71,7 @@ namespace RearrangedS282
 		[Header("Oiling: an oil cup on every driven big end (reapply the arrangement to update)")]
 		[Draw("Oil cups on every driven big end:", Height = HEIGHT)] public bool bigEndOiling = true;
 
-		[Header("Experimental 2-2-2: non-colliding clearance prototype")]
-		[Header("Reapply the arrangement after changing its driver diameter")]
-		[Draw("2-2-2 driver diameter (metres):", DrawType.Slider, Min = 2.1, Max = 3.6, Precision = 2)]
-		public float giant222DriverDiameterMetres = 2.8f;
+		[System.Xml.Serialization.XmlIgnore] internal float giant222DriverDiameterMetres = 2.8f;
 
 		[Header("Random spawns")]
 		[Draw("Spawn S282 with random wheel arrangement:", DrawType.Toggle, Height = HEIGHT)] public bool spawnRandomWA = false;
@@ -135,11 +122,16 @@ namespace RearrangedS282
 		[Draw("Randomly spawn 2-6-2 Prairie:", Height = HEIGHT)] public bool spawn262 = true;
 		[Draw("Randomly spawn articulated 2-6-6-0 Mallet:", Height = HEIGHT)] public bool spawn2660 = false;
 		[Draw("Randomly spawn articulated 2-10-10-2 Mallet:", Height = HEIGHT)] public bool spawn210102 = false;
+		[Draw("Randomly spawn articulated 2-4-4-4-0 Triplex:", Height = HEIGHT)] public bool spawn24440 = false;
 		[Draw("Randomly spawn 4-14-4:", Height = HEIGHT)] public bool spawn4144 = false;
 
 		// Derived from the toggles, not a second authoritative saved pool.
 		[System.Xml.Serialization.XmlIgnore]
 		public List<WheelArrangementType> RandomWAs = new();
+#if B99_ALL_STANDARD
+		public int[] poweredTenderArrangements = new[] { 43 };
+		internal bool PoweredTenderEnabled(int id) => PoweredTenderPolicy.Supports(id) && poweredTenderArrangements != null && poweredTenderArrangements.Contains(id);
+#endif
 
 		public override void Save(UnityModManager.ModEntry modEntry)
 		{
@@ -267,6 +259,7 @@ namespace RearrangedS282
 				RandomWAs.Add(WheelArrangementType.s2660);
 			if (spawn210102)
 				RandomWAs.Add(WheelArrangementType.s210102);
+			if (spawn24440) RandomWAs.Add(WheelArrangementType.s24440);
 			if (spawn4144)
 				RandomWAs.Add(WheelArrangementType.s4144);
 

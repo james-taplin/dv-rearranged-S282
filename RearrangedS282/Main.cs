@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using UnityModManagerNet;
@@ -39,38 +40,44 @@ namespace RearrangedS282
 				if (settings.MigrateSpawnPool()) settings.Save(modEntry);
 				settings.OnChange();
 				modEntry.OnSaveGUI = OnSaveGUI;
+#if B99_DIAGNOSTICS
 				stage2Harmony.CreateClassProcessor(typeof(PowerDiagnosticsTick)).Patch();
+#endif
 				ArticulatedSimulation.Register(stage2Harmony);
 				BigEndOiling.Register(stage2Harmony);
 				ArticulatedEffects.Register(stage2Harmony);
 				DeltaTrailingTruckCompatibility.Register(stage2Harmony);
 				ConventionalSpawn.RegisterPatches(stage2Harmony);
 				stage2Harmony.CreateClassProcessor(typeof(WheelRearranger.CurveSquealPatch)).Patch();
+#if B99_DIAGNOSTICS
 				PowerDiagnostics.CurveSampler = CurveDiagnostics.Sample;
 				PowerDiagnostics.CurveSessionInfo = CurveDiagnostics.SessionInfo;
 				modEntry.OnUpdate = (entry, delta) => PowerDiagnostics.Update();
 				Application.quitting += () => PowerDiagnostics.Stop("game exiting");
+#endif
 				// Live geometry and save owners cannot safely outlive their Harmony hooks.
-				modEntry.OnUnload = entry => { PowerDiagnostics.Stop("unload requested"); Logger.Log("Restart the game to unload Rearranged S282."); return false; };
+				modEntry.OnUnload = entry => { Logger.Log("Restart the game to unload Rearranged S282."); return false; };
 #endif
 				stage2Harmony.CreateClassProcessor(typeof(CommsRadio_Awake_Patch)).Patch();
 				modEntry.OnGUI = entry => {
                     GUILayout.Label("Running Rearranged S282 " + typeof(Main).Assembly.GetName().Version);
 #if B99_ALL_STANDARD
-					GUILayout.Label("47 ARRANGEMENTS — MAIN CONNECTING ROD SPACING TRIAL\n" +
+					GUILayout.Label("48 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +
 						"Selections are saved with each locomotive. Loaded arrangements wait until switching is safe.\n" +
 						"First conversion may take a few seconds to prepare rods.");
 					var radio = CommsRadio_Awake_Patch.rearranger;
 					if (radio != null)
 					{
-						GUILayout.Label(radio.SettingsSelectionStatus);
-						if (!Stage2RuntimeChecks.Running && !PowerDiagnostics.Recording && radio.SettingsTarget != null &&
+						if (radio.SettingsTarget != null) GUILayout.Label("Selected locomotive: " + radio.SettingsTarget.ID);
+						if (radio.SettingsTarget != null &&
 							GUILayout.Button("REAPPLY CURRENT ARRANGEMENT — highlighted S282")) radio.ReapplyFromSettings();
 						if (GUILayout.Button("RESET WHEEL-ARRANGER RADIO SELECTION")) radio.ResetSelectionFromSettings();
 					}
+					DrawPoweredTenderSettings();
 					if (CommsRadioS282Rearranger.ReapplyStatus != null) GUILayout.Label(CommsRadioS282Rearranger.ReapplyStatus);
 					if (DeltaTrailingTruckCompatibility.Status != null) GUILayout.Label(DeltaTrailingTruckCompatibility.Status);
+#if B99_DIAGNOSTICS
 					GUILayout.Space(8);
 					GUILayout.Label(PowerDiagnostics.Status);
 					if (PowerDiagnostics.Latest != null) GUILayout.Label(PowerDiagnostics.Latest);
@@ -80,12 +87,14 @@ namespace RearrangedS282
 						if (GUILayout.Button("STOP AND SAVE POWER DIAGNOSTICS")) PowerDiagnostics.Stop();
 					}
 					else if (!Stage2RuntimeChecks.Running && GUILayout.Button("START POWER DIAGNOSTICS — all loaded S282s")) PowerDiagnostics.Begin();
+#endif
 #else
 					GUILayout.Label(
 					"B99 stage 2: select a stationary S282 with the Wheel Rearranger radio.\n" +
 					"Stock 2-8-2 and 2-8-4 only. Close the regulator before switching.\n" +
 					"Selections are temporary and are not written to saves.");
 #endif
+#if B99_DIAGNOSTICS
 					GUILayout.Label(Stage2RuntimeChecks.Status);
 					if (!Stage2RuntimeChecks.Running
 #if B99_ALL_STANDARD
@@ -93,6 +102,7 @@ namespace RearrangedS282
 #endif
 						&& GUILayout.Button("RUN STRUCTURAL TEST — two stationary S282s"))
 						Stage2RuntimeChecks.Begin();
+#endif
 #if B99_ALL_STANDARD
 					GUILayout.Space(8);
 					showArrangementSettings = GUILayout.Toggle(showArrangementSettings, "Show arrangement and random-spawn settings");
@@ -146,6 +156,25 @@ namespace RearrangedS282
 			return true;
 #endif
 		}
+
+#if B99_ALL_STANDARD
+        private static bool showPoweredTenderSettings;
+        private static void DrawPoweredTenderSettings()
+        {
+            showPoweredTenderSettings = GUILayout.Toggle(showPoweredTenderSettings, "Powered tender — arrangement options (test)");
+            if (!showPoweredTenderSettings) return;
+            GUILayout.Label("Checked layouts use the Erie powered S282 tender. Applies on spawn/reload or REAPPLY above. Stop and close the regulator first.\nThree-engine locomotive triplexes, Drivers not found and the giant prototype are excluded. Uncheck Erie here to test its locomotive without the tender engine.");
+            settings.poweredTenderArrangements ??= new[] { 43 };
+            for (int id = 0; id < WheelArrangement.SupportedCount; id++)
+            {
+                if (!PoweredTenderPolicy.Supports(id)) continue;
+                bool previous = settings.PoweredTenderEnabled(id);
+                bool selected = GUILayout.Toggle(previous, WheelArrangement.WheelArrangementNames[id] + " — powered tender");
+                if (selected && !previous) settings.poweredTenderArrangements = settings.poweredTenderArrangements.Append(id).ToArray();
+                if (!selected && previous) settings.poweredTenderArrangements = settings.poweredTenderArrangements.Where(x => x != id).ToArray();
+            }
+        }
+#endif
 
 		static void OnGUI(UnityModManager.ModEntry modEntry)
 		{

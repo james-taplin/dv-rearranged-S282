@@ -27,6 +27,13 @@ namespace RearrangedS282
                 return;
             }
 #endif
+#if B99_ALL_STANDARD
+            if (Main.settings?.PoweredTenderEnabled((int)WheelArrangementType.s282) == true)
+            {
+                Status = "Structural test needs unmodified stock as its reference: uncheck the stock 2-8-2 powered-tender option and reapply stock to both test locomotives first.";
+                return;
+            }
+#endif
             var cars = UnityEngine.Object.FindObjectsOfType<TrainCar>()
                 .Where(c => c.carType == TrainCarType.LocoSteamHeavy && !c.derailed && !c.isExploded &&
                     c.entity != null && c.entity.IsConverted && Mathf.Abs(c.GetForwardSpeed()) <= .01f &&
@@ -139,7 +146,7 @@ namespace RearrangedS282
                         {
                             result["prototypeDriverDiameterMetres"] = runner.GiantSingleDriverDiameter;
                             result["prototypeDriverColliderCount"] = runner.GiantSingleDriverColliderCount;
-                            float expectedDiameter = WheelRearranger.ClampGiantDriverDiameter(Main.settings.giant222DriverDiameterMetres);
+                            float expectedDiameter = 2.8f;
                             if (Mathf.Abs(runner.GiantSingleDriverDiameter - expectedDiameter) > .001f ||
                                 runner.GiantSingleDriverColliderCount != 0 ||
                                 Mathf.Abs(2f * subject.SimController.drivingForce.wheelRadius - expectedDiameter) > .001f)

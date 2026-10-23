@@ -369,6 +369,7 @@ namespace RearrangedS282
                     break;
                 case WheelArrangementType.s22222:
                 case WheelArrangementType.s02220:
+                case WheelArrangementType.s24440:
                     yield return Make("front engine", driveL, articulatedFrontRoot, articulatedPin);
                     yield return Make("middle engine", triplexMiddleL, articulatedMiddleRoot, triplexMiddlePin);
                     yield return Make("rear engine", triplexRearL, articulatedRearRoot, null);

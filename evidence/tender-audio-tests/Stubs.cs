@@ -12,7 +12,7 @@ namespace DV.ModularAudioCar {
 namespace RearrangedS282 {
  internal sealed class ArticulatedSimulation:MonoBehaviour {
   internal LocoSim.Implementations.ReciprocatingSteamEngine RearEngine=new(),MiddleEngine=new();
-  internal bool IsMiddleActive,IsTenderEngine;
+  internal bool IsActive=true,IsMiddleActive,IsTenderEngine;
  }
  internal sealed class WheelRearranger:MonoBehaviour {
   internal Transform ArticulatedRearRoot,ArticulatedMiddleRoot,TenderEffectsRoot,TenderExhaustOutlet;

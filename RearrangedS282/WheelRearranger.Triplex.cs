@@ -45,18 +45,21 @@ namespace RearrangedS282
         private readonly List<Transform> triplexAssets = new List<Transform>();
         private TriplexLayout triplex;
         private float triplexAssetsScale = float.NaN;
+        private bool triplexAssetsTwoCoupled;
+        private Vector3[] triplexCoupledDriverPositions;
 
         private sealed class TriplexLayout
         {
-            internal bool Trucks;
+            internal bool Trucks, TwoCoupled;
             internal float Scale, Radius, FrontPinZ, MiddlePinZ, TrailingZ;
+            internal float Shorten => TwoCoupled ? .10f : TriplexShortenNative;
             internal readonly float[] Offsets = new float[3], CylinderFronts = new float[3], Drivers = new float[3];
             // Driver side (drives, brakes, springs).
             internal Matrix4x4 Front => EngineMap(Offsets[0], Scale);
             internal Matrix4x4 Middle => EngineMap(Offsets[1], Scale);
             internal Matrix4x4 Rear => EngineMap(Offsets[2], Scale);
             // Cylinder side (guides, cylinder colliders, cylinder outlets).
-            internal Matrix4x4 Cylinders(int engine) => EngineMap(Offsets[engine] - Scale * TriplexShortenNative, Scale);
+            internal Matrix4x4 Cylinders(int engine) => EngineMap(Offsets[engine] - Scale * Shorten, Scale);
         }
 
         // Largest uniform scale at which three engines, the gaps between them and
@@ -64,21 +67,21 @@ namespace RearrangedS282
         // 12-coupled trailing-axle position. Everything in the body frame.
         // Without trucks (0-2-2-2-0) the span ends at the trailing wheel's rear edge
         // instead of leaving room for that wheel.
-        private TriplexLayout MeasureTriplex(bool trucks)
+        private TriplexLayout MeasureTriplex(bool trucks, bool twoCoupled = false)
         {
             var body = MalletBody;
             float cylinderFront = FranklinCylinderFront();
             float driver = secondLeftDriveWheel.localPosition.z, radius = secondLeftDriveWheel.localPosition.y;
-            float engineLength = cylinderFront - driver - TriplexShortenNative;
+            float engineLength = cylinderFront - driver - (twoCoupled ? .10f : TriplexShortenNative);
             float trailingLimit = body.InverseTransformPoint(rearBogie.TransformPoint(TriplexOwnTrailingLimit)).z;
             float front = cylinderFront + (trucks ? TriplexFrontExtra : TrucklessFrontExtra);
             float gap = trucks ? TriplexEngineGap : TrucklessEngineGap;
             // Body z where the last driver's rear edge (no trucks) or its trailing
             // wheel's front clearance (trucks) may reach.
-            float rearLimit = trucks ? trailingLimit + MalletTrailingRadius + MalletEngineGap : trailingLimit - MalletTrailingRadius;
+            float rearLimit = trucks && !twoCoupled ? trailingLimit + MalletTrailingRadius + MalletEngineGap : trailingLimit - MalletTrailingRadius;
             float s = (front - rearLimit - 2f * gap) / (3f * engineLength + 3f * radius);
             if (!(s > .3f && s < 1f)) throw new InvalidOperationException("Triplex S282 engines do not fit the frame (scale " + s + ").");
-            var layout = new TriplexLayout { Trucks = trucks, Scale = s, Radius = s * radius };
+            var layout = new TriplexLayout { Trucks = trucks, TwoCoupled = twoCoupled, Scale = s, Radius = s * radius };
             float cylinder = front;
             for (int e = 0; e < 3; e++)
             {
@@ -112,12 +115,13 @@ namespace RearrangedS282
             return front;
         }
 
-        private void ApplyTriplexGeometry(bool trucks)
+        private void ApplyTriplexGeometry(bool trucks, bool twoCoupled = false)
         {
             // The Franklin engine assets, duplex guide meshes and short main rod
             // are the 2-4-4-2's; the drives are cloned after they exist.
             EnsureArticulatedAssets();
-            triplex = MeasureTriplex(trucks);
+            triplex = MeasureTriplex(trucks, twoCoupled);
+            if (twoCoupled) triplexCoupledDriverPositions = new[] { firstLeftDriveWheel.localPosition, secondLeftDriveWheel.localPosition };
             EnsureTriplexAssets();
             float s = triplex.Scale;
             float phase = lfAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime % 1f;
@@ -125,11 +129,13 @@ namespace RearrangedS282
             if (trucks)
             {
                 ShowTwoLeadingWheels();
+                if (!twoCoupled) {
                 ShowTwoTrailingWheelsFor12Coupled();
                 float trailingLocal = rearBogie.InverseTransformPoint(MalletBody.TransformPoint(new Vector3(0f, 0f, triplex.TrailingZ))).z;
                 float trailingShift = trailingLocal - secondRearAxle.localPosition.z;
                 secondRearAxle.localPosition += Vector3.forward * trailingShift;
                 secondRearAxleSupport.localPosition += Vector3.forward * trailingShift;
+                }
             }
             setWheelRadius(.712f * s);
 
@@ -137,7 +143,7 @@ namespace RearrangedS282
             driveL.localScale = new Vector3(-1f, s, s); driveR.localScale = new Vector3(1f, s, s);
             SetPairActive(frontFranklin, true); SetPairActive(frontFranklin4444, false);
             foreach (var part in frontFranklin) EnableGeneratedRenderers(part);
-            ConfigureSingleDriverDrive(driveL, false); ConfigureSingleDriverDrive(driveR, false);
+            ConfigureTriplexDrive(driveL, false); ConfigureTriplexDrive(driveR, false);
             lfAnimator.runtimeAnimatorController = rfAnimator.runtimeAnimatorController = AssetBundleLoader.FranklinBAnimCtrl;
             leftReachRod.gameObject.SetActive(false); rightReachRod.gameObject.SetActive(false);
             // The Franklin cylinders replace the native ones and Walschaerts supports.
@@ -153,6 +159,7 @@ namespace RearrangedS282
             PrepareTriplexGuide(lfCrossheadBracket, articulatedGuideL); PrepareTriplexGuide(rfCrossheadBracket, articulatedGuideR);
 
             var frontStatic = TriplexStaticParts();
+            foreach (var part in frontStatic) part.gameObject.SetActive(true);
             foreach (var part in frontStatic) MapMalletPart(part, IsTriplexGuide(part) ? triplex.Cylinders(0) : triplex.Front);
             var colliders = MalletColliders.Select(path => transform.Find(path)).Where(t => t != null).ToArray();
             foreach (var collider in colliders) MapMalletPart(collider, triplex.Cylinders(0));
@@ -164,30 +171,41 @@ namespace RearrangedS282
                 drive.localPosition = new Vector3(0f, 0f, triplex.Offsets[offset]);
                 drive.localScale = new Vector3(mirrored ? -1f : 1f, s, s);
                 drive.gameObject.SetActive(true);
+                ConfigureTriplexDrive(drive, true);
             }
             // Cylinder outlets (cocks, drips) follow the cylinders.
             scaledEngineMaps = new[] { triplex.Cylinders(0), triplex.Cylinders(2), triplex.Cylinders(1) };
             BindFranklinTriplexAnimation(phase);
-            BindEngineBrakeHeat(new[] { triplexMiddleL, triplexMiddleR, triplexRearL, triplexRearR }, 2);
+            BindEngineBrakeHeat(new[] { triplexMiddleL, triplexMiddleR, triplexRearL, triplexRearR }, twoCoupled ? new[] { 1, 2 } : new[] { 2 });
 
             // One powered axle per engine: front and middle in the native front
             // bogie, rear in the native rear bogie.
-            driveAxle4.gameObject.SetActive(false);
-            AlignNativeAxle(driveAxle1, secondLeftDriveWheel, articulatedFrontRoot);
-            AlignNativeAxle(driveAxle2, RequireArticulatedPart(triplexMiddleL, "s282_wheels_driving_2"), articulatedMiddleRoot);
-            AlignNativeAxle(driveAxle3, RequireArticulatedPart(triplexRearL, "s282_wheels_driving_2"), articulatedRearRoot);
+            // Native parents remain unchanged:1/2/6 belong to the front
+            // bogie,3/4/5 to the rear. Split the middle pair across them.
+            var axles = twoCoupled ? new[] { driveAxle1, driveAxle2, driveAxle6, driveAxle3, driveAxle4, driveAxle5 }
+                : new[] { driveAxle1, driveAxle2, driveAxle3, driveAxle4, driveAxle5, driveAxle6 };
+            var drives = new[] { driveL, triplexMiddleL, triplexRearL };
+            var roots = new[] { articulatedFrontRoot, articulatedMiddleRoot, articulatedRearRoot };
+            int used = 0;
+            for (int e = 0; e < 3; e++)
+                foreach (int wheel in twoCoupled ? new[] { 1, 2 } : new[] { 2 })
+                {
+                    axles[used].gameObject.SetActive(true);
+                    AlignNativeAxle(axles[used++], RequireArticulatedPart(drives[e], "s282_wheels_driving_" + wheel), roots[e]);
+                }
+            for (; used < axles.Length; used++) axles[used].gameObject.SetActive(false);
 
             foreach (var part in new[] { driveL, driveR }.Concat(frontStatic).Concat(colliders))
                 MoveArticulatedPart(part, articulatedFrontRoot);
             UpdateTriplexSparks();
             ConfigureTriplexMiddleArticulation();
-            ConfigureNativeArticulation(trucks ? ArticulatedSimulation.TriplexId : ArticulatedSimulation.TrucklessTriplexId, triplex.FrontPinZ);
+            ConfigureNativeArticulation(twoCoupled ? ArticulatedSimulation.SixAxleTriplexId : trucks ? ArticulatedSimulation.TriplexId : ArticulatedSimulation.TrucklessTriplexId, triplex.FrontPinZ);
             // The front engine's hinge rides on the middle engine.
             MoveArticulatedPart(articulatedPin, articulatedMiddleRoot);
             BindArticulatedLods();
             // Cylinder side drawn closer to each driver; main rod and middle shaft shortened.
-            foreach (var drive in TriplexDrives()) DriveRetarget.Bind(drive, -TriplexShortenNative, DriveRetarget.FranklinRole, transform);
-            Main.Logger.Log($"Articulated S282 {(trucks ? "2-2-2-2-2" : "0-2-2-2-0")}: scale {s:0.000}, {2f * triplex.Radius:0.00} m drivers at " +
+            foreach (var drive in TriplexDrives()) DriveRetarget.Bind(drive, -triplex.Shorten, DriveRetarget.FranklinRole, transform);
+            Main.Logger.Log($"Articulated S282 {(twoCoupled ? "2-4-4-4-0" : trucks ? "2-2-2-2-2" : "0-2-2-2-0")}: scale {s:0.000}, {2f * triplex.Radius:0.00} m drivers at " +
                 $"{triplex.Drivers[0]:0.00}/{triplex.Drivers[1]:0.00}/{triplex.Drivers[2]:0.00}, cylinders {triplex.CylinderFronts[0]:0.00}, " +
                 $"pins {triplex.FrontPinZ:0.00}/{triplex.MiddlePinZ:0.00}" + (trucks ? $", trailing axle {triplex.TrailingZ:0.00}" : ", no trucks") + " (body z).");
         }
@@ -200,7 +218,8 @@ namespace RearrangedS282
 
         private Transform[] TriplexStaticParts() => new[] { lfCrossheadBracket, rfCrossheadBracket,
             leftSecondBrakeCaliper, rightSecondBrakeCaliper,
-            RequireArticulatedPart(splitLoco, "s282a_suspension_l_2"), RequireArticulatedPart(splitLoco, "s282a_suspension_r_2") };
+            RequireArticulatedPart(splitLoco, "s282a_suspension_l_2"), RequireArticulatedPart(splitLoco, "s282a_suspension_r_2") }.Concat(triplex.TwoCoupled ? new[] { leftFirstBrakeCaliper, rightFirstBrakeCaliper,
+            RequireArticulatedPart(splitLoco, "s282a_suspension_l_1"), RequireArticulatedPart(splitLoco, "s282a_suspension_r_1") } : Array.Empty<Transform>()).ToArray();
 
         // The 2-4-4-2's front guide: lengthened mesh, as placed for that engine.
         private static void PrepareTriplexGuide(Transform guide, Mesh mesh)
@@ -248,7 +267,7 @@ namespace RearrangedS282
                 triplexMiddlePosition.constraintActive = false; triplexMiddleAim.constraintActive = false;
                 foreach (var t in new[] { articulatedMiddleFrame, triplexMiddlePin, triplexAimRest }) t.gameObject.SetActive(false);
             }
-            if (triplexRearR != null && triplexAssetsScale == triplex.Scale) return;
+            if (triplexRearR != null && triplexAssetsScale == triplex.Scale && triplexAssetsTwoCoupled == triplex.TwoCoupled) return;
             // The middle and rear guides, brakes and springs are mapped once from the
             // prepared pose; rebuild them when the layout (2-2-2-2-2 or 0-2-2-2-0) changes.
             foreach (var old in triplexAssets.Where(t => t != null)) { old.gameObject.SetActive(false); Object.Destroy(old.gameObject); }
@@ -283,7 +302,7 @@ namespace RearrangedS282
                         clone.gameObject.SetActive(false);
                         triplexAssets.Add(clone);
                     }
-                triplexAssetsScale = triplex.Scale;
+                triplexAssetsScale = triplex.Scale; triplexAssetsTwoCoupled = triplex.TwoCoupled;
             }
             catch
             {
@@ -331,22 +350,37 @@ namespace RearrangedS282
             }
         }
 
+        private void ConfigureTriplexDrive(Transform drive, bool clone)
+        {
+            if (!triplex.TwoCoupled) { ConfigureSingleDriverDrive(drive, clone); return; }
+            ConfigureEngineDrive(drive, MeshFinder.Instance.DuplexMainRodMesh, true);
+            // ResetToFourCoupled rounds native coordinates; retain exact prepared
+            // pin positions for all three engines in the new layout.
+            for (int i = 0; i < 2; i++)
+                RequireArticulatedPart(drive, "s282_wheels_driving_" + (i + 1)).localPosition = triplexCoupledDriverPositions[i];
+            RequireArticulatedPart(drive, "s282_wheels_driving_1").gameObject.SetActive(true);
+            RequireArticulatedPart(drive, "s282_wheels_driving_2").gameObject.SetActive(true);
+            foreach (var child in drive.Cast<Transform>())
+                if (child.name == "franklin_type_b(Clone)") { child.gameObject.SetActive(true); EnableGeneratedRenderers(child); }
+                else if (child.name == "franklin_type_b_4444(Clone)") child.gameObject.SetActive(false);
+        }
+
         private void UpdateTriplexSparks()
         {
-            var axles = new[] { driveAxle1, driveAxle2, driveAxle3 };
+            var axles = triplex.TwoCoupled ? new[] { driveAxle1, driveAxle2, driveAxle6, driveAxle3, driveAxle4, driveAxle5 } : new[] { driveAxle1, driveAxle2, driveAxle3 };
             var roots = new[] { articulatedFrontRoot, articulatedMiddleRoot, articulatedRearRoot };
-            var left = new[] { spark1L, spark2L, spark3L };
-            var right = new[] { spark1R, spark2R, spark3R };
-            for (int i = 0; i < 3; i++)
+            var left = new[] { spark1L, spark2L, spark3L, spark4L, spark5L, spark6L };
+            var right = new[] { spark1R, spark2R, spark3R, spark4R, spark5R, spark6R };
+            for (int i = 0; i < axles.Length; i++)
             {
                 var point = transform.InverseTransformPoint(axles[i].position); point.y = 0f;
                 left[i].position = transform.TransformPoint(new Vector3(-.75f, 0f, point.z));
                 right[i].position = transform.TransformPoint(new Vector3(.75f, 0f, point.z));
                 left[i].gameObject.SetActive(true); right[i].gameObject.SetActive(true);
-                MoveArticulatedPart(left[i], roots[i]);
-                MoveArticulatedPart(right[i], roots[i]);
+                MoveArticulatedPart(left[i], roots[triplex.TwoCoupled ? i / 2 : i]);
+                MoveArticulatedPart(right[i], roots[triplex.TwoCoupled ? i / 2 : i]);
             }
-            foreach (var spark in new[] { spark4L, spark4R, spark5L, spark5R, spark6L, spark6R }) spark.gameObject.SetActive(false);
+            if (!triplex.TwoCoupled) foreach (var spark in new[] { spark4L, spark4R, spark5L, spark5R, spark6L, spark6R }) spark.gameObject.SetActive(false);
         }
 
         // The middle engine pivots on a boiler-fixed pin ahead of the rear

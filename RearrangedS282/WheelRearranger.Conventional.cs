@@ -39,12 +39,14 @@ namespace RearrangedS282
                 Main.Logger.Warning("Use a repaired, stationary S282 with its regulator closed and wheel slip/driving force settled before switching.");
                 return false;
             }
-            if (stockGeometry == null && id == 10) return true;
+            bool wantsTender = Main.settings != null && Main.settings.PoweredTenderEnabled(id);
+            if (stockGeometry == null && id == 10 && !wantsTender) return true;
             LastConventionalError = null;
             skipWheelArrangementChange = true;
             try
             {
                 DeltaTrailingTruckCompatibility.Suspend(loco);
+                DetachTenderEngine();
                 if (stockGeometry == null)
                 {
                     splitS282A = GetComponent<S282AMeshLoader>();
@@ -81,7 +83,11 @@ namespace RearrangedS282
                     cylinderCalibration = new CylinderCalibration(sim.simFlow.OrderedSimComps.OfType<LocoSim.Implementations.ReciprocatingSteamEngine>().ToArray(),
                         stage2Physics.DriverRadius, stage2Physics.OriginalSlipCoefficient,
                         stage2Physics.OriginalPowered.Length, stage2Physics.OriginalTotalAxles);
-                if (id == 10) RestoreConventionalStock();
+                if (id == 10)
+                {
+                    if (wantsTender) { preparedGeometry.Restore(); EnsurePoweredTenderSource(); }
+                    RestoreConventionalStock();
+                }
                 else
                 {
                     cylinderCalibration.Restore();
@@ -96,12 +102,14 @@ namespace RearrangedS282
                     SuspendDriverLayout();
                     preparedGeometry.Restore();
                     currentWA = WheelArrangementType.s282;
+                    if (wantsTender) EnsurePoweredTenderSource();
                     if (WheelArrangement.IsArticulatedId(id))
                     {
                         articulatedSimulation = ArticulatedSimulation.Ensure(loco);
                         if (id == (int)WheelArrangementType.s2662) ApplyMalletGeometry();
                         else if (id == (int)WheelArrangementType.s22222) ApplyTriplexGeometry(true);
                         else if (id == (int)WheelArrangementType.s02220) ApplyTriplexGeometry(false);
+                        else if (id == (int)WheelArrangementType.s24440) ApplyTriplexGeometry(true, true);
                         else if (IsBigMallet(id) || id == (int)WheelArrangementType.s28882) ApplyBigMalletGeometry((WheelArrangementType)id);
                         else ApplyArticulatedGeometry(id);
                     }
@@ -168,26 +176,27 @@ namespace RearrangedS282
                         var active = sim.simFlow.OrderedSimComps.OfType<LocoSim.Implementations.ReciprocatingSteamEngine>()
                             .Where(e => !(e is ArticulatedRearEngine aux) || (aux.Active && !aux.TenderMode)).ToArray();
                         cylinderCalibration.Apply(active, sim.drivingForce.wheelRadius, mass, fraction, powered.Length);
-                        if (id == (int)WheelArrangementType.s28882)
-                            cylinderCalibration.ApplyTender(articulatedSimulation.MiddleEngine, sim.drivingForce.wheelRadius);
                         Main.Logger.Log($"Design cylinder calibration: area x{cylinderCalibration.AreaScale:F4}; " +
                             $"reference pull {cylinderCalibration.BeforeForceN / 1000:F1} -> {cylinderCalibration.AfterForceN / 1000:F1} kN; design ratio ceiling {cylinderCalibration.TargetRatio:F3} at 124 t rated mass.");
                     }
                     ApplySteamConnections(id);
                     RefreshConventionalRollingAudio();
                 }
+                SelectPoweredTender(wantsTender);
                 UpdateExternalControlPositions();
                 ApplyOilCupMounts();
                 B99Oilcups.Bind(loco, loco.loadedExternalInteractables);
                 RefreshBigEndOiling(loco.loadedExternalInteractables);
-                ArticulatedEffects.Refresh(loco, WheelArrangement.IsArticulatedId(id));
+                ArticulatedEffects.Refresh(loco, WheelArrangement.IsArticulatedId(id) || poweredTenderSelected);
                 // Includes inactive conventional LODs and lazily created rear
                 // engines. Exclude other integrations' separately owned effects.
                 explosionMaterials?.Refresh(GetComponentsInChildren<MeshRenderer>(true)
                     .Where(r => !DeltaTrailingTruckCompatibility.IsPresentation(r.transform) &&
                         !ArticulatedEffects.IsOwnedPresentation(r.transform)));
                 GetComponent<LMSCustomizationPlacementMeshes>()?.ReloadAllGadgetMeshTransforms();
+#if B99_DIAGNOSTICS
                 LogStage2State("arrangement applied");
+#endif
                 return true;
             }
             catch (Exception ex)
@@ -205,6 +214,8 @@ namespace RearrangedS282
 
         private void RestoreConventionalStock()
         {
+            DetachTenderEngine();
+            poweredTenderSelected = false;
             cylinderCalibration?.Restore();
             preliminaryDriverShare = float.NaN;
             SuspendSteamConnections();

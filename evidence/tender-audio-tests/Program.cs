@@ -28,6 +28,10 @@ internal static class Program {
    Check(state.Calls.SequenceEqual(new[]{"audio","audio","particles","refresh"}),"audio removed before refresh can clone replacements");
    state.ResetAudio();Check(first.removed==1&&second.removed==1,"reset idempotent");
   }
+  sim.IsActive=false;sim.IsMiddleActive=sim.IsTenderEngine=true;
+  Check(state.Secondaries.Count==1&&state.Secondaries[0].Tender,"rigid host selects only tender audio/particles without a fake rear engine");
+  sim.IsMiddleActive=false;Check(state.Secondaries.Count==0,"uncoupled rigid host has no auxiliary emitters");
+  sim.IsActive=true;
   sim.IsMiddleActive=sim.IsTenderEngine=true;wheels.TenderExhaustOutlet=null;
   Check(state.Secondaries.All(s=>!s.Tender),"no tender emitter bound before exhaust outlet is ready");
   for(int i=0;i<250;i++){

@@ -107,7 +107,7 @@ static class Program
         foreach(bool running in new[]{true,false})
         {
             cases++;var r=new Rig();r.Point(r.a);Stage2RuntimeChecks.Running=running;PowerDiagnostics.Recording=!running;GUILayout.Clicks.Add("REAPPLY CURRENT ARRANGEMENT — highlighted S282");entry.OnGUI(entry);
-            Check(r.wa.Calls.Count==0,"Main GUI gates reapply during recording/structural run");Check(!GUILayout.Buttons.Contains("REAPPLY CURRENT ARRANGEMENT — highlighted S282"),"Main GUI suppresses gated button");
+            Check(r.wa.Calls.Count==1,"Retired diagnostic flags cannot block reapply");Check(!GUILayout.Buttons.Any(x=>x.Contains("DIAGNOSTICS")||x.Contains("STRUCTURAL TEST")),"Player GUI has no diagnostic controls");
         }
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"Main.cs","CommsRadioS282Rearranger.cs","WheelArrangement.cs"},limitations="Managed stand-ins test actual mod state/input guards and GUI callback wiring only; they do not reproduce native CanScroll, hotbar input, Unity/UMM rendering, VR, native conversion, save persistence or the reported in-game cycle failure."};
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0])));File.WriteAllText(args[0],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));

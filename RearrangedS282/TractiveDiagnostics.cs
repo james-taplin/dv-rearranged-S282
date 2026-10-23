@@ -114,7 +114,7 @@ namespace RearrangedS282
                     ["regulator"] = N(engine.throttleControl.Value), ["reverser"] = N(engine.reverserControl.Value),
                     ["admissionPressureBarAbs"] = N(pressure), ["modifiedAdmissionPressureBarAbs"] = N(modified),
                     ["chestPressureBarAbs"] = N(engine.steamChestPressureReadOut?.Value), ["intakeTemperatureC"] = N(engine.intakeTemperature.Value),
-                    ["crankRpm"] = N(engine.crankRpm.Value), ["instantaneousTorqueNm"] = N(tenderMode ? auxiliary.TenderTorque : engine.torqueOut?.Value),
+                    ["crankRpm"] = N(auxiliary != null ? auxiliary.EffectiveCrankRpm : engine.crankRpm.Value), ["instantaneousTorqueNm"] = N(tenderMode ? auxiliary.TenderTorque : engine.torqueOut?.Value),
                     ["referenceMeanForceN"] = N(active ? refForce : null), ["meanForceAtSampledSteamN"] = N(active ? mean : null)
                 });
             }

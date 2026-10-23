@@ -119,10 +119,10 @@ namespace RearrangedS282
         {
             switch ((WheelArrangementType)id)
             {
-                case WheelArrangementType.s260: return Main.settings.mogulExtraCoupledPitchMetres;
-                case WheelArrangementType.s240: return Main.settings.twoFortyExtraCoupledPitchMetres;
-                case WheelArrangementType.s262: return Main.settings.prairieExtraCoupledPitchMetres;
-                case WheelArrangementType.s440: return Main.settings.americanExtraCoupledPitchMetres;
+                case WheelArrangementType.s260: return .18f;
+                case WheelArrangementType.s240: return .20f;
+                case WheelArrangementType.s262: return .22f;
+                case WheelArrangementType.s440: return 0f;
                 default: throw new ArgumentOutOfRangeException(nameof(id));
             }
         }

@@ -140,7 +140,7 @@ namespace RearrangedS282
 
         private void ApplyCylinderCasings(int id)
         {
-            if (Main.settings == null || !Main.settings.nearVanillaCylinderCasings || id == (int)WheelArrangementType.s282) return;
+            if (id == (int)WheelArrangementType.s282) return;
             if (WheelArrangement.IsArticulatedId(id)) CacheFranklinCasings();
             bool fullArrangement = UsesFullCylinderCasings(id);
             var body = transform.Find("LocoS282A_Body/MovingParts_LOD0");

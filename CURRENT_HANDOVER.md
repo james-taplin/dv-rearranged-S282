@@ -1,3 +1,77 @@
+## 1.23.0 triplex and optional powered tender test - 23 October 2026
+
+James requested a more usable articulated 2-4-4-4-0 with all engines on the loco,
+plus optional Erie powered tenders on other arrangements, explicitly including
+rigids. He then requested diagnostics and resizing options be removed from this
+build. Game was running at request; build/package only, no installation.
+
+Appended save/catalogue ID47 (48 entries), default random spawn OFF. Reuses the
+native pin/aim articulation and Franklin two-axle engine/short coupling rod in
+three groups. Six native powered axles, one leading axle, no trailing truck and
+no powered tender. Same existing three native engines, per-arrangement reduction-
+only calibration and shared locomotive traction/slip architecture. Added first-
+axle brakes/springs, all six sparks, existing oil cups/steam/casing/LOD handling.
+Exact prepared wheel positions retained for the new layout. Shorten only0.10m
+native cylinder reach versus0.45m on single-driver triplexes: avoids crowding
+first driver by casing. Measured layout radius~0.596m, diameter~1.19m.
+
+UMM Powered tender - arrangement options (test):43 compatible rigid/two-engine
+layouts. Only Erie enabled by default; Erie can also be unchecked. Global policy
+per arrangement; applies on spawn/reload or explicit safe REAPPLY on highlighted
+loco. Already-loaded neighbours do not all change immediately. Three-engine loco
+triplexes38/40/47 cannot add a fourth engine;33 novelty and36 prototype excluded.
+Regular S282 tender only, ordinary rear coupling. No new radio mode. Selection
+stored as XML array: test caught prepopulated List append re-enabling Erie on
+reload, fixed with replacement-array serialization and empty round-trip check.
+
+Tender source measured/cached from prepared native pose independently of host;
+Franklin source parts explicitly hidden on rigid hosts. Freeze original static
+maps/cylinder-front datum against later host movements. Reuse existing Erie
+geometry, exhaust/cocks/drips, weight-limited force and native boiler intake sum.
+Third native engine owns tender torque/exhaust separately, private input adapter
+scales only its RPM by host/tender wheel-radius ratio during native Tick (restores
+reference in finally), never writes shared host RPM. Native engine checks compare
+same torque/intake/phase/frequency at four ratios against B99 engine calculation.
+No new grip/weather/sanding/independent-slip model. Powered tender adds steam use
+and pull, no boiler capacity. Existing host calibration/handling remains intact.
+Stock is exact with its tender option OFF; opting in explicitly adds tender power.
+
+Added missing native Mechanism_Layered/CHUFF_FREQUENCY clanks at tender driver
+centre, alongside1.22.4 tender chuffs/loops/cock audio. Uses existing native audio
+reader lifecycle. Tender animation owns speed from tender frequency; reuses native
+AnimatorPortReader for Cutoff with original authored reverser.REVERSER settings,
+so a Franklin host without native Cutoff parameter does not freeze tender gear.
+Detach/stock restore/pooling release the other car's engine and native readers.
+
+Accepted fixed pitch/rearward values: Mogul0.18/0.12m,2-4-0 0.20/0.14m,
+Prairie0.22/0.12m,American0/0m. Accepted cylinder normalization always enabled;
+prototype diameter fixed2.8m. Old tuning fields XML-ignored and no longer consulted
+by runtime geometry. No slider attributes or cylinder resize toggle remain.
+Valve gear/trucks/curving/oiling/random spawning retained. Default project excludes
+Stage2RuntimeChecks,PowerDiagnostics/PowerDiagnosticsTick,TractiveDiagnostics and
+all recorder registration/UI. Developer diagnostics can be compiled explicitly
+with EnableDiagnostics=true. CurveDiagnostics.SampledCurvature still supports
+unchanged curve handling. Package excludes recorder/export tools and dev reports;
+normal game/error logging retained. Manual acceptance only, no structural button.
+
+Validation: clean .NET48 game-reference build,0warnings/errors;68 real native
+engine checks;54 managed graph/lifecycle checks;19 extracted compact-layout checks;
+2553 extracted tender seating/selection/reset checks;9014 audio discovery checks;
+1484 settings/catalogue/identity/XML checks;271 radio/GUI checks;4142 existing
+calibration checks/1400 native ticks (47 old layouts, NOT new live evidence).
+Compiled integration:124 protected calibration/adhesion/curving/rod/oil methods
+unchanged from1.22.4,278 assertions including absent recorders and native cleanup.
+Compact fixture native force-radius replay within0.1mm after distinguishing
+native0.712 force datum from wheel-transform height0.7121296. This is longitudinal
+clearance/math only, not complete3D clipping proof or Unity constraint execution.
+No listening or in-game1.23 tests. New layout/switching/LOD/oil/refill/uncouple/
+save/reload and unsupported tender behaviour need manual testing. No true series
+compound enabled. RUNTIME_TRIAL_TESTING.txt is the player/manual guide.
+
+Desktop test ZIP prepared under RearrangedS282-B99-1.23.0-Test; build receipt is
+canonical final DLL/ZIP hash. Installed1.22.3 remains untouched. No backup copies,
+push, Nexus publication or S060 edits. Local source checkpoint recorded separately.
+
 ## Erie tender mechanical clanks audit - 22 Oct 2026
 
 James asked specifically about driving-gear clanks. Confirmed gap:1.22.4 adds

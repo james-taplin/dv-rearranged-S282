@@ -63,10 +63,10 @@ namespace RearrangedS282
         {
             switch ((WheelArrangementType)id)
             {
-                case WheelArrangementType.s260: return Main.settings.mogulDriverRearwardMetres;
-                case WheelArrangementType.s240: return Main.settings.twoFortyDriverRearwardMetres;
-                case WheelArrangementType.s262: return Main.settings.prairieDriverRearwardMetres;
-                case WheelArrangementType.s440: return Main.settings.americanDriverRearwardMetres;
+                case WheelArrangementType.s260: return .12f;
+                case WheelArrangementType.s240: return .14f;
+                case WheelArrangementType.s262: return .12f;
+                case WheelArrangementType.s440: return 0f;
                 default: throw new ArgumentOutOfRangeException(nameof(id));
             }
         }

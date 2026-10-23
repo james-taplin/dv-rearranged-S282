@@ -177,7 +177,7 @@ namespace RearrangedS282
             ["colliders"] = steamPresentation != null ? steamPresentation.ColliderCount : 0,
             ["manifoldHeader"] = steamPresentation != null && steamPresentation.UsesHeader,
             ["error"] = steamPresentation?.Error == null ? JValue.CreateNull() : new JValue(steamPresentation.Error),
-            ["internallyFedTenderCylinders"] = currentWA == WheelArrangementType.s28882 && tenderEngineRoot != null ? 2 : 0,
+            ["internallyFedTenderCylinders"] = poweredTenderSelected && tenderEngineRoot != null ? 2 : 0,
             ["minimumVisualPipeScale"] = SteamPipePresentation.MinimumVisualScale,
             ["minimumShaftDiameterM"] = steamPresentation != null ? steamPresentation.MinimumShaftDiameterM : 0f,
             ["route"] = steamPresentation == null ? "native" : steamPresentation.UsesDirectRigid ? "compact rigid" : "locomotive manifold header",

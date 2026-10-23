@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using DV.ModularAudioCar;
 using DV.Simulation.Controllers;
+using DV.Simulation.Ports;
 using HarmonyLib;
 using LocoSim.Implementations;
 using UnityEngine;
@@ -261,10 +262,12 @@ namespace RearrangedS282
         {
             internal LayeredAudioSimReadersController Controller;
             private readonly List<CylinderCockLayeredPortReader> readers = new();
+            private readonly List<LayeredAudioPortReader> mechanisms = new();
             private readonly List<Pose> primaryLeaves = new();
             private readonly List<GameObject> secondaryLeaves = new();
             internal bool TenderReady => Owner != null && readers.Any(r => r != null &&
-                r.crankRotationPortId == Owner.Simulation.MiddleEngine.crankRotationReadOut.id);
+                r.crankRotationPortId == Owner.Simulation.MiddleEngine.crankRotationReadOut.id) && mechanisms.Any(r => r != null &&
+                r.portId == Owner.Simulation.MiddleEngine.chuffFrequencyReadOut.id);
             internal void Add(EffectsState owner)
             {
                 if (Copies.Count != 0 || !Ready) return;
@@ -273,7 +276,7 @@ namespace RearrangedS282
                 var template = Template<CylinderCockLayeredPortReader>(Car, r => r.crankRotationPortId == owner.Simulation.MainEngine.crankRotationReadOut.id);
                 if (primary == null || template == null) throw new InvalidOperationException("Native S282 cylinder-cock audio template missing.");
                 Owner = owner; owner.Audio.Add(this);
-                foreach (var audio in primary.cylCockAudio)
+                foreach (var audio in owner.Simulation.IsActive ? primary.cylCockAudio : Array.Empty<LayeredAudio>())
                 {
                     if (audio == null) continue;
                     primaryLeaves.Add(new Pose(audio.transform));
@@ -303,11 +306,28 @@ namespace RearrangedS282
                     }
                     Controller.entries = Controller.entries.Append(reader).ToArray();
                     readers.Add(reader); Initialized = true; reader.Init(Car, Flow);
+                    if (secondary.Tender)
+                    {
+                        var mechanism = Template<LayeredAudioPortReader>(Car, r => r.gameObject.name == "Mechanism_Layered" &&
+                            r.portId == owner.Simulation.MainEngine.chuffFrequencyReadOut.id);
+                        if (mechanism == null) throw new InvalidOperationException("Native valve-gear mechanism audio template missing.");
+                        var machine = Copy(mechanism.gameObject, secondary.Root, "tender driving-gear clanks"); Copies.Add(machine);
+                        machine.transform.localPosition = Car.GetComponent<WheelRearranger>().TenderMechanismLocal;
+                        machine.transform.localRotation = Quaternion.identity;
+                        var sound = machine.GetComponent<LayeredAudioPortReader>();
+                        sound.portId = engine.chuffFrequencyReadOut.id;
+                        RequirePorts(Flow, sound.portId);
+                        Controller.entries = Controller.entries.Append(sound).ToArray();
+                        mechanisms.Add(sound); sound.Init(Car, Flow);
+                    }
                 }
             }
             internal override void Remove()
             {
                 if (Initialized) foreach (var reader in readers) Safe(reader.Deinit);
+                foreach (var mechanism in mechanisms) Safe(mechanism.Deinit);
+                if (Controller != null) Controller.entries = Controller.entries.Where(r => !mechanisms.Any(x => ReferenceEquals(x, r))).ToArray();
+                mechanisms.Clear();
                 if (Controller != null) Controller.entries = Controller.entries.Where(r => !readers.Any(x => ReferenceEquals(x, r))).ToArray();
                 foreach (var pose in primaryLeaves) Safe(pose.Restore); primaryLeaves.Clear();
                 foreach (var leaf in secondaryLeaves) Safe(() => DestroyCopy(leaf)); secondaryLeaves.Clear();
@@ -332,7 +352,8 @@ namespace RearrangedS282
             {
                 get
                 {
-                    var list = new List<Secondary> { new Secondary { Engine = Simulation.RearEngine, Root = Rear, Index = 1, Name = "rear" } };
+                    var list = new List<Secondary>();
+                    if (Simulation.IsActive) list.Add(new Secondary { Engine = Simulation.RearEngine, Root = Rear, Index = 1, Name = "rear" });
                     if (Simulation.IsMiddleActive && Middle != null && !Simulation.IsTenderEngine)
                         list.Add(new Secondary { Engine = Simulation.MiddleEngine, Root = Middle, Index = 2, Name = "middle" });
                     var tender = Car.GetComponent<WheelRearranger>().TenderEffectsRoot;
@@ -392,7 +413,8 @@ namespace RearrangedS282
 
             internal void RefreshNow()
             {
-                if (!Active || Car == null || Simulation == null || !Simulation.IsActive || Front == null || Rear == null) return;
+                if (!Active || Car == null || Simulation == null || (!Simulation.IsActive && !Simulation.IsTenderEngine)) return;
+                if (Simulation.IsActive && (Front == null || Rear == null)) return;
                 try
                 {
                     var tender = Car.GetComponent<WheelRearranger>().TenderEffectsRoot;
@@ -601,7 +623,7 @@ namespace RearrangedS282
 
             private void MovePrimary(GameObject leaf)
             {
-                if (leaf == null || primaryLeaves.Any(p => p.Leaf == leaf.transform)) return;
+                if (!owner.Simulation.IsActive || leaf == null || primaryLeaves.Any(p => p.Leaf == leaf.transform)) return;
                 primaryLeaves.Add(new Pose(leaf.transform));
                 Vector3 world = leaf.transform.position;
                 Vector3 centre = leaf.transform.TransformPoint(PacificHudsonAffine.EmitterCentreLocal(leaf.transform));

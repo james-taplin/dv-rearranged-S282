@@ -144,6 +144,25 @@ internal static class NativeProbe
             repair.Active = true; repair.Tick(.02f);
             Check(repair.isCylinderCrackedReadOut.Value == 0 && repair.chuffFrequencyReadOut.Value > 0,
                 "Rear remains repaired when reactivated after a dormant native repair");
+            foreach (float ratio in new[] { .55f, 1f, 1.4f, 2.1f })
+            {
+                var tender = new ArticulatedRearEngine(def) { Active = true, TenderMode = true, TenderRpmRatio = ratio };
+                var expected = new ReciprocatingSteamEngine(def);
+                Setup(tender, 120f, true); Setup(expected, 120f * ratio, true);
+                var shared = new Port("host", new PortDefinition(PortType.READONLY_OUT, PortValueType.RPM, "RPM"));
+                shared.Value = 120f; tender.crankRpm.SetPortReference(shared);
+                for (int tick = 0; tick < 150; tick++) { tender.Tick(.02f); expected.Tick(.02f); }
+                Near(tender.TenderTorque, expected.torqueOut.Value, "Tender torque exact native at diameter-adjusted RPM " + ratio);
+                Near(tender.intakeFlowReadOut.Value, expected.intakeFlowReadOut.Value, "Tender steam charged at diameter-adjusted RPM " + ratio);
+                Near(tender.chuffFrequencyReadOut.Value, expected.chuffFrequencyReadOut.Value, "Tender sound/animation clock at correct RPM " + ratio);
+                Near(tender.crankRotationReadOut.Value, expected.crankRotationReadOut.Value, "Tender phase integrates its own diameter " + ratio);
+                Check(ReferenceEquals(tender.crankRpm.port, shared) && shared.Value == 120f, "Shared host input identity/value untouched " + ratio);
+                Check(tender.torqueOut.Value == 0f && tender.exhaustFlowReadOut.Value == 0f && tender.TenderExhaust >= 0f,
+                    "Tender outputs excluded from host pull/blast " + ratio);
+                tender.Disable(); tender.Tick(.02f);
+                Check(tender.TenderTorque == 0f && tender.intakeFlowReadOut.Value == 0f && shared.Value == 120f,
+                    "Disabled tender cannot pull or consume after use " + ratio);
+            }
             Directory.CreateDirectory(args[0]);
             var report = new JObject { ["passed"] = true, ["count"] = Checks.Count, ["checks"] = new JArray(Checks),
                 ["rearCapacityFraction"] = fraction,

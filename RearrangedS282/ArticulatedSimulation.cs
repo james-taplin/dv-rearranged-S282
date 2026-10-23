@@ -54,8 +54,8 @@ namespace RearrangedS282
         // 2-8-8-8-2: the third (middle) engine sits under the tender; its pull and
         // exhaust go to the tender, not the loco's traction and blast.
         internal const int TenderTriplexId = 43;
-        internal const int TriplexId = 38, TrucklessTriplexId = 40;
-        internal static bool IsTriplexId(int id) => id == TriplexId || id == TrucklessTriplexId;
+        internal const int TriplexId = 38, TrucklessTriplexId = 40, SixAxleTriplexId = 47;
+        internal static bool IsTriplexId(int id) => id == TriplexId || id == TrucklessTriplexId || id == SixAxleTriplexId;
 
         internal static void Register(Harmony harmony)
         {
@@ -263,6 +263,19 @@ namespace RearrangedS282
             if (IsTriplexId(id)) Activate(middle);
         }
 
+        internal void ConfigureTender(bool enabled, float rpmRatio)
+        {
+            if (middle == null) throw new InvalidOperationException("Tender simulation is not ready.");
+            if (middle.Active && !middle.TenderMode)
+            {
+                if (enabled) throw new InvalidOperationException("The third engine is already on the locomotive.");
+                return;
+            }
+            middle.TenderMode = enabled;
+            middle.TenderRpmRatio = rpmRatio;
+            if (!enabled) middle.Disable();
+        }
+
         // The 2-8-8-8-2's tender engine: on while an S282 tender is coupled.
         internal void SetTenderEngine(bool attached)
         {
@@ -349,9 +362,13 @@ namespace RearrangedS282
         // ports the loco sums read, and kept here for the tender. The previous
         // values are put back before the next tick so the native smoothing holds.
         internal bool TenderMode;
+        internal float TenderRpmRatio = 1f;
+        internal float EffectiveCrankRpm => crankRpm.Value * (TenderMode ? TenderRpmRatio : 1f);
+        private readonly Port tenderRpm;
         internal float TenderTorque, TenderExhaust;
         internal ArticulatedRearEngine(ReciprocatingSteamEngineDefinition definition) : base(definition)
         {
+            tenderRpm = new Port(definition.ID, new PortDefinition(PortType.READONLY_OUT, PortValueType.RPM, "TENDER_CRANK_RPM"));
             // Native repair normally observes this one-frame health increase in
             // Tick. Preserve that repair while dormant, without advancing steam
             // or wear. This subscription is wholly owned by this engine's port.
@@ -369,7 +386,20 @@ namespace RearrangedS282
         {
             if (!Active) return;
             if (TenderMode) { torqueOut.Value = TenderTorque; exhaustFlowReadOut.Value = TenderExhaust; }
-            base.Tick(delta);
+            // One owned input adapter for unequal host/tender wheel diameters.
+            // Repoint only this engine's reference during its synchronous native
+            // tick; shared traction/RPM ports, other engines and saved graph stay intact.
+            var originalRpm = crankRpm.port;
+            try
+            {
+                if (TenderMode && TenderRpmRatio != 1f)
+                {
+                    tenderRpm.Value = EffectiveCrankRpm;
+                    crankRpm.port = tenderRpm;
+                }
+                base.Tick(delta);
+            }
+            finally { crankRpm.port = originalRpm; }
             if (!TenderMode) return;
             TenderTorque = torqueOut.Value; TenderExhaust = exhaustFlowReadOut.Value;
             torqueOut.Value = 0f; exhaustFlowReadOut.Value = 0f;

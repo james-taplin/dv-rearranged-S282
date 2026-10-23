@@ -29,7 +29,7 @@ namespace RearrangedS282
 
         private void ApplyGiantSingleDriverPrototype()
         {
-            float radius = ClampGiantDriverDiameter(Main.settings.giant222DriverDiameterMetres) * .5f;
+            float radius = 2.8f * .5f;
             float stockRadius = stage2Physics.DriverRadius;
             // Scale only new renderer objects. Whole-drive scaling would also
             // stretch native oilcup anchors and animate the crank in the wrong place.
