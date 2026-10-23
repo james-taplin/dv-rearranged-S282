@@ -1,0 +1,11 @@
+FILE NAME
+Rearranged S282 B99 1.23.2 Beta
+
+VERSION
+1.23.2
+
+FILE DESCRIPTION
+48 arrangements including the new 2-4-4-4-0 triplex and optional powered tenders for 43 layouts. Updated running gear, compact steam pipes, tender sounds and effects. Includes the structural test button.
+
+INSTALLATION
+Install through Unity Mod Manager with the game closed. Requires Derail Valley B99 and Locomotive Mesh Splitter. Existing settings are retained. Custom Car Loader and MultiCylinderChuffFix are not required.

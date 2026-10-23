@@ -1,3 +1,32 @@
+## 1.23.2 Beta release copy and Nexus package prepared - 23 October 2026
+
+James requested a full new Nexus description, credits, file information and a
+compressed versioned changelog since public 1.22.2, plus a human-facing repository
+README. These are now in release-copy/1.23.2-Beta; NEXUS_RELEASE_COPY.txt combines
+the complete draft. Root README.md and canonical release-copy/CREDITS.txt updated.
+Catalogue: 48 choices; 43 compatible optional powered-tender choices. Document the
+unfinished giant 2-2-2, unpowered 4-0-4, parallel rather than series compounds,
+simplified tender grip, unsupported Realistic Firing and unverified MP/VR plainly.
+No runtime source or driving physics changed for this packaging task.
+
+Package.Nexus.ps1 reuses the exact installed 1.23.2 DLL and runtime-trial payload,
+replacing test-only instructions with player documentation. Original LICENSE,
+THIRD_PARTY_NOTICES.txt, all eleven library licence files and original mod assets
+remain byte-identical. Package audit: 167 checks pass, 36 files, safe archive
+paths, no user settings/recordings/dev tools; installed DLL matches exactly.
+No rebuild, reinstall, full backup or rollback copy. Latest live structural run
+is still the failed 1.23.1 capture; James expresses confidence in 1.23.2, but no
+new full game result was inspected and runtime acceptance is not claimed.
+
+Nexus ZIP: release/1.23.2-Beta/RearrangedS282-B99-1.23.2-Beta.zip
+Desktop copy: C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-1.23.2-Beta-Nexus
+ZIP SHA256 8C60B3139CEC090AB39FD34D39164192C4B3A0DD272FC6663FB82BB6CA3FCE1A.
+DLL SHA256 C4C216972DE6687E2F4A2C3FF5862AACFAFEDC5852CC22636EFA278C77D73A1A.
+Receipt/inventory: release/1.23.2-Beta/release-manifest.json and
+build/release-1.23.2/audit.json. Local release documentation checkpoint follows
+13c5976 using an isolated Git index; active b99-port branch/index left alone.
+Prepared and packaged locally; not pushed, uploaded or published by Codex.
+
 ## 1.23.2 installed: fix active Franklin copies in rear/tender templates - 23 October 2026
 
 James reported the1.23.1 structural run failed. Actual JSON version1.23.1.0:
