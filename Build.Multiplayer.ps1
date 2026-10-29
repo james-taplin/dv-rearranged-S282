@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.1-mp.alpha.1',
+    [string]$Version = '2.0.8-alpha',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$MultiplayerApiPath = 'B:\GitHub repo\dads-decals\lib\MultiplayerAPI.dll',
     [string]$SeedPackage = 'B:\GitHub repo\rearranged-s282-b99\release\2.0-beta\RearrangedS282-B99-2.0-beta.zip',
@@ -8,7 +8,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-if ($Version -notmatch '^\d+\.\d+\.\d+-mp\.alpha\.\d+$') { throw 'Use an explicit multiplayer alpha version.' }
+if ($Version -notmatch '^\d+\.\d+\.\d+-(?:alpha|mp\.alpha\.\d+)$') { throw 'Use an explicit multiplayer alpha version.' }
 if (-not $OutputDirectory) { $OutputDirectory = "C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-$Version-Test" }
 if (-not $CandidateDirectory) { $CandidateDirectory = Join-Path $root "build\multiplayer-$Version" }
 $seedHash = '48A4C061CE75423B6DE0760AE76DC652521940B93520111856E585580E4760C0'

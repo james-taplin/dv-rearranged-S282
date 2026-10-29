@@ -1,0 +1,8 @@
+2.0.8-alpha - Multiplayer branch
+
+Nexus-facing package identity for the existing multiplayer implementation.
+Shared radio requests, host permissions, per-car settings and late-join state.
+Optional adapter loading preserves single-player use without Multiplayer.
+Includes a plain player README, credits, tester notes and BBCode Nexus copy.
+Gameplay code and assets are unchanged from the first multiplayer test build.
+This is a separate multiplayer alpha; no live session acceptance is claimed.

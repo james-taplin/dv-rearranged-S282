@@ -1,3 +1,46 @@
+## Nexus-facing multiplayer 2.0.8-alpha - 29 October 2026
+
+James explicitly authorised pushing this branch to his GitHub fork, while
+keeping it separate from the main version, and preparing a Nexus-facing
+2.0.8-alpha build. Work remains in this isolated checkout on
+codex/s282-multiplayer. Push only that branch to remote james:
+https://github.com/james-taplin/dv-rearranged-S282
+The default branch b99-port and branch main must not move. Before this work,
+their remote heads were respectively 14b112841a53ab53e4162e52ec8df06b14ae6948
+and 24e24d5a4e859e8c792de35d6df420c6177c6803.
+
+2.0.8-alpha retains the gameplay implementation from 2acef90 and its 2.0-beta
+arrangement baseline. This is a version/documentation/package change; later
+single-player fixes and independent-wheelslip development are not merged.
+The normal release remains a separate line. Both packages use RearrangedS282
+as their mod ID/folder; this is an alternative build, not a side-by-side mod.
+
+Version metadata is 2.0.8-alpha in Info.json and both project defaults. The
+multiplayer builder accepts this public alpha identity. Package.Nexus.ps1 now
+reads the multiplayer candidate receipt, checks both DLLs, preserves the
+MultiplayerCompatibility All and optional single-player fallback, and emits
+checksums, source/build receipt and a release manifest alongside the ZIP.
+No gameplay C# or meshes are changed. Native game/API references are build-only.
+
+release-copy/2.0.8-alpha contains the plain player README, compressed changelog,
+file information, UMM options, complete credits and BBCode Nexus description.
+Offer it as an optional experimental multiplayer file; keep the normal file as
+the main download. Requirements, identical peer packages, host permissions,
+failed-sync disconnection and live-testing limits are stated. The original
+credits/licences are retained and AMacro/DV Multiplayer contributors credited.
+
+Build: Build.Multiplayer.ps1, then Package.Nexus.ps1. Outputs:
+release/2.0.8-alpha/RearrangedS282-B99-2.0.8-alpha.zip
+Desktop/Derail Valley Mods/RearrangedS282-B99-2.0.8-alpha-Nexus/
+The final release manifest records source commit and both DLL/ZIP hashes.
+This task authorises a branch push, not a GitHub release, Nexus upload, merge
+or installation. Live multiplayer acceptance remains pending; do not present
+offline checks as a successful live session. The previous alpha evidence and
+known limits below still apply. Package/build receipts record fresh validation.
+Fresh 29 October checks: 182 bridge/codec, 78 core and 287 radio/settings
+assertions pass. Plain README, BBCode balance, script parsing, unchanged C#
+source and no newly introduced binary/raw-log Git history were checked.
+
 ## Multiplayer development branch - 23 October 2026
 
 James requested a new development branch for shared radios, optional per-player

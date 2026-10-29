@@ -1,7 +1,8 @@
 param(
-    [string]$Version = '2.0-beta',
+    [string]$Version = '2.0.8-alpha',
     [string]$ReleaseName = '',
-    [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods'
+    [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods',
+    [string]$CandidateDirectory
 )
 # Repackages the runtime-trial build of $Version as a player-facing Nexus archive:
 # same DLL, bundle, exporter and licences; test-only notes replaced by README,
@@ -10,11 +11,13 @@ $ErrorActionPreference = 'Stop'
 if (-not $ReleaseName) { $ReleaseName = $Version }
 if ($Version -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$' -or $ReleaseName -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$') { throw 'Invalid version or release name.' }
 $root = $PSScriptRoot
-$candidate = Join-Path $root "build\runtime-trial-$Version"
+$candidate = if ($CandidateDirectory) { $CandidateDirectory } else { Join-Path $root "build\multiplayer-$Version" }
 $receipt = Get-Content -LiteralPath (Join-Path $candidate 'build-receipt.json') -Raw | ConvertFrom-Json
 $source = $receipt.package
 if (-not (Test-Path -LiteralPath (Join-Path $source 'RearrangedS282.dll'))) { throw "Built package not found: $source" }
 if ((Get-FileHash -LiteralPath (Join-Path $source 'RearrangedS282.dll')).Hash -ne $receipt.dllSHA256) { throw 'Built DLL differs from its receipt.' }
+$multiplayer = $null -ne $receipt.PSObject.Properties['bridgeSHA256']
+if ($multiplayer -and (Get-FileHash -LiteralPath (Join-Path $source 'RearrangedS282.Multiplayer.dll')).Hash -ne $receipt.bridgeSHA256) { throw 'Built multiplayer adapter differs from its receipt.' }
 $copy = Join-Path $root "release-copy\$ReleaseName"
 $plainReadme = Get-Content -LiteralPath (Join-Path $copy 'README.txt') -Raw
 if ($plainReadme -match '(?m)^#{1,6}\s|^\|.*\|\s*$|\*\*|`|\[[^\]]+\]\(https?://|\[/?(?:b|i|url|list)(?:=[^\]]*)?\]') { throw 'Packaged README.txt must be plain text without Markdown or BBCode.' }
@@ -30,7 +33,8 @@ foreach ($doc in 'README.txt','CHANGELOG.txt','CREDITS.txt','UMM_OPTIONS.md') { 
 $infoPath = Join-Path $mod 'Info.json'
 $info = Get-Content -LiteralPath $infoPath -Raw | ConvertFrom-Json
 if ($info.Version -ne $Version) { throw "Info.json version $($info.Version) is not $Version." }
-$info.DisplayName = if ($ReleaseName -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
+$info.DisplayName = if ($multiplayer) { 'Rearranged S282 - B99 Multiplayer Alpha' } elseif ($ReleaseName -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
+if ($multiplayer -and ($info.MultiplayerCompatibility -ne 'All' -or 'Multiplayer' -in $info.Requirements)) { throw 'Multiplayer must be compatible on all peers and optional for single player.' }
 $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoPath -Encoding utf8
 $allowedObj = @('assets/franklin_casing.obj','assets/steam_manifold.obj','assets/steam_transfer.obj')
 $modBase = [IO.Path]::GetFullPath($mod).TrimEnd([char]92) + [char]92
@@ -63,14 +67,25 @@ if (-not $resolvedStage.StartsWith($buildBoundary, [StringComparison]::OrdinalIg
 Remove-Item -LiteralPath $resolvedStage -Recurse -Force
 $zipHash = (Get-FileHash -LiteralPath $zip).Hash
 "$zipHash  $zipName`r`n$($receipt.dllSHA256)  RearrangedS282/RearrangedS282.dll" | Set-Content -LiteralPath (Join-Path $out 'CHECKSUMS.txt') -Encoding ascii
+if ($multiplayer) { "$($receipt.bridgeSHA256)  RearrangedS282/RearrangedS282.Multiplayer.dll" | Add-Content -LiteralPath (Join-Path $out 'CHECKSUMS.txt') -Encoding ascii }
 $publicDocs = @('NEXUS_RELEASE_COPY.txt','DESCRIPTION.md','CREDITS.md','CREDITS.txt','CHANGELOG.txt','FILE_INFO.txt','UMM_OPTIONS.md','README.txt')
 $publicDocs += @('DESCRIPTION_BBCODE.txt','CREDITS_BBCODE.txt','NEXUS_DESCRIPTION_BBCODE.txt') | Where-Object { Test-Path -LiteralPath (Join-Path $copy $_) }
 foreach ($doc in $publicDocs) { Copy-Item -LiteralPath (Join-Path $copy $doc) -Destination $out -Force }
 $desk = Join-Path $DesktopDirectory "RearrangedS282-B99-$ReleaseName-Nexus"
 New-Item -ItemType Directory -Path $desk -Force | Out-Null
 Copy-Item -LiteralPath $zip,(Join-Path $out 'CHECKSUMS.txt') -Destination $desk -Force
+foreach ($destination in @($out,$desk)) { Copy-Item -LiteralPath (Join-Path $candidate 'build-receipt.json') -Destination $destination -Force }
 foreach ($doc in $publicDocs) { Copy-Item -LiteralPath (Join-Path $out $doc) -Destination $desk -Force }
 $archive = [IO.Compression.ZipFile]::OpenRead($zip)
 try { $files = @($archive.Entries | Where-Object Name -NE '' | ForEach-Object FullName) } finally { $archive.Dispose() }
 if ($files | Where-Object { $_ -match '\\' -or -not $_.StartsWith('RearrangedS282/') }) { throw 'Archive entries must be RearrangedS282/... with forward slashes.' }
-[ordered]@{ version=$Version; zip=$zip; desktop=(Join-Path $desk $zipName); zipSHA256=$zipHash; dllSHA256=$receipt.dllSHA256; files=$files.Count; uploaded=$false } | ConvertTo-Json
+$manifest = [ordered]@{
+    version=$Version; sourceCommit=$receipt.sourceCommit; sourceHasUncommittedChanges=$receipt.sourceHasUncommittedChanges
+    branch='codex/s282-multiplayer'; multiplayerAlpha=$multiplayer; optionalDownload=$true
+    zip=$zip; desktop=(Join-Path $desk $zipName); zipSHA256=$zipHash
+    dllSHA256=$receipt.dllSHA256; bridgeSHA256=$receipt.bridgeSHA256; files=$files
+    runtimeValidated=$false; installed=$false; uploaded=$false
+}
+$manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out 'release-manifest.json') -Encoding utf8
+Copy-Item -LiteralPath (Join-Path $out 'release-manifest.json') -Destination $desk -Force
+[ordered]@{ version=$Version; sourceCommit=$receipt.sourceCommit; zip=$zip; desktop=(Join-Path $desk $zipName); zipSHA256=$zipHash; dllSHA256=$receipt.dllSHA256; bridgeSHA256=$receipt.bridgeSHA256; files=$files.Count; uploaded=$false } | ConvertTo-Json

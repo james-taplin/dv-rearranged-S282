@@ -1,6 +1,6 @@
-Rearranged S282 B99 2.0.1-mp.alpha.1
+Rearranged S282 B99 2.0.8-alpha
 Initial multiplayer compatibility test
-23 October 2026
+29 October 2026
 
 Status
 

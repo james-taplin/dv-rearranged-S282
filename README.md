@@ -1,10 +1,12 @@
 # Rearranged S282 — multiplayer development
 
-This checkout is the `codex/s282-multiplayer` development branch, based on the current 2.0-beta source checkpoint. The first external test package is **2.0.1-mp.alpha.1**. Multiplayer has not been installed or tested live on the development PC.
+This is the separate `codex/s282-multiplayer` branch. Its current Nexus-facing package is **2.0.8-alpha**, using the multiplayer gameplay code first packaged as 2.0.1-mp.alpha.1. It retains the 2.0-beta arrangement baseline; later single-player and independent-wheelslip work is not merged into this branch. Multiplayer has not been installed or tested live on the development PC.
 
 All players use their own Wheel Rearranger radio to request changes. The host validates each request and distributes the arrangement and its settings. Host UMM controls allow all guests, lock all guests, or lock selected players for the session. Locked players continue receiving arrangement updates. All players must install the identical package; mismatched builds are refused. See [the testing instructions](MULTIPLAYER_TESTING.txt) and [current handover](CURRENT_HANDOVER.md) for validation and remaining live tests.
 
 `Build.Multiplayer.ps1` builds and packages the alpha using the retained 2.0-beta release as its asset baseline. It uses the Multiplayer API as a build-only reference. The optional adapter loads only when Multiplayer is active; native Multiplayer handles transport, simulation ports and train movement.
+
+For the player-facing archive, run `Package.Nexus.ps1` after the build. The plain packaged README and BBCode Nexus copy are in `release-copy/2.0.8-alpha`. Offer this as a separate optional multiplayer alpha download. It shares the `RearrangedS282` mod ID and folder with the normal package, so install one build at a time. The normal release branch and updater are unchanged.
 
 The existing 2.0-beta feature documentation follows.
 

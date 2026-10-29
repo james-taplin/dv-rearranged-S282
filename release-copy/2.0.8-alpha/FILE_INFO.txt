@@ -1,0 +1,20 @@
+FILE NAME
+Rearranged S282 B99 2.0.8-alpha - Multiplayer
+
+VERSION
+2.0.8-alpha
+
+SUGGESTED CATEGORY
+Optional files - experimental multiplayer alpha. Keep the normal download as the main file.
+
+FILE DESCRIPTION
+Experimental multiplayer branch with shared wheel-arranger radios, host per-player permissions and late-join arrangement/settings sync. Everyone needs the identical package. Live multiplayer acceptance pending. Normal single-player fallback included. Retains the 48-arrangement 2.0-beta baseline; later single-player and independent-slip work is not included.
+
+REQUIREMENTS
+Derail Valley B99 on Windows, Unity Mod Manager 0.27.3 or newer and Locomotive Mesh Splitter. For online play: Multiplayer 0.1.16.0-beta and this exact ZIP on all peers. Realistic Firing off. Multiplayer/API are not bundled.
+
+INSTALLATION
+Close the game and replace the existing RearrangedS282 installation through UMM or extract the RearrangedS282 folder into Mods. Retain personal Settings.xml if wanted when replacing the old folder. Install one Rearranged S282 build at a time.
+
+SOURCE BRANCH
+https://github.com/james-taplin/dv-rearranged-S282/tree/codex/s282-multiplayer
