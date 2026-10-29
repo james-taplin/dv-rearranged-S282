@@ -206,9 +206,13 @@ namespace RearrangedS282
             foreach (Transform child in rod) child.gameObject.SetActive(false);
             var main = RequireArticulatedPart(rod, "s282_mech_push_rod_to_connect");
             main.gameObject.SetActive(true);
+            // Earlier presentation setup can leave these native renderers hidden.
+            // A Franklin engine always needs its main rod and crank bearing.
+            main.GetComponent<MeshRenderer>().enabled = true;
             main.GetComponent<MeshFilter>().sharedMesh = shortRod;
             var cutoff = RequireArticulatedPart(rod, "s282_mech_connect_to_cutoff_base");
             cutoff.gameObject.SetActive(true);
+            cutoff.GetComponent<MeshRenderer>().enabled = true;
             cutoff.localPosition = new Vector3(.15f, 0, 0);
             SetPartActive(cutoff, "s282_mech_connect_to_cutoff_rod", false);
             var shortSide = rod.Find("[Rearranged two-axle rod]");
@@ -221,6 +225,7 @@ namespace RearrangedS282
                 articulatedAssets.Add(shortSide);
             }
             shortSide.gameObject.SetActive(true);
+            shortSide.GetComponent<MeshRenderer>().enabled = true;
             var shoes = drive.Find("s282a_brake_shoes(Clone)");
             if (shoes != null)
                 foreach (Transform shoe in shoes)
@@ -348,16 +353,10 @@ namespace RearrangedS282
             articulatedOriginalAnimators = articulatedRotation.animatorSetups;
             var rearLeft = articulatedRearL.GetComponent<Animator>(); var rearRight = articulatedRearR.GetComponent<Animator>();
             articulatedRotation.animatorSetups = articulatedOriginalAnimators.Concat(new[] {
-                new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair {animator=rearLeft, startTimeOffset=0f},
-                new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair {animator=rearRight, startTimeOffset=.75f}
+                new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair {animator=rearLeft, startTimeOffset=nativeLeftPhase},
+                new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair {animator=rearRight, startTimeOffset=nativeRightPhase}
             }).ToArray();
-            float time = lfAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime % 1f;
-            foreach (var setup in articulatedRotation.animatorSetups)
-            {
-                string state = setup.animator.runtimeAnimatorController == AssetBundleLoader.FranklinBAnimCtrl4444
-                    ? "LocoS282A_AnimationDriveGear4444" : "LocoS282A_AnimationDriveGear";
-                setup.animator.Play(state, 0, (time + setup.startTimeOffset) % 1f);
-            }
+            // ApplyDriverQuartering samples these only after frame activation.
             foreach (var drive in new[] {driveL, driveR})
                 foreach (var reader in drive.GetComponents<MonoBehaviour>().Where(b => b.GetType().Name == "AnimatorPortReader"))
                 { articulatedReaders.Add(new EnabledReaderState {reader=reader, enabled=reader.enabled}); reader.enabled=false; }
@@ -657,6 +656,7 @@ namespace RearrangedS282
 
         private void SuspendArticulatedGeometry()
         {
+            ReleaseMalletDriverPitch();
             // Rod retargeting saved the articulated LOD layout when it was bound;
             // undo it before that layout is restored, or it would be put back after.
             foreach (var drive in TriplexDrives()) DriveRetarget.Unbind(drive);

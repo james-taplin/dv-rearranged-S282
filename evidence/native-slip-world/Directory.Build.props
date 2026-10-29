@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- These probes target different frameworks; isolate NuGet/MSBuild state. -->
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)bin\$(MSBuildProjectName)\</BaseOutputPath>
+  </PropertyGroup>
+</Project>

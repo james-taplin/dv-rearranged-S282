@@ -54,7 +54,10 @@ namespace RearrangedS282
 #if B99_DIAGNOSTICS
 				stage2Harmony.CreateClassProcessor(typeof(PowerDiagnosticsTick)).Patch();
 #endif
+				S282SpawnScope.Register(stage2Harmony);
 				ArticulatedSimulation.Register(stage2Harmony);
+                IndependentDrive.Register(stage2Harmony);
+                GroupSlipEffects.Register(stage2Harmony);
 				BigEndOiling.Register(stage2Harmony);
 				ArticulatedEffects.Register(stage2Harmony);
 				DeltaTrailingTruckCompatibility.Register(stage2Harmony);
@@ -80,7 +83,7 @@ namespace RearrangedS282
                     GUILayout.Label("Running Rearranged S282 " + RunningVersion);
 #if B99_ALL_STANDARD
 					MultiplayerSync.Draw();
-					GUILayout.Label("48 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
+					GUILayout.Label("49 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +
 						"Selections are saved with each locomotive. Loaded arrangements wait until switching is safe.\n" +
 						"First conversion may take a few seconds to prepare rods.");
@@ -92,10 +95,20 @@ namespace RearrangedS282
 							GUILayout.Button("REAPPLY CURRENT ARRANGEMENT — highlighted S282")) radio.ReapplyFromSettings();
 						if (GUILayout.Button("RESET WHEEL-ARRANGER RADIO SELECTION")) radio.ResetSelectionFromSettings();
 					}
-					bool settingsEnabled = GUI.enabled;
-					GUI.enabled = settingsEnabled && !MultiplayerSync.IsClient;
-					DrawPoweredTenderSettings();
-					GUI.enabled = settingsEnabled;
+					                    if(radio?.SettingsTarget!=null)
+                    {
+                        var drive=radio.SettingsTarget.GetComponent<IndependentDrive>();
+                        if(drive!=null)
+                        {
+                            GUILayout.Label("INDEPENDENT SLIP TEST: "+(drive.IsOwning?"active":"waiting/restored"));
+                            if(GUILayout.Button(drive.Recording?"STOP GROUP SLIP RECORDING":"RECORD GROUP SLIP DIAGNOSTICS")) drive.Recording=!drive.Recording;
+                            if(!MultiplayerSync.InSession && GUILayout.Button("TEST FIRST GROUP GRIP: "+drive.DiagnosticFirstGroupGrip.ToString("F1")+"x — toggle 0.5/1.0")) drive.DiagnosticFirstGroupGrip=drive.DiagnosticFirstGroupGrip==1f?.5f:1f;
+                        }
+                    }
+                    bool optionsEnabled = GUI.enabled;
+                    GUI.enabled = optionsEnabled && !MultiplayerSync.IsClient;
+                    DrawPoweredTenderSettings();
+                    GUI.enabled = optionsEnabled;
 					if (CommsRadioS282Rearranger.ReapplyStatus != null) GUILayout.Label(CommsRadioS282Rearranger.ReapplyStatus);
 					if (DeltaTrailingTruckCompatibility.Status != null) GUILayout.Label(DeltaTrailingTruckCompatibility.Status);
 #if B99_DIAGNOSTICS
@@ -133,10 +146,10 @@ namespace RearrangedS282
 					if (showArrangementSettings)
 					{
 						GUILayout.Label("Random spawning affects new S282s only. Saved choices are kept. An empty pool uses stock 2-8-2.");
-						bool oldEnabled = GUI.enabled;
-						GUI.enabled = oldEnabled && !MultiplayerSync.IsClient;
+						bool settingsEnabled = GUI.enabled;
+						GUI.enabled = settingsEnabled && !MultiplayerSync.IsClient;
 						settings.Draw(entry);
-						GUI.enabled = oldEnabled;
+						GUI.enabled = settingsEnabled;
 					}
 #endif
 				};

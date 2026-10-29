@@ -1,0 +1,48 @@
+Rearranged S282 2.0.8-slip-test - experimental branch trial
+
+Staged only. Main/release branches and installed mod are not changed.
+
+Two- and three-engine LOCOMOTIVE arrangements now use individual native ECS
+slip calculations, engine RPM feeds, existing finite boiler intake aggregation,
+native phase-driven wheel/rod animation and per-wheel slip sparks. Forces are
+limited once per group and apportioned over actual native bogies. Original
+native brake forces remain active. Stock without independent groups bypasses
+this owner. Derailment or an invalid contact/calculation releases ownership
+and restores the previous shared native traction path; reapply after rerailing.
+
+SCOPE LIMIT: the optional powered tender retains its previous manual force/RPM
+treatment in this first trial. It does NOT yet have an independent slip state.
+Native slip audio definitions spanning several groups use one native emitter
+with the maximum mapped slip; no extra sound sources are invented. Cab/global
+slip indications and extra curve-drag policy still follow the original car-wide
+controller. These are outstanding integration work, not completed acceptance.
+
+All original cylinder dimensions/current arrangement calibration, wheel radii,
+boiler and steam-flow limits are retained. Stronger main cylinders can slip
+before weaker auxiliaries and no longer borrow their spare adhesion. Expect
+less total pull in that condition than with the old summed-traction clamp.
+
+TEST
+1. Use a stationary repaired S282 with regulator closed. Start with 2-6-6-2,
+   powered tender off. Apply the arrangement. UMM selection displays independent
+   slip waiting/active status. Wait for active before testing traction.
+2. Enable RECORD GROUP SLIP DIAGNOSTICS in UMM for the selected locomotive.
+   Data appends to independent-slip.jsonl in the mod folder, at 4 samples/sec.
+   Record steady low-demand pull, then regulator/load changes and sanding.
+3. To reproduce different conditions at matched demand, toggle TEST FIRST GROUP
+   GRIP to 0.5x. This explicitly reduces only the first group's diagnostic grip.
+   Record one group slipping and the other gripping. Reset to 1.0x afterwards.
+4. Check wheel/rod/chuff/spark agreement, quartering, forward/reverse, both-group
+   slip and regulator-close recovery. Stop recording after each case.
+5. Repeat with 2-4-4-2 and 2-4-4-4-0. Test stopping and returning to stock, save/
+   reload, pooling and reapply, derail/rerail and optional tender detachment.
+   Native braking, finite shared steam demand and real-car animation/effects
+   require acceptance. Do not use an important save as the sole test record.
+
+EVIDENCE
+Native calculation/wrapper/order fixture: 46 checks passed in a separate Unity
+2019 release player. Rendered phase fixture: 11 checks passed using a synthetic
+controller/wheel and actual native phase readers. Native-reference build clean.
+These do not demonstrate actual rail vehicle forces, actual Franklin/Walschaerts
+clip origins, finite-boiler behaviour under slipping load or game lifecycle.
+This package is a playable experimental trial, not a validated release.

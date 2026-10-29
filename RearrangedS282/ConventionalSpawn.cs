@@ -11,8 +11,8 @@ using UnityEngine;
 namespace RearrangedS282
 {
     // Per-instance lifecycle only: shared loco definitions and prefabs are never
-    // edited. Native simCarState follows the car through ordinary and unique-car
-    // save/restore, including a pending choice that could not safely be applied.
+    // edited. Native simCarState follows ordinary S282 save/restore, including a
+    // pending choice that could not safely be applied. Unique cars are excluded.
     internal sealed class ConventionalSpawn : MonoBehaviour
     {
         private static readonly System.Random Random = new System.Random();
@@ -30,8 +30,7 @@ namespace RearrangedS282
             harmony.CreateClassProcessor(typeof(LoadingCarState)).Patch();
         }
 
-        private static bool IsS282(TrainCar candidate) => candidate != null &&
-            candidate.carType == TrainCarType.LocoSteamHeavy && candidate.logicCar != null;
+        private static bool IsS282(TrainCar candidate) => S282Target.IsNormal(candidate) && candidate.logicCar != null;
 
         private static ConventionalSpawn For(TrainCar candidate)
         {
@@ -62,6 +61,7 @@ namespace RearrangedS282
         private void StartPending()
         {
             if (MultiplayerSync.DeferAutomatic(car)) { CancelPending(); return; }
+            if (!IsS282(car)) return;
             // Newly instantiated/native-pooled stock needs no geometry or sim
             // edit, even if loaded with its regulator open or while derailed.
             if (state.PendingId == (int)WheelArrangementType.s282 && !(Main.settings?.PoweredTenderEnabled((int)WheelArrangementType.s282) ?? false) && car != null &&
@@ -88,7 +88,7 @@ namespace RearrangedS282
             // Native restore and Mesh Splitter's Start both complete before the
             // first attempt, including loading cars whose logic already exists.
             yield return null;
-            while (car != null && car.logicCar != null &&
+            while (IsS282(car) &&
                 string.Equals(state.Guid, car.CarGUID, StringComparison.Ordinal) && state.PendingId.HasValue)
             {
                 if (MultiplayerSync.DeferAutomatic(car)) break;
@@ -155,7 +155,7 @@ namespace RearrangedS282
         {
             private static bool Prefix(TrainCar __instance)
             {
-                if (__instance == null || __instance.carType != TrainCarType.LocoSteamHeavy) return true;
+                if (!S282Target.IsNormal(__instance)) return true;
                 MultiplayerSync.Forget(__instance);
                 var owner = __instance.GetComponent<ConventionalSpawn>();
                 if (owner != null)

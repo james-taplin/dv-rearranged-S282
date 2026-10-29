@@ -9,10 +9,12 @@ namespace RearrangedS282
     // Pure planning for big-end oil cups: which native oiling point each driven
     // wheel's big end uses, and how saved oil levels map onto the extended
     // point list. The S282's six native points stay at indices 0-5; the extra
-    // big ends are 6-12 (left, front to back) and 13-19 (right).
+    // big ends retain 6-12 (left) and 13-19 (right) from shipped saves.
+    // The two additional slots per side are appended at 20-21 and 22-23.
     public static class BigEndOilingPlan
     {
-        public const int NativePoints = 6, ExtraPerSide = 7, TotalPoints = NativePoints + 2 * ExtraPerSide;
+        public const int NativePoints = 6, LegacyExtraPerSide = 7, LegacyTotalPoints = 20;
+        public const int ExtraPerSide = 9, TotalPoints = NativePoints + 2 * ExtraPerSide;
 
         public struct BigEnd
         {
@@ -23,7 +25,8 @@ namespace RearrangedS282
         public static int PointIndex(bool left, int slot)
         {
             if (slot < 0 || slot >= ExtraPerSide) throw new ArgumentOutOfRangeException(nameof(slot));
-            return NativePoints + (left ? 0 : ExtraPerSide) + slot;
+            if (slot < LegacyExtraPerSide) return NativePoints + (left ? 0 : LegacyExtraPerSide) + slot;
+            return LegacyTotalPoints + (left ? 0 : ExtraPerSide - LegacyExtraPerSide) + slot - LegacyExtraPerSide;
         }
 
         // Point index per big end (same order as given), -1 for big ends that

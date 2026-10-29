@@ -103,33 +103,6 @@ internal static class NativeProbe
                 "Dormant hot engine produces no torque, steam consumption, exhaust, wear or chuff event changes");
             Near(PrivateFloat(dormant, "steamChestSteamMass"), dormantMass, "Dormant native chest mass remains unchanged");
             Near(PrivateFloat(dormant, "temperatureInCylinders"), dormantTemperature, "Dormant native cylinder temperature does not advance");
-            // A guest receives these live ports from Multiplayer. It must not
-            // advance the physical engine or overwrite received presentation.
-            var observer = new ArticulatedRearEngine(def) { Active = true };
-            Setup(observer, 400, true);
-            observer.torqueOut.Value = 12000f;
-            observer.chuffFrequencyReadOut.Value = 26f;
-            observer.crankRotationReadOut.Value = .3f;
-            var observerPorts = typeof(ReciprocatingSteamEngine).GetFields(Fields)
-                .Where(f => f.FieldType == typeof(Port)).Select(f => (Port)f.GetValue(observer)).ToArray();
-            var observerValues = observerPorts.Select(p => p.Value).ToArray();
-            var observerMass = PrivateFloat(observer, "steamChestSteamMass");
-            var observerTemperature = PrivateFloat(observer, "temperatureInCylinders");
-            int observerEvents = 0;
-            observer.chuffEventReadOut.ValueUpdatedInternally += _ => observerEvents++;
-            MultiplayerSync.IsSimulationAuthority = false;
-            try
-            {
-                for (int i = 0; i < 1000; i++) observer.Tick(.02f);
-                observer.Disable();
-                Check(!observer.Active, "Guest geometry can disable an engine without advancing its simulation");
-            }
-            finally { MultiplayerSync.IsSimulationAuthority = true; }
-            for (int i = 0; i < observerPorts.Length; i++)
-                Near(observerPorts[i].Value, observerValues[i], "Guest engine preserves mirrored port " + observerPorts[i].id);
-            Near(PrivateFloat(observer, "steamChestSteamMass"), observerMass, "Guest engine does not consume native chest steam");
-            Near(PrivateFloat(observer, "temperatureInCylinders"), observerTemperature, "Guest engine does not advance native temperature");
-            Check(observerEvents == 0, "Guest engine does not emit independently simulated chuff events");
             var activeMass = PrivateFloat(actual, "steamChestSteamMass");
             var activeWater = actual.waterInCylindersNormalizedReadOut.Value;
             var activeCrank = actual.crankRotationReadOut.Value;
@@ -190,6 +163,24 @@ internal static class NativeProbe
                 Check(tender.TenderTorque == 0f && tender.intakeFlowReadOut.Value == 0f && shared.Value == 120f,
                     "Disabled tender cannot pull or consume after use " + ratio);
             }
+            var replica = new ArticulatedRearEngine(def) { Active = true, TenderMode = true, TenderRpmRatio = 1.5f };
+            Setup(replica, 120f, true); replica.Tick(.02f);
+            var replicaPorts = typeof(ReciprocatingSteamEngine).GetFields(Fields).Where(f => f.FieldType == typeof(Port))
+                .Select(f => (Port)f.GetValue(replica)).Where(p => p != null).Distinct().ToArray();
+            var replicaValues = replicaPorts.Select(p => p.Value).ToArray();
+            float replicaMass = PrivateFloat(replica, "steamChestSteamMass"), replicaPhase = replica.crankRotation;
+            MultiplayerSync.IsSimulationAuthority = false;
+            for (int i = 0; i < 500; i++) replica.Tick(.02f);
+            Check(replicaPorts.Select(p => p.Value).SequenceEqual(replicaValues) && replica.crankRotation == replicaPhase,
+                "Guest auxiliary engine Tick cannot advance phase or overwrite any native port, including tender mode");
+            Near(PrivateFloat(replica, "steamChestSteamMass"), replicaMass, "Guest auxiliary Tick cannot consume native steam");
+            replica.Disable();
+            Check(replicaPorts.Select(p => p.Value).SequenceEqual(replicaValues), "Guest auxiliary teardown does not zero replicated native ports");
+            replica.isCylinderCrackedReadOut.Value = 1; Set(replica, "waterInCylindersDamageMeter", .8f);
+            replica.healthStateExtIn.ExternalValueUpdate(.8f); replica.healthStateExtIn.ExternalValueUpdate(1f);
+            Check(replica.isCylinderCrackedReadOut.Value == 1 && PrivateFloat(replica, "waterInCylindersDamageMeter") == .8f,
+                "Guest native health subscription cannot repair a host-owned cylinder");
+            MultiplayerSync.IsSimulationAuthority = true;
             Directory.CreateDirectory(args[0]);
             var report = new JObject { ["passed"] = true, ["count"] = Checks.Count, ["checks"] = new JArray(Checks),
                 ["rearCapacityFraction"] = fraction,
@@ -200,4 +191,10 @@ internal static class NativeProbe
         }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
+}
+
+namespace RearrangedS282
+{
+    // Offline/host is the baseline; selected tests can disable simulation writes.
+    internal static class MultiplayerSync { internal static bool IsSimulationAuthority = true; }
 }

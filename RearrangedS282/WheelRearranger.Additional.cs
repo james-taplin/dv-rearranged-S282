@@ -100,7 +100,8 @@ namespace RearrangedS282
                 AlignAdditionalAxle(driveAxle3, Presented(thirdRightDriveWheel));
                 AlignAdditionalAxle(driveAxle4, Presented(fourthRightDriveWheel));
             }
-            else if (id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big || id == (int)WheelArrangementType.s284Big)
+            else if (id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big ||
+                id == (int)WheelArrangementType.s284Big || id == (int)WheelArrangementType.s482Big)
             {
                 AlignAdditionalAxle(driveAxle1, Presented(firstRightDriveWheel));
                 AlignAdditionalAxle(driveAxle2, Presented(secondRightDriveWheel));

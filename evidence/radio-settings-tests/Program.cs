@@ -45,6 +45,8 @@ static class Program
     {
         var entry=new UMM.ModEntry();var loaded=(bool)typeof(Main).GetMethod("Load",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{entry});
         Check(loaded&&entry.OnGUI!=null,"actual Main.Load installs GUI callback");
+        Check(WheelArrangement.SupportedCount==49&&WheelArrangement.WheelArrangementNames.Length==49&&
+            WheelArrangement.WheelArrangementNames[48]=="4-8-2 Express","Latest 49-choice catalogue retains Express at saved ID 48");
         {
             cases++;var first=new Rig();var second=new Rig();
             Check(first.radio.display!=second.radio.display&&first.radio.signalOrigin!=second.radio.signalOrigin,"Two radio modes copy each owner's display and signal origin");
@@ -89,16 +91,19 @@ static class Program
             cases++;var r=new Rig();r.Point(r.b);r.wb.currentWA=WheelArrangementType.s240;UMM.UI.Instance.Opened=true;r.radio.ReapplyFromSettings();
             Check(r.wb.Calls.SequenceEqual(new[]{35})&&r.wa.Calls.Count==0,"pointed-only UMM target supported");ResetCheck(r,"pointed reapply");
         }
-        foreach(string reason in new[]{"no target","wrong type","out of range","no signal origin","destroyed target"})
+        foreach(string reason in new[]{"no target","other heavy-steam livery","unique vehicle","unique spawn scope","out of range","no signal origin","destroyed target"})
         {
             cases++;var r=new Rig();int records=ConventionalSpawn.Records.Count;
             if(reason!="no target")Set(r.radio,"PointedCar",r.a);
-            if(reason=="wrong type")r.a.carType=DV.ThingTypes.TrainCarType.Other;
+            if(reason=="other heavy-steam livery")r.a.carLivery=new DV.Livery();
+            if(reason=="unique vehicle")r.a.uniqueCar=true;
+            if(reason=="unique spawn scope")S282Target.UniqueSpawnInProgress=true;
             if(reason=="out of range")r.a.transform.position=new Vector3(0,0,100.01f);
             if(reason=="no signal origin")r.radio.signalOrigin=null;
             if(reason=="destroyed target")UnityEngine.Object.Destroy(r.a);
             r.radio.ReapplyFromSettings();Check(r.wa.Calls.Count==0&&r.wb.Calls.Count==0&&ConventionalSpawn.Records.Count==records,reason+" refuses without mutation");
             Check(CommsRadioS282Rearranger.ReapplyStatus.Contains("Highlight"),reason+" actionable status");
+            S282Target.UniqueSpawnInProgress=false;
         }
         {
             cases++;var r=new Rig();r.Point(r.a);r.a.transform.position=new Vector3(0,0,100);r.radio.ReapplyFromSettings();Check(r.wa.Calls.Count==1,"exact 100m boundary allowed");
@@ -128,6 +133,12 @@ static class Program
         }
         {cases++;var r=new Rig();int starts=Stage2RuntimeChecks.Starts;GUILayout.Clicks.Add("RUN STRUCTURAL TEST — two stationary S282s");entry.OnGUI(entry);Check(Stage2RuntimeChecks.Starts==starts+1,"Manual structural button invokes Begin");}
         {
+            cases++;var r=new Rig();GUILayout.ToggleValue=true;entry.OnGUI(entry);
+            for(int id=0;id<WheelArrangement.SupportedCount;id++)
+                Check(Core.settings.PoweredTenderEnabled(id)==PoweredTenderPolicy.Supports(id),"Host powered-tender options follow supported policy for catalogue ID "+id);
+            Check(Core.settings.PoweredTenderEnabled(48),"Retained Express supports the optional powered tender");
+        }
+        {
             cases++;var r=new Rig();MultiplayerSync.IsClient=MultiplayerSync.InSession=true;MultiplayerSync.AllowClientRequest=false;int records=ConventionalSpawn.Records.Count;
             r.SelectA();r.radio.OnUse();Check(r.wa.Calls.Count==0&&ConventionalSpawn.Records.Count==records,"Locked guest radio cannot convert locally");
             Stage2RuntimeChecks.Running=false;r.SelectA();MultiplayerSync.AllowClientRequest=true;r.radio.OnUse();
@@ -138,7 +149,7 @@ static class Program
             Check(Core.settings.poweredTenderArrangements.SequenceEqual(tenderChoices),"Guest powered-tender controls cannot mutate local global policy");
             MultiplayerSync.IsClient=MultiplayerSync.InSession=false;GUILayout.Clear();
         }
-        var report=new{passed=true,checks,cases,compiledProduction=new[]{"Main.cs","CommsRadioS282Rearranger.cs","WheelArrangement.cs"},limitations="Managed stand-ins test actual mod state/input guards and GUI callback wiring only; they do not reproduce native CanScroll, hotbar input, Unity/UMM rendering, VR, native conversion, save persistence or the reported in-game cycle failure."};
+        var report=new{passed=true,checks,cases,compiledProduction=new[]{"Main.cs","CommsRadioS282Rearranger.cs","WheelArrangement.cs","PoweredTenderPolicy.cs","S282Target.cs"},limitations="Managed stand-ins test actual mod state/input guards, canonical-livery target selection and GUI callback wiring only; they do not reproduce native CanScroll, hotbar input, Unity/UMM rendering, VR, native conversion, save persistence or the reported in-game cycle failure."};
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0])));File.WriteAllText(args[0],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));
         Console.WriteLine($"Radio/settings integration passed {checks} checks across {cases} cases.");return 0;
     }

@@ -23,9 +23,12 @@ namespace RearrangedS282
         {
             internal MeshFilter Filter;
             internal Mesh Original, Corrected;
+            internal bool FranklinRearNose;
         }
         private readonly Dictionary<Mesh, CasingTemplate> casingTemplates = new Dictionary<Mesh, CasingTemplate>();
         private readonly List<CasingMesh> casingMeshes = new List<CasingMesh>();
+        internal int FranklinRearNoseClearanceCasings => casingMeshes.Count(entry => entry.FranklinRearNose &&
+            entry.Filter != null && entry.Corrected != null && entry.Filter.sharedMesh == entry.Corrected);
         private readonly List<Mesh> readableCasingSources = new List<Mesh>();
         private sealed class PrairieFitting
         {
@@ -132,6 +135,7 @@ namespace RearrangedS282
 
         private static bool UsesFullCylinderCasings(int id) => id == (int)WheelArrangementType.s262 ||
             id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big || id == (int)WheelArrangementType.s284Big ||
+            id == (int)WheelArrangementType.s482Big ||
             id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 ||
             id == (int)WheelArrangementType.s440 || id == (int)WheelArrangementType.s442 ||
             id == (int)WheelArrangementType.s444 || id == (int)WheelArrangementType.s240 ||
@@ -161,6 +165,9 @@ namespace RearrangedS282
                 // different axis from its spindle (especially on twelve drivers).
                 // Move only mesh vertices into that frame, never animated joints.
                 bool fullCasing = fullArrangement && !template.Franklin;
+                bool compactRearNose = id == (int)WheelArrangementType.s4444 && template.Franklin &&
+                    ((articulatedRearL != null && filter.transform.IsChildOf(articulatedRearL)) ||
+                    (articulatedRearR != null && filter.transform.IsChildOf(articulatedRearR)));
                 var nativeToWorld = fullCasing ? CylinderDriveFrame(driveR)
                     : filter.transform.localToWorldMatrix * template.MeshFromNative;
                 var sizeFrame = fullCasing ? body.worldToLocalMatrix * nativeToWorld : nativeToWorld;
@@ -168,7 +175,7 @@ namespace RearrangedS282
                 float sz = sizeFrame.MultiplyVector(Vector3.forward).magnitude;
                 float originY = transform.InverseTransformPoint(nativeToWorld.MultiplyPoint3x4(Vector3.zero)).y;
                 float targetY = CylinderCasingShape.ComputeTargetY(sy, template.MinY, template.PistonY, originY);
-                if (Mathf.Abs(targetY - sy) < .001f) continue;
+                if (Mathf.Abs(targetY - sy) < .001f && !compactRearNose) continue;
                 var meshFromMappedNative = filter.transform.worldToLocalMatrix * nativeToWorld;
                 var vertices = new Vector3[template.Vertices.Length];
                 for (int i = 0; i < vertices.Length; i++)
@@ -177,6 +184,7 @@ namespace RearrangedS282
                     point = fullCasing ? CylinderCasingShape.NormalizePrairie(point, sy, sz)
                         : CylinderCasingShape.TransformVertex(point, sy, sz, targetY,
                             template.RearZ, template.FullZ, template.PistonY, template.Franklin);
+                    if (compactRearNose) point = CylinderCasingShape.CompactFranklinRearNose(point);
                     vertices[i] = fullCasing ? meshFromMappedNative.MultiplyPoint3x4(point)
                         : template.MeshFromNative.MultiplyPoint3x4(point);
                 }
@@ -186,7 +194,8 @@ namespace RearrangedS282
                     copy.name = "[Rearranged cylinder casing] " + original.name;
                     copy.vertices = vertices; copy.RecalculateBounds(); copy.RecalculateNormals();
                     if (copy.uv.Length == copy.vertexCount) copy.RecalculateTangents();
-                    casingMeshes.Add(new CasingMesh { Filter = filter, Original = original, Corrected = copy });
+                    casingMeshes.Add(new CasingMesh { Filter = filter, Original = original, Corrected = copy,
+                        FranklinRearNose = compactRearNose });
                     filter.sharedMesh = copy;
                     if (fullCasing)
                     {

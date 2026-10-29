@@ -18,6 +18,7 @@ $project = @"
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$root\RearrangedS282\DeltaTrailingTruckCompatibility.cs" />
+    <Compile Include="$root\RearrangedS282\S282Target.cs" />
     <Compile Include="$root\RearrangedS282\DeltaTrailingTruckVisuals.cs" />
     <Compile Include="$root\evidence\delta-compatibility-tests\Stubs.cs" />
     <Compile Include="$root\evidence\delta-compatibility-tests\Program.cs" />

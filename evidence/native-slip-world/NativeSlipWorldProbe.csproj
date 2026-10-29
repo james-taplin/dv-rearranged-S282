@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <DefineConstants>B99_ALL_STANDARD</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NuGetAudit>false</NuGetAudit>
+    <ManagedPath Condition="'$(ManagedPath)' == ''">B:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed</ManagedPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="NativeSlipWorldProbe.cs" />
+    <Compile Include="GroupAnimationProbe.cs" />
+    <Compile Include="..\..\RearrangedS282\GroupCrankAnimation.cs" />
+    <Compile Include="..\..\RearrangedS282\DriveQuartering.cs" />
+    <Compile Include="..\..\RearrangedS282\NativeSlipEntitySchema.cs" />
+    <Compile Include="..\..\RearrangedS282\NativeSlipRuntimeState.cs" />
+    <Reference Include="$(ManagedPath)\*.dll" Private="false" />
+  </ItemGroup>
+</Project>

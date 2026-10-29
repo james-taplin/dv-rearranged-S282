@@ -106,6 +106,16 @@ internal static partial class Program {
             Check((bool)Hook("AllowNativeHiding",a.Body),"Apply finalizer restores native hiding outside the Delta scope");
             var otherConfig=new LocoS282730AConfig{ModificationId="OtherAxles"};
             Check((bool)Hook("ApplyDelta",a.Owner,otherConfig),"Unrelated axle modifications retain their native callback");
+            foreach(bool unique in new[]{true,false}) {
+                var excluded=new Fixture(unique?"Demonstrator":"Custom heavy steam");
+                excluded.Car.uniqueCar=unique;
+                if(!unique)excluded.Car.carLivery=new(){id="LocoS282A"};
+                var scope=new object[]{excluded.Owner,excluded.Owner.Config,null};Hook("BeginApply",scope);
+                Check((bool)Hook("AllowNativeHiding",excluded.Body),"Excluded Delta car keeps native hiding: "+unique);
+                Hook("EndApply",scope[2],null);
+                Check((bool)Hook("ApplyDelta",excluded.Owner,excluded.Owner.Config)&&excluded.Visuals==null,"Excluded Delta car retains native callback: "+unique);
+                Check((bool)Hook("AllowNativeReset",excluded.Owner),"Excluded Delta car retains native reset: "+unique);
+            }
 
             a.Apply();
             Check(a.Roots().Length==2,"Single active unpowered trailer creates one wheel presentation and one frame presentation");

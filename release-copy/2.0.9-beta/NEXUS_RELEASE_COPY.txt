@@ -1,0 +1,18 @@
+FILE: RearrangedS282-B99-2.0.9-beta.zip
+VERSION: 2.0.9-beta
+TYPE: Optional experimental multiplayer beta
+
+Paste NEXUS_DESCRIPTION_BBCODE.txt into the Nexus description editor.
+FILE_INFO.txt has the short file description. CHANGELOG.txt covers this release.
+CREDITS_BBCODE.txt retains the complete credit list.
+
+Built from the complete 2.0.8-slip-test base, including experimental independent
+wheelslip. This replaces the older multiplayer alpha as the development build.
+Keep the normal stable download available separately. Users install one build
+at a time because both use the RearrangedS282 mod ID/folder.
+
+Everyone needs the identical complete package for online play. Multiplayer
+0.1.16.0-beta is optional for single player. LocoMeshSplitter remains required.
+Live multiplayer acceptance is pending; describe this as an experimental beta.
+
+The ZIP is ready for UMM installation. Nothing is uploaded automatically.

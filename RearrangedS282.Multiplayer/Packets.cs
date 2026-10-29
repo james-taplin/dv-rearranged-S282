@@ -82,8 +82,9 @@ namespace RearrangedS282.Multiplayer
         public string CarGuid = "";
         public int Arrangement;
         public long ExpectedRevision;
-        public override void Serialize(BinaryWriter w) { w.Write(CarGuid); w.Write(Arrangement); w.Write(ExpectedRevision); }
-        protected override void Read(BinaryReader r) { CarGuid = Text(r, 128); Arrangement = r.ReadInt32(); ExpectedRevision = r.ReadInt64(); }
+        public long Epoch;
+        public override void Serialize(BinaryWriter w) { w.Write(CarGuid); w.Write(Arrangement); w.Write(ExpectedRevision); w.Write(Epoch); }
+        protected override void Read(BinaryReader r) { CarGuid = Text(r, 128); Arrangement = r.ReadInt32(); ExpectedRevision = r.ReadInt64(); Epoch = r.ReadInt64(); }
     }
 
     public sealed class RequestResultPacket : BoundedPacket

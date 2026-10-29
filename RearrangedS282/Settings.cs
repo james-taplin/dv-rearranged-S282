@@ -52,7 +52,7 @@ namespace RearrangedS282
 		[Draw("Show x-6-x valve gear:", Height = HEIGHT)] public bool show6CoupledValveGear = false;
 		[Draw("Polished Walschaerts on 4-6-2 / 4-6-4 (reapply):", Height = HEIGHT)] public bool polishedPacificHudsonValveGear = true;
 		[Draw("Show x-8-x valve gear:", Height = HEIGHT)] public bool show8CoupledValveGear = true;
-		[Draw("Show high-speed 2-8-2 valve gear:", Height = HEIGHT)] public bool show282BigValveGear = false;
+		[Draw("Show large-driver express valve gear:", Height = HEIGHT)] public bool show282BigValveGear = false;
 		[Draw("Show x-10-x valve gear:", Height = HEIGHT)] public bool show10CoupledValveGear = true;
 		[Draw("Show x-12-x valve gear:", Height = HEIGHT)] public bool show12CoupledValveGear = true;
 
@@ -70,6 +70,8 @@ namespace RearrangedS282
 		[Draw("Extra flange squeal for long rigid wheelbases:", Height = HEIGHT)] public bool curveSqueal = true;
 		[Header("Oiling: an oil cup on every driven big end (reapply the arrangement to update)")]
 		[Draw("Oil cups on every driven big end:", Height = HEIGHT)] public bool bigEndOiling = true;
+		[Header("Optional oiling assistance: free cup oil; takes effect immediately")]
+		[Draw("Automatically fill oilcups and close their lids:", Height = HEIGHT)] public bool automaticCupOiling = false;
 
 		[System.Xml.Serialization.XmlIgnore] internal float giant222DriverDiameterMetres = 2.8f;
 
@@ -124,6 +126,7 @@ namespace RearrangedS282
 		[Draw("Randomly spawn articulated 2-10-10-2 Mallet:", Height = HEIGHT)] public bool spawn210102 = false;
 		[Draw("Randomly spawn articulated 2-4-4-4-0 Triplex:", Height = HEIGHT)] public bool spawn24440 = false;
 		[Draw("Randomly spawn 4-14-4:", Height = HEIGHT)] public bool spawn4144 = false;
+		[Draw("Randomly spawn 4-8-2 Express:", Height = HEIGHT)] public bool spawn482Big = false;
 
 		// Derived from the toggles, not a second authoritative saved pool.
 		[System.Xml.Serialization.XmlIgnore]
@@ -262,6 +265,7 @@ namespace RearrangedS282
 			if (spawn24440) RandomWAs.Add(WheelArrangementType.s24440);
 			if (spawn4144)
 				RandomWAs.Add(WheelArrangementType.s4144);
+			if (spawn482Big) RandomWAs.Add(WheelArrangementType.s482Big);
 
 		}
 

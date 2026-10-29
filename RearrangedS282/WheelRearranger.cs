@@ -369,6 +369,7 @@ namespace RearrangedS282
 			originalAirControlPosition = airControl.localPosition;
 			UpdateExternalControlPositions();
 #if B99_ALL_STANDARD
+			RestoreNativeLubricatorAnimation();
 			ApplyOilCupMounts();
 			B99Oilcups.Bind(loco, externalInteractables);
 			RefreshBigEndOiling(externalInteractables);
@@ -487,6 +488,9 @@ namespace RearrangedS282
 			rfAnimator = driveR.GetComponent<Animator>();
 			lfDefaultAnimatorCtrl = lfAnimator.runtimeAnimatorController;
 			rfDefaultAnimatorCtrl = rfAnimator.runtimeAnimatorController;
+#if B99_ALL_STANDARD
+			CacheNativeQuartering();
+#endif
 			leftReachRod = driveL.Find("s282_mech_cutoff_rod");
 			rightReachRod = driveR.Find("s282_mech_cutoff_rod");
 
@@ -1023,6 +1027,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s4102:
 				case WheelArrangementType.s4104:
 				case WheelArrangementType.s4122:
+				case WheelArrangementType.s482Big:
 				//case WheelArrangementType.s4664:
 					ShowFourLeadingWheels();
 					break;
@@ -1062,6 +1067,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s280Big:
 				case WheelArrangementType.s282Big:
 				case WheelArrangementType.s284Big:
+				case WheelArrangementType.s482Big:
 					Show8BigDrivers();
 					break;
 				case WheelArrangementType.s080:
@@ -1147,7 +1153,8 @@ namespace RearrangedS282
 							break;
 					}
 					break;
-				case WheelArrangementType.s282Big: //don't want the alternate position for S282Big
+				case WheelArrangementType.s482Big:
+				case WheelArrangementType.s282Big: //don't want the alternate position for large drivers
 					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
@@ -1320,6 +1327,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s4102:
 				case WheelArrangementType.s4104:
 				case WheelArrangementType.s4122:
+				case WheelArrangementType.s482Big:
 				//case WheelArrangementType.s4664:
 					ShowFourLeadingWheels();
 					break;
@@ -1368,6 +1376,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s280Big:
 				case WheelArrangementType.s282Big:
 				case WheelArrangementType.s284Big:
+				case WheelArrangementType.s482Big:
 					Show8BigDrivers();
 					break;
 				case WheelArrangementType.s080:
@@ -1457,7 +1466,8 @@ namespace RearrangedS282
 							break;
 					}
 					break;
-				case WheelArrangementType.s282Big: //don't want the alternate position for S282Big
+				case WheelArrangementType.s482Big:
+				case WheelArrangementType.s282Big: //don't want the alternate position for large drivers
 					switch (ArrangementSettings.x82Options)
 					{
 						case Settings.X82Options.vanilla:
@@ -1756,11 +1766,13 @@ namespace RearrangedS282
 			driveR.Find("s282_mech_cutoff_rail/s282_mech_lubricator_rod").gameObject.SetActive(true);
 			driveR.Find("LubricatorParts").gameObject.SetActive(true);
 
+#if !B99_ALL_STANDARD
 			float time = lfAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime;
 			lfAnimator.runtimeAnimatorController = lfDefaultAnimatorCtrl;
 			rfAnimator.runtimeAnimatorController = rfDefaultAnimatorCtrl;
 			lfAnimator.Play(lfAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash, 0, time              );
 			rfAnimator.Play(rfAnimator.GetCurrentAnimatorStateInfo(0).shortNameHash, 0, (time + 0.75f) % 1);
+#endif
 
 			ShowValveGear();
 			ShowReachRod();

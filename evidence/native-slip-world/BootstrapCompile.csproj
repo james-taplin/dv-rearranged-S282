@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NuGetAudit>false</NuGetAudit>
+    <UnityManagedPath>B:\Games\Unity 2019.4.40f1\Editor\Data\Managed</UnityManagedPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="SlipWorldBootstrap.cs" />
+    <Reference Include="UnityEditor"><HintPath>$(UnityManagedPath)\UnityEditor.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="$(UnityManagedPath)\UnityEngine\*.dll" Private="false" />
+  </ItemGroup>
+</Project>

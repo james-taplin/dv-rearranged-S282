@@ -18,10 +18,11 @@ namespace DV.Damage {public sealed class DamageController:UnityEngine.MonoBehavi
 public sealed class TrainCar:UnityEngine.MonoBehaviour { public DV.ThingTypes.TrainCarType carType;public DV.Simulation.Cars.SimController SimController;}
 namespace DV.Simulation.Cars {public sealed class SimController:UnityEngine.MonoBehaviour {public LocoSim.Definitions.SimConnectionDefinition connectionsDefinition;public LocoSim.Implementations.SimulationFlow simFlow;public void Initialize(TrainCar c,DV.Damage.DamageController d){}} }
 namespace LocoSim.Definitions {
- public enum PortType {OUT,IN,EXTERNAL_IN,READONLY_OUT} public enum PortValueType{GENERIC,TORQUE,MASS_RATE,RPM}
+ public enum PortType {OUT,IN,EXTERNAL_IN,READONLY_OUT} public enum PortValueType{GENERIC,TORQUE,MASS_RATE,RPM,STATE}
  public sealed class PortReferenceDefinition {public string ID;public PortReferenceDefinition(PortValueType t,string id){ID=id;}}
- public sealed class PortDefinition {public string ID;public PortDefinition(PortType t,PortValueType v,string id){ID=id;}}
+ public sealed class PortDefinition {public string ID;public PortType Type;public PortValueType ValueType;public PortDefinition(PortType t,PortValueType v,string id){ID=id;Type=t;ValueType=v;}}
  public abstract class SimComponentDefinition:UnityEngine.MonoBehaviour {public string ID;public abstract LocoSim.Implementations.SimComponent InstantiateImplementation();}
+ public sealed class ConfigurablePortDefinition:SimComponentDefinition {public float value;public PortDefinition port;public override LocoSim.Implementations.SimComponent InstantiateImplementation()=>new LocoSim.Implementations.ConfigurablePort(this);}
  public class ReciprocatingSteamEngineDefinition:SimComponentDefinition {public int numCylinders=2;public float cylinderBore=.61f,pistonStroke=.711f,minCutoff=.05f,maxCutoff=.9f,throttleMaxFlow=6,steamChestVolume=1000,passiveDamagePerRev=.01f,noOilDamagePerRev=1,cylinderCrackDamage=100,waterDamagePercentagePerChuff=.025f;public override LocoSim.Implementations.SimComponent InstantiateImplementation()=>new LocoSim.Implementations.ReciprocatingSteamEngine(this);}
  public sealed class MultiplePortSumDefinition:SimComponentDefinition {public PortReferenceDefinition[] inputs;public PortDefinition output;public override LocoSim.Implementations.SimComponent InstantiateImplementation()=>new LocoSim.Implementations.Sum(this);}
  public sealed class EmptyDefinition:SimComponentDefinition{public override LocoSim.Implementations.SimComponent InstantiateImplementation()=>new LocoSim.Implementations.Empty(ID);}
@@ -35,6 +36,7 @@ namespace LocoSim.Implementations {
  public class PortReference { public Port port; public float Value=>port?.Value??0f; }
  public abstract class SimComponent{public string id;public List<Port> ports=new();protected SimComponent(string s){id=s;}protected Port P(string s){var p=new Port(id+"."+s);ports.Add(p);return p;}public abstract void Tick(float delta);}
  public sealed class Empty:SimComponent{public Empty(string id):base(id){}public override void Tick(float delta){}}
+ public sealed class ConfigurablePort:SimComponent{public ConfigurablePort(ConfigurablePortDefinition d):base(d.ID){var p=P(d.port.ID);p.Value=d.value;}public override void Tick(float delta){}}
  public sealed class Sum:SimComponent{public Sum(MultiplePortSumDefinition d):base(d.ID){P("OUT");}public override void Tick(float delta){}}
  public class ReciprocatingSteamEngine:SimComponent{
  public PortReference crankRpm=new();public float crankRotation,prevCrankRotation,torqueVelocity,waterInCylindersDamageMeter;public int nativeTicks;
@@ -44,4 +46,4 @@ namespace LocoSim.Implementations {
  }
  public sealed class SimulationFlow {public List<SimComponent> OrderedSimComps;private Dictionary<string,Port> ports;public SimulationFlow(SimConnectionDefinition graph){OrderedSimComps=graph.executionOrder.Select(d=>d.InstantiateImplementation()).ToList();ports=OrderedSimComps.SelectMany(c=>c.ports).ToDictionary(p=>p.id);}public bool TryGetPort(string s,out Port p)=>ports.TryGetValue(s,out p);public void SetSaveStateData(JObject j){} }
 }
-namespace RearrangedS282 {internal static class MultiplayerSync{internal static bool IsSimulationAuthority=true;}internal static class Main{internal static Logger Logger=new();}internal sealed class Logger{internal List<string> warnings=new();internal void Warning(string s){warnings.Add(s);}}}
+namespace RearrangedS282 {internal static class S282Target {internal static bool IsNormal(TrainCar car)=>car!=null&&car.carType==DV.ThingTypes.TrainCarType.LocoSteamHeavy;}internal static class MultiplayerSync {internal static bool IsSimulationAuthority=true;}internal static class Main{internal static Logger Logger=new();}internal sealed class Logger{internal List<string> warnings=new();internal void Warning(string s){warnings.Add(s);}}}

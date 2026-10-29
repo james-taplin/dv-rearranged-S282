@@ -343,7 +343,21 @@ namespace RearrangedS282
                 {
                     if (!SteamPipeNativeFit.TrySection(d.Native.Vertices, d.Native.Source.triangles, d.Native.Source.uv, 2.02f, out var section))
                         throw new InvalidOperationException("Native Prairie adapter profile is unavailable.");
-                    b.Adapter(section.Points, section.UV, socket, radius, section.EdgeEndUV, Vector3.right * (c.Side * .22f));
+                    // Short posed spans cannot always accommodate the full
+                    // clearance bulge. Reduce only that offset, retaining the
+                    // actual endpoints, bore and folded-face validation.
+                    bool fitted = false;
+                    foreach (float clearance in new[] { .22f, .16f, .10f, 0f })
+                    {
+                        b.Clear();
+                        try
+                        {
+                            b.Adapter(section.Points, section.UV, socket, radius, section.EdgeEndUV, Vector3.right * (c.Side * clearance));
+                            fitted = true; break;
+                        }
+                        catch (InvalidOperationException ex) when (ex.Message == "Steam cast adapter contains a folded or collapsed face.") { }
+                    }
+                    if (!fitted) throw new InvalidOperationException("Prairie adapter cannot fit the posed cylinder without folded faces.");
                     MaximumGapM = Math.Max(MaximumGapM, b.LastAdapterMaximumGapM);
                     b.Collar(socket + Unit(c.Previous.MultiplyVector(c.Up)) * .02f, Unit(c.Previous.MultiplyVector(c.Up)), radius);
                 }

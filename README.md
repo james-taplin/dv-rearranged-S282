@@ -1,18 +1,26 @@
-# Rearranged S282 — multiplayer development
+# Rearranged S282 - 2.0.9-beta multiplayer development
 
-This is the separate `codex/s282-multiplayer` branch. Its current Nexus-facing package is **2.0.8-alpha**, using the multiplayer gameplay code first packaged as 2.0.1-mp.alpha.1. It retains the 2.0-beta arrangement baseline; later single-player and independent-wheelslip work is not merged into this branch. Multiplayer has not been installed or tested live on the development PC.
+This separate `codex/s282-multiplayer` branch uses the complete **2.0.8-slip-test** source (checkpoint `31389e811d0b99fb68b238174fd59b9264f389ef`), including experimental independent wheelslip. It replaces the earlier multiplayer alpha baseline and carries its latest fixes and 49-layout catalogue.
 
-All players use their own Wheel Rearranger radio to request changes. The host validates each request and distributes the arrangement and its settings. Host UMM controls allow all guests, lock all guests, or lock selected players for the session. Locked players continue receiving arrangement updates. All players must install the identical package; mismatched builds are refused. See [the testing instructions](MULTIPLAYER_TESTING.txt) and [current handover](CURRENT_HANDOVER.md) for validation and remaining live tests.
+Every player uses their own Wheel Rearranger radio. The host validates changes and shares the layout and relevant settings. Host UMM controls allow all guests or block individuals for the session. Locked guests still see updates. The native multiplayer mod owns transport, train movement and port replication; independent traction runs on the host and guest presentation follows native outputs.
 
-`Build.Multiplayer.ps1` builds and packages the alpha using the retained 2.0-beta release as its asset baseline. It uses the Multiplayer API as a build-only reference. The optional adapter loads only when Multiplayer is active; native Multiplayer handles transport, simulation ports and train movement.
+Multiplayer is optional. Absent/inactive Multiplayer and its internal single-player mode retain normal single-player controls with no multiplayer status or permission UI. Online peers need the same complete S282 package and **DV Multiplayer 0.1.16.0-beta**. LocoMeshSplitter remains required. Leave Realistic Firing off.
 
-For the player-facing archive, run `Package.Nexus.ps1` after the build. The plain packaged README and BBCode Nexus copy are in `release-copy/2.0.8-alpha`. Offer this as a separate optional multiplayer alpha download. It shares the `RearrangedS282` mod ID and folder with the normal package, so install one build at a time. The normal release branch and updater are unchanged.
+Run `Build.Multiplayer.ps1`, then `Package.Nexus.ps1` from a clean source commit. Nexus copy is in `release-copy/2.0.9-beta`. The builder verifies the selected seed ZIP and preserves every runtime asset, exporter file and licence; the optional API is build-only. The packager checks both DLLs and emits a UMM-installable ZIP, checksums and source receipts. Install one Rearranged S282 build at a time.
 
-The existing 2.0-beta feature documentation follows.
+See [current handover](CURRENT_HANDOVER.md), [release README](release-copy/2.0.9-beta/README.txt) and [optional tester checklist](MULTIPLAYER_TESTING.txt). Code and native fixtures do not establish live multiplayer acceptance. Powered-tender independent slip, actual peer audio/visual/driving behavior and live save/reconnect tests remain outside local validation.
+
+The retained base's gameplay reference follows; its version-specific paragraphs describe earlier changes.
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 
-There are **48 selectable arrangements**. The original layouts are retained alongside the Prairie, larger Mallets and triplexes. The new **2-4-4-4-0** puts three two-axle driver groups under the locomotive, with an ordinary unpowered tender.
+There are **49 selectable arrangements**. The original layouts are retained alongside the Prairie, larger Mallets and triplexes. The new **2-4-4-4-0** puts three two-axle driver groups under the locomotive, with an ordinary unpowered tender.
+
+The **4-8-2 Express** uses the existing large-driver express running gear with a four-wheel leading truck. The original Mountain remains available. Its random-spawn option is off by default, and it supports the optional powered tender.
+
+Version 2.0.7-beta restores the complete mesh-exporter package, corrects articulated oilcup mounts and lid bindings, and adds the four missing bearing cups on the 2-10-10-2. The Erie tender's rear supports use the native tender LODs, and its sounds and particles clean up correctly when changing arrangements. Existing saved cup levels and lid states keep their original slots.
+
+Optional automatic oilcup filling and lid closing is available in UMM, off by default. This update retains the earlier quartering, rod alignment, Express oilcup and mechanical lubricator fixes. It adds no arrangements or driving-physics changes.
 
 ## What the mod does
 
@@ -28,7 +36,7 @@ There are **48 selectable arrangements**. The original layouts are retained alon
 
 ## Powered tenders
 
-You can now use the Erie powered tender with **43 compatible arrangements**, including rigid locomotives. Open the powered-tender section in UMM and tick the arrangements you want. Erie is the only one enabled by default, and you can untick it to use its locomotive with an ordinary tender.
+You can now use the Erie powered tender with **44 compatible arrangements**, including rigid locomotives. Open the powered-tender section in UMM and tick the arrangements you want. Erie is the only one enabled by default, and you can untick it to use its locomotive with an ordinary tender.
 
 For a locomotive already in the world, stop, close the regulator, highlight it with Wheel Rearranger and press **REAPPLY CURRENT ARRANGEMENT** in UMM. The checkboxes also apply when locomotives spawn or their arrangements are restored on loading. They do not change every loaded locomotive immediately.
 
@@ -40,7 +48,7 @@ The powered tender adds pull and draws steam from the same S282 boiler. It needs
 |---|---|
 | Four driving wheels | 4-4-0 American, 4-4-2 Atlantic, 4-4-4 Reading, 2-4-0 |
 | Six driving wheels | 4-6-0 Ten-wheeler, 4-6-2 Pacific, 4-6-4 Hudson, 2-6-0 Mogul, 2-6-2 Prairie |
-| Eight driving wheels | 0-8-0, 0-8-2, 0-8-4, 2-8-0, 2-8-2, 2-8-4, 4-8-0, 4-8-2, 4-8-4, plus high-speed 2-8-0, 2-8-2 and 2-8-4 variants |
+| Eight driving wheels | 0-8-0, 0-8-2, 0-8-4, 2-8-0, 2-8-2, 2-8-4, 4-8-0, 4-8-2, 4-8-4, plus high-speed 2-8-0, 2-8-2 and 2-8-4 variants and the 4-8-2 Express |
 | Ten driving wheels | 0-10-0, 0-10-2, 0-10-4, 2-10-0, 2-10-2, 2-10-4, 4-10-0, 4-10-2, 4-10-4 |
 | Larger rigid layouts | 0-12-0, 2-12-0, 2-12-2, 4-12-2, 4-14-4 |
 | Articulated two-engine layouts | 2-4-4-2, 4-4-4-4, 2-6-6-2 Mallet, 0-8-8-0 Angus, 2-6-8-0 Great Northern, 2-6-6-0 Mallet, 2-10-10-2 Mallet |
@@ -52,6 +60,8 @@ The powered tender adds pull and draws steam from the same S282 boiler. It needs
 You need **Derail Valley B99 on Windows**, **Unity Mod Manager** and [**Locomotive Mesh Splitter**](https://www.nexusmods.com/derailvalley/mods/867). The mod's manager requirement is UMM 0.27.3 or newer; Mesh Splitter 1.1.9 is the tested version.
 
 Close the game and install the ZIP through UMM. When updating, install it over your existing Rearranged S282 installation. Your saved settings are retained. Custom Car Loader is not required.
+
+Keep the included **AssetStudio** folder. The mod uses it to prepare running-gear meshes from your installed game files; it detects your installation paths automatically.
 
 The mod handles its own extra-engine sounds. **MultiCylinderChuffFix is optional**, not a dependency: its entry in `LoadAfter` only sets load order if it is installed.
 
@@ -66,6 +76,8 @@ Some rigid-family valve-gear options are off by default. Hiding the gear is a vi
 Random spawning is off by default. Enable its master switch, then tick the arrangements you want in the pool. Saved locomotive choices are kept, and an empty pool falls back to stock. The new triplex is not in the default random pool.
 
 The accepted proportions are built in. The temporary resizing sliders and power recorder have been removed. The **structural test button** remains available for troubleshooting; it is not needed for normal play.
+
+**Automatically fill oilcups and close their lids** is under the expanded arrangement settings. It takes effect immediately and supplies free cup oil while enabled; switch it off for manual filling and lid operation. It applies only to Rearranged S282 oiling components. The central mechanical lubricator still needs its normal oil.
 
 ## A few things to know
 
@@ -116,9 +128,9 @@ B99 fork: https://github.com/james-taplin/dv-rearranged-S282
 The runtime project targets .NET Framework 4.8 and references the assemblies in your own Derail Valley installation. `Build.RuntimeTrial.ps1` builds and packages a development version; pass `-GamePath` if your game is installed elsewhere. Installation only happens when `-Install` is supplied and the game is closed.
 
 ```powershell
-.\Build.RuntimeTrial.ps1 -Version 2.0-beta
+.\Build.RuntimeTrial.ps1 -Version 2.0.7-beta
 ```
 
 The existing custom drivetrain bundle is reused. Rebuilding its authored models is a separate asset workflow, documented in the original upstream project's README. Game assemblies and locally extracted game meshes are not included in the public package.
 
-See [the current options guide](release-copy/2.0-beta/UMM_OPTIONS.md) and [changes since 1.22.2](release-copy/2.0-beta/CHANGELOG.txt). Development evidence and outstanding work are recorded in `CURRENT_HANDOVER.md` and `TODO.md`.
+See [the current options guide](release-copy/2.0.7-beta/UMM_OPTIONS.md), [changes since 2.0.6](release-copy/2.0.7-beta/CHANGES_SINCE_2.0.6.txt) and [the full changelog](release-copy/2.0.7-beta/CHANGELOG.txt). Development evidence and outstanding work are recorded in `CURRENT_HANDOVER.md` and `TODO.md`.

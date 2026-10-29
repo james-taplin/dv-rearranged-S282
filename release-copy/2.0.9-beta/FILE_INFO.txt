@@ -1,0 +1,14 @@
+Nexus file title: Rearranged S282 2.0.9-beta - multiplayer and independent slip
+Version: 2.0.9-beta
+Category: Optional file / experimental beta
+Archive: RearrangedS282-B99-2.0.9-beta.zip
+Installation: Unity Mod Manager; one RearrangedS282 folder at archive root.
+Replaces the previous Rearranged S282 build; do not install both together.
+
+Requires DV B99, UMM 0.27.3+, Locomotive Mesh Splitter.
+Online: every player needs DV Multiplayer 0.1.16.0-beta and this exact package.
+Offline: Multiplayer is optional. Leave Realistic Firing off for testing.
+
+Based on 2.0.8-slip-test including experimental independent wheelslip.
+Shared arrangement radios, host player locks, host-authoritative simulation.
+Live multiplayer testing is pending; see README.txt for limits and reports.

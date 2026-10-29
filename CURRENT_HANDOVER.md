@@ -1,3 +1,67 @@
+## Current release: multiplayer 2.0.9-beta - 29 October 2026
+
+This section supersedes the older 2.0.8-alpha baseline below. James explicitly
+selected 2.0.8-slip-test, including experimental independent wheelslip, and
+then specified the public version 2.0.9-beta. Do not restart from e65a3da's old
+2.0-beta gameplay code. Selected immutable source:
+31389e811d0b99fb68b238174fd59b9264f389ef.
+Its inherited Info/default project version says 2.0.7-beta; the verified trial
+was built as 2.0.8-slip-test. The selected ZIP SHA256 is
+B3677FC1D8D42F9423E702C044DB75B84E0E31C5C9EDB71CD62AD56C4D35B94D.
+
+Work remains in B:\GitHub repo\rearranged-s282-multiplayer, branch
+codex/s282-multiplayer. The normal b99-port and independent-slip checkouts and
+indices are untouched. Prior explicit authorization to push this MP branch to
+remote james persists. No main/b99-port push, install, merge, GitHub release or
+Nexus upload is authorized by this task. Source commits are reviewed checkpoints;
+package receipts and final chat distinguish actual packaging and push outcomes.
+
+The complete selected runtime and its regression sources were restored before
+reapplying multiplayer hooks. Includes 49 arrangements/Express48, 44 powered-
+tender choices, owned 24-point oiling and six/20 save migrations, exact normal
+S282 scope, quartering, lubrication/cup mounts, pipe/tender/LOD teardown,
+Franklin renderer/nose/outlets and experimental locomotive-group wheelslip.
+
+Native-first integration: use supported MPAPI custom packets for arrangements
+and native readonly flow ports for 3 groups' RPM/slip/phase/force presentation.
+Native MP continues to own transport/train motion. Only authority runs native
+slip ECS, force, steam-engine ticks, cracked-state repair and oiling writes.
+Guests never create independent slip ECS or rewrite engine RPM inputs. Stable
+ports are appended before native graph initialization. Exact GUID/epoch/revision channels
+reject old layout samples; host phase offsets bind the existing native readers.
+
+Every player's radio is independent. Host requests remain stationary/safe;
+UMM can allow all guests or block individuals. Lock checks are enforced on host
+packet handling. Protocol 2 uses epochs/revisions, bounded tombstones and
+request/snapshot limits. Native ready-stage handshake, stale instance callbacks,
+ID reuse, permission notices and fatal replica timeouts have explicit fixtures.
+Identity includes both loaded DLLs and all four runtime assets, once cached.
+Newer/future tender preferences cannot invalidate a compatible car profile.
+
+Absent/inactive MP and native internal single-player retain ordinary controls,
+with no multiplayer UI/status. Main DLL has no MPAPI assembly dependency. Only
+the optional adapter references API1.1. The supplied 0.1.16.0-beta archive/API
+was checked against official release/source; native source and references stay
+under ignored build/, and neither MP nor its API is installed or distributed.
+
+Build with Build.Multiplayer.ps1 -Version 2.0.9-beta, then Package.Nexus.ps1
+from the recorded clean commit. Validate.MultiplayerPackage.ps1 checks final ZIP
+layout, metadata, optional references and byte-identical seed assets/exporter/
+licences. Release copy is release-copy/2.0.9-beta; final UMM archive is
+release/2.0.9-beta/RearrangedS282-B99-2.0.9-beta.zip and copied to
+Desktop/Derail Valley Mods/RearrangedS282-B99-2.0.9-beta-Nexus/.
+
+Validation details: MULTIPLAYER_2_0_9_VALIDATION.md and ignored build receipts.
+Native/managed fixtures are stronger than compilation but are not a live
+multi-PC playtest. External group acceptance remains pending. Powered-tender
+independent slip is still absent; global slip/curve policy is still pooled,
+true compound expansion is not modeled, and native failure/derailment falls
+back to the earlier shared traction path (reapply after rerailing). Do not
+silently widen scope or claim those limitations were solved by networking.
+
+The user's lowercase drafting preference was for an email. Normal capitalization
+and Markdown in chat were explicitly restored. No tester email is sent here.
+
 ## Nexus-facing multiplayer 2.0.8-alpha - 29 October 2026
 
 James explicitly authorised pushing this branch to his GitHub fork, while

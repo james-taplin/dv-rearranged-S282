@@ -82,6 +82,7 @@ namespace RearrangedS282
                     clone.name = source.name;
                     tenderStaticMaps.Add(clone, MalletBody.worldToLocalMatrix * source.localToWorldMatrix);
                 }
+                BuildTenderFrameSources();
             }
             catch
             {
@@ -198,7 +199,8 @@ namespace RearrangedS282
             // Native controller and rods retained; tender animation uses its
             // own engine frequency so different host diameters do not alter wheel speed.
             var animationClock = tenderEngineRoot.gameObject.AddComponent<TenderDriveAnimation>();
-            animationClock.Initialize(articulatedSimulation, tenderDriveL.GetComponent<Animator>(), tenderDriveR.GetComponent<Animator>(), lfAnimator, rfAnimator);
+            animationClock.Initialize(articulatedSimulation, tenderDriveL.GetComponent<Animator>(), tenderDriveR.GetComponent<Animator>(),
+                lfAnimator, rfAnimator, nativeLeftPhase, nativeRightPhase);
             articulatedSimulation.SetTenderEngine(true);
             // Presentation failure must never remove a working tender engine.
             try
@@ -208,6 +210,16 @@ namespace RearrangedS282
                 tenderPresentation.Initialize(tender, steamNative.First().Materials);
             }
             catch (Exception ex) { Main.Logger.LogException("Erie tender exhaust presentation", ex); }
+            try
+            {
+                tenderPolish = tenderEngineRoot.gameObject.AddComponent<ErieTenderPolish>();
+                tenderPolish.Initialize(loco, tender, steamNative.First().Materials);
+            }
+            catch (Exception ex)
+            {
+                tenderPolish?.Release();
+                Main.Logger.LogException("Erie tender underframe presentation", ex);
+            }
             ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
             RefreshSteamConnectionsForTender();
             Main.Logger.Log($"Erie triplex: tender engine attached to {tender.ID}; {2f * tenderLayout.Radius:0.00} m drivers, " +
@@ -232,15 +244,18 @@ namespace RearrangedS282
 
         private void DetachTenderEngine()
         {
+            tenderPolish?.Release(); tenderPolish = null;
             articulatedSimulation?.SetTenderEngine(false);
             foreach (var go in tenderHidden) if (go != null) go.SetActive(true);
             tenderHidden.Clear();
-            if (tenderEngineRoot != null) tenderEngineRoot.gameObject.SetActive(false);
-            ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
+            // Unbind native readers while their leaves and active hierarchy
+            // still exist. Release removes the outlet before its callback, so
+            // refresh cannot recreate tender effects during teardown.
+            if (tenderPresentation != null) tenderPresentation.Release();
+            else ArticulatedEffects.TenderChanged(GetComponent<TrainCar>());
             if (tenderEngineRoot != null)
             {
-                // Remove native readers while their leaves still exist.
-                tenderPresentation?.Release();
+                tenderEngineRoot.gameObject.SetActive(false);
                 Object.Destroy(tenderEngineRoot.gameObject);
             }
             if (tenderEngineCar != null && tenderEngineRoot != null) Main.Logger.Log($"Erie triplex: tender engine detached from {tenderEngineCar.ID}.");
@@ -270,7 +285,7 @@ namespace RearrangedS282
             {
                 if (bogie == null || !bogie.enabled || bogie.rb == null || bogie.rb.isKinematic) continue;
                 var axis = bogie.transform.forward;
-                bogie.rb.AddForce(axis * (Mathf.Sign(Vector3.Dot(axis, forward)) * perBogie));
+                bogie.ApplyForce(Mathf.Sign(Vector3.Dot(axis, forward)) * perBogie);
             }
         }
 
@@ -279,6 +294,8 @@ namespace RearrangedS282
             ["selected"] = poweredTenderSelected, ["hostArrangement"] = (int)currentWA,
             ["sourceReady"] = tenderSourceRoot != null && tenderSourceL != null && tenderSourceR != null && tenderStaticMaps.Count != 0,
             ["sourceStaticCount"] = tenderStaticMaps.Count,
+            ["undercarriagePresentationReady"] = tenderPolish != null && tenderPolish.Ready,
+            ["underframeSteamConnection"] = tenderPolish != null ? tenderPolish.Report() : null,
             ["unexpectedFranklinAssemblies"] = tenderEngineRoot == null ? 0 : tenderEngineRoot.GetComponentsInChildren<Transform>(true)
                 .Count(t => t.gameObject.activeInHierarchy && (t.name == "franklin_type_b(Clone)" || t.name == "franklin_type_b_4444(Clone)")),
             ["driverRadiusM"] = tenderLayout != null ? .712f * tenderLayout.Scale : (float?)null,

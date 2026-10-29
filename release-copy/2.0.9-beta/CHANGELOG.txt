@@ -1,0 +1,28 @@
+2.0.9-beta - multiplayer and independent-wheelslip beta
+
+Rebased on the full 2.0.8-slip-test source, including experimental independent
+locomotive-group wheelslip and all fixes/additions present in that build.
+Preserves 49 layouts, Express Mountain, 44 powered-tender choices, exact normal
+S282 spawn scope, owned 24-point oiling and legacy save migration, quartering,
+oilcup seating, steam-pipe/tender polish and Franklin linkage fixes.
+
+Every player can use their own arrangement radio. The host validates changes
+and distributes the layout plus relevant per-locomotive preferences. Host UMM
+controls can allow all guests or block particular players for that session.
+
+Native Multiplayer 0.1.16.0-beta handles transport, train movement and port
+replication. Independent traction calculations, force and oiling writes run
+on the host; guest animation/effects follow native replicated outputs. Port
+revision markers prevent a guest binding the previous layout's group state.
+
+Hardened session cleanup, reconnect/ID reuse, late join, stale request handling,
+request limits, bounded state history and replica failure reporting. Corrected
+newer tender-preference handling. Complete runtime DLL/asset fingerprints
+reject mixed packages. Failed replicas are disconnected by the host.
+
+Multiplayer remains optional. Absent, inactive and native internal single-
+player modes retain ordinary single-player behavior without multiplayer UI.
+
+Live multi-PC acceptance remains pending. Powered tender independent slip,
+true compound expansion, VR and Realistic Firing compatibility are not proven.
+This beta does not establish those features or compatibility claims.

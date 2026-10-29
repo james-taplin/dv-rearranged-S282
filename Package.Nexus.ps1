@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.8-alpha',
+    [string]$Version = '2.0.9-beta',
     [string]$ReleaseName = '',
     [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods',
     [string]$CandidateDirectory
@@ -13,6 +13,11 @@ if ($Version -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$' -or $R
 $root = $PSScriptRoot
 $candidate = if ($CandidateDirectory) { $CandidateDirectory } else { Join-Path $root "build\multiplayer-$Version" }
 $receipt = Get-Content -LiteralPath (Join-Path $candidate 'build-receipt.json') -Raw | ConvertFrom-Json
+if ($receipt.version -ne $Version) { throw 'Candidate receipt has a different version.' }
+if ($receipt.sourceHasUncommittedChanges) { throw 'Commit the reviewed source before producing the Nexus archive.' }
+$currentCommit = & git -C $root rev-parse HEAD
+if ($LASTEXITCODE -ne 0 -or $currentCommit -ne $receipt.sourceCommit) { throw 'Candidate receipt is not from the current source commit.' }
+if (@(& git -C $root status --porcelain).Count -gt 0) { throw 'Source changed after the recorded clean build.' }
 $source = $receipt.package
 if (-not (Test-Path -LiteralPath (Join-Path $source 'RearrangedS282.dll'))) { throw "Built package not found: $source" }
 if ((Get-FileHash -LiteralPath (Join-Path $source 'RearrangedS282.dll')).Hash -ne $receipt.dllSHA256) { throw 'Built DLL differs from its receipt.' }
@@ -27,13 +32,13 @@ $stage = Join-Path $root ('build\nexus-staging-' + [Guid]::NewGuid().ToString('N
 $mod = Join-Path $stage 'RearrangedS282'
 New-Item -ItemType Directory -Path $stage | Out-Null
 Copy-Item -LiteralPath $source -Destination $mod -Recurse
-foreach ($test in 'RUNTIME_TRIAL_TESTING.txt','MANUAL_TEST_CHECKLIST.txt','README_BETA.txt','ARTICULATED_TEST_STATUS.txt')
+foreach ($test in 'RUNTIME_TRIAL_TESTING.txt','MANUAL_TEST_CHECKLIST.txt','README_BETA.txt','ARTICULATED_TEST_STATUS.txt','INDEPENDENT_SLIP_TEST.txt')
 { Remove-Item -LiteralPath (Join-Path $mod $test) -ErrorAction SilentlyContinue }
 foreach ($doc in 'README.txt','CHANGELOG.txt','CREDITS.txt','UMM_OPTIONS.md') { Copy-Item -LiteralPath (Join-Path $copy $doc) -Destination $mod -Force }
 $infoPath = Join-Path $mod 'Info.json'
 $info = Get-Content -LiteralPath $infoPath -Raw | ConvertFrom-Json
 if ($info.Version -ne $Version) { throw "Info.json version $($info.Version) is not $Version." }
-$info.DisplayName = if ($multiplayer) { 'Rearranged S282 - B99 Multiplayer Alpha' } elseif ($ReleaseName -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
+$info.DisplayName = if ($multiplayer) { 'Rearranged S282 - B99 Multiplayer Beta' } elseif ($ReleaseName -match '-beta$') { 'Rearranged S282 - B99 Beta' } else { 'Rearranged S282 - B99' }
 if ($multiplayer -and ($info.MultiplayerCompatibility -ne 'All' -or 'Multiplayer' -in $info.Requirements)) { throw 'Multiplayer must be compatible on all peers and optional for single player.' }
 $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $infoPath -Encoding utf8
 $allowedObj = @('assets/franklin_casing.obj','assets/steam_manifold.obj','assets/steam_transfer.obj')
@@ -44,7 +49,7 @@ $bad = Get-ChildItem -LiteralPath $mod -Recurse -File | Where-Object {
         ($_.Extension -eq '.obj' -and $relative -notin $allowedObj)
 }
 if ($bad) { throw "Unexpected files: $($bad.FullName -join ', ')" }
-foreach ($need in 'RearrangedS282.dll','Info.json','LICENSE','THIRD_PARTY_NOTICES.txt','assets\s282_drivetrain','AssetStudioModCLI_net472_win64_contained\AssetStudioModCLI.exe')
+foreach ($need in 'RearrangedS282.dll','Info.json','LICENSE','THIRD_PARTY_NOTICES.txt','assets\s282_drivetrain','assets\franklin_casing.obj','assets\steam_manifold.obj','assets\steam_transfer.obj','AssetStudioModCLI_net472_win64_contained\AssetStudioModCLI.exe')
 { if (-not (Test-Path -LiteralPath (Join-Path $mod $need))) { throw "Missing $need" } }
 $zipName = "RearrangedS282-B99-$ReleaseName.zip"
 $zip = Join-Path $out $zipName
@@ -81,7 +86,7 @@ try { $files = @($archive.Entries | Where-Object Name -NE '' | ForEach-Object Fu
 if ($files | Where-Object { $_ -match '\\' -or -not $_.StartsWith('RearrangedS282/') }) { throw 'Archive entries must be RearrangedS282/... with forward slashes.' }
 $manifest = [ordered]@{
     version=$Version; sourceCommit=$receipt.sourceCommit; sourceHasUncommittedChanges=$receipt.sourceHasUncommittedChanges
-    branch='codex/s282-multiplayer'; multiplayerAlpha=$multiplayer; optionalDownload=$true
+    branch='codex/s282-multiplayer'; multiplayer=$multiplayer; optionalDownload=$true; baseCommit='31389e811d0b99fb68b238174fd59b9264f389ef'
     zip=$zip; desktop=(Join-Path $desk $zipName); zipSHA256=$zipHash
     dllSHA256=$receipt.dllSHA256; bridgeSHA256=$receipt.bridgeSHA256; files=$files
     runtimeValidated=$false; installed=$false; uploaded=$false

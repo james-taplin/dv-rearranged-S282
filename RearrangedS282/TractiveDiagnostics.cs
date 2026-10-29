@@ -83,6 +83,7 @@ namespace RearrangedS282
                     ["amountNativeUnits"] = N(r.amountReadOut?.Value), ["capacityNativeUnits"] = N(r.capacity) }));
             var tender = owner?.TenderEngineReport();
             result["tender"] = tender;
+            result["independentDrive"] = car.GetComponent<IndependentDrive>()?.Report();
             var engines = new JArray();
             double reference = 0d, liveMean = 0d, tenderReference = 0d;
             bool referenceKnown = true, liveKnown = true, tenderKnown = true;

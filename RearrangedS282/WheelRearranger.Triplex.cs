@@ -124,7 +124,6 @@ namespace RearrangedS282
             if (twoCoupled) triplexCoupledDriverPositions = new[] { firstLeftDriveWheel.localPosition, secondLeftDriveWheel.localPosition };
             EnsureTriplexAssets();
             float s = triplex.Scale;
-            float phase = lfAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime % 1f;
             ResetBody(); ResetToFourCoupled(); HideLeadingWheels(); HideTrailingWheels();
             if (trucks)
             {
@@ -175,7 +174,7 @@ namespace RearrangedS282
             }
             // Cylinder outlets (cocks, drips) follow the cylinders.
             scaledEngineMaps = new[] { triplex.Cylinders(0), triplex.Cylinders(2), triplex.Cylinders(1) };
-            BindFranklinTriplexAnimation(phase);
+            BindFranklinTriplexAnimation();
             BindEngineBrakeHeat(new[] { triplexMiddleL, triplexMiddleR, triplexRearL, triplexRearR }, twoCoupled ? new[] { 1, 2 } : new[] { 2 });
 
             // One powered axle per engine: front and middle in the native front
@@ -232,7 +231,7 @@ namespace RearrangedS282
         // Every engine runs the duplex Franklin clip with the native start offsets.
         // That controller has no native cutoff parameters, so the front readers
         // are paused while it is bound, exactly as on the 2-4-4-2.
-        private void BindFranklinTriplexAnimation(float phase)
+        private void BindFranklinTriplexAnimation()
         {
             articulatedRotation = loco.GetComponentsInChildren<PoweredWheelRotationViaAnimation>(true)
                 .FirstOrDefault(r => r.animatorSetups != null && r.animatorSetups.Any(x => x.animator == lfAnimator));
@@ -243,9 +242,7 @@ namespace RearrangedS282
             articulatedRotation.animatorSetups = articulatedOriginalAnimators.Concat(clones.Select((clone, i) =>
                 new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair
                 { animator = clone.GetComponent<Animator>(), startTimeOffset = Offset(i % 2 == 0 ? lfAnimator : rfAnimator) })).ToArray();
-            foreach (var setup in articulatedRotation.animatorSetups)
-                if (setup.animator.runtimeAnimatorController == AssetBundleLoader.FranklinBAnimCtrl)
-                    setup.animator.Play(FranklinDriveState, 0, (phase + setup.startTimeOffset) % 1f);
+            // Final quartering follows activation of the middle/front frames.
             foreach (var drive in new[] { driveL, driveR })
                 foreach (var reader in drive.GetComponents<MonoBehaviour>().Where(b => b.GetType().Name == "AnimatorPortReader"))
                 { articulatedReaders.Add(new EnabledReaderState { reader = reader, enabled = reader.enabled }); reader.enabled = false; }
@@ -330,9 +327,11 @@ namespace RearrangedS282
             foreach (Transform child in rod) child.gameObject.SetActive(false);
             var main = RequireArticulatedPart(rod, "s282_mech_push_rod_to_connect");
             main.gameObject.SetActive(true);
+            main.GetComponent<MeshRenderer>().enabled = true;
             main.GetComponent<MeshFilter>().sharedMesh = MeshFinder.Instance.DuplexMainRodMesh;
             var cutoff = RequireArticulatedPart(rod, "s282_mech_connect_to_cutoff_base");
             cutoff.gameObject.SetActive(true);
+            cutoff.GetComponent<MeshRenderer>().enabled = true;
             cutoff.localPosition = new Vector3(.15f, 0f, 0f);
             SetPartActive(cutoff, "s282_mech_connect_to_cutoff_rod", false);
             var shoes = drive.Find("s282a_brake_shoes(Clone)");

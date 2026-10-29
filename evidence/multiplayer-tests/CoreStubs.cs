@@ -18,7 +18,7 @@ namespace UnityEngine
     }
     public sealed class Transform{public bool MeshReady;public Transform Find(string path)=>MeshReady?this:null;}
     public static class Time {public static float unscaledTime;}
-    public static class GUILayout {public static void Label(string value){}}
+    public static class GUILayout {public static readonly List<string> Labels=new();public static void Label(string value)=>Labels.Add(value);}
 }
 namespace UnityModManagerNet
 {
@@ -44,6 +44,7 @@ public sealed class TrainCar:UnityEngine.Component
     public Entity entity=new();
     public Controller SimController=new();
     public bool BogiesReady=true,Moving;
+    public bool NormalLivery=true,uniqueCar;
     public bool AreBogiesFullyInitialized()=>BogiesReady;
     public sealed class Entity{public bool IsConverted=true;}
     public sealed class Controller{public Flow simFlow=new();public PoweredWheels poweredWheels=new();public object drivingForce=new(),wheelslipController=new(),tractionPortsFeeder=new();}
@@ -52,11 +53,18 @@ public sealed class TrainCar:UnityEngine.Component
 }
 public sealed class CarSpawner
 {
-    public static CarSpawner Instance=new();
+    private static CarSpawner current=new();
+    public static int InstanceReads;
+    public static CarSpawner Instance{get{InstanceReads++;return current;}set{current=value;}}
     public readonly List<TrainCar> AllCars=new();
+    public event Action<TrainCar> CarAboutToBeDeleted;
+    // Native deletion removes AllCars and emits this event before either pool
+    // return or PrepareForDestroy/Object.Destroy, including world unload.
+    public void Delete(TrainCar car){AllCars.Remove(car);CarAboutToBeDeleted?.Invoke(car);}
 }
 namespace RearrangedS282
 {
+    internal static class S282Target {internal static bool IsNormal(TrainCar car)=>car!=null&&car.NormalLivery&&!car.uniqueCar;}
     internal static class Main
     {
         internal static Settings settings=new();

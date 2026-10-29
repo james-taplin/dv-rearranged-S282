@@ -3,7 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 #pragma warning disable CS0649,CS0067
-namespace DV { }
+namespace DV
+{
+    public static class Globals { public static GlobalData G=new(); }
+    public sealed class GlobalData { public TypeRegistry Types=new(); }
+    public sealed class TypeRegistry
+    {
+        public readonly Livery NormalS282=new();
+        public bool TryGetLivery(string id,out Livery livery){livery=id=="LocoS282A"?NormalS282:null;return livery!=null;}
+    }
+    public sealed class Livery { }
+}
 namespace DV.Localization { }
 namespace DV.Logic.Job { }
 namespace DV.ThingTypes.TransitionHelpers { }
@@ -122,6 +132,7 @@ public sealed class CommsRadioController:UnityEngine.Component
 public sealed class TrainCar:UnityEngine.Component
 {
     public string ID;public DV.ThingTypes.TrainCarType carType=DV.ThingTypes.TrainCarType.LocoSteamHeavy;
+    public DV.Livery carLivery=DV.Globals.G.Types.NormalS282;public bool uniqueCar;
     public UnityEngine.Bounds Bounds=new(){center=new(0,0,5),size=new(3,4,18)};
     public static TrainCar Resolve(UnityEngine.Transform t)=>t?.GetComponent<TrainCar>();
 }
@@ -173,6 +184,13 @@ namespace RearrangedS282
     }
     internal sealed class PowerDiagnosticsTick{ }
     internal static class ArticulatedSimulation{internal static void Register(HarmonyLib.Harmony h){} }
+    internal static class S282SpawnScope{internal static void Register(HarmonyLib.Harmony h){} }
+    internal sealed class IndependentDrive:UnityEngine.MonoBehaviour
+    {
+        internal bool IsOwning,Recording;internal float DiagnosticFirstGroupGrip=1f;
+        internal static void Register(HarmonyLib.Harmony h){}
+    }
+    internal static class GroupSlipEffects{internal static void Register(HarmonyLib.Harmony h){} }
     internal static class BigEndOiling{internal static void Register(HarmonyLib.Harmony h){} }
     internal static class ArticulatedEffects{internal static void Register(HarmonyLib.Harmony h){} }
     internal static class DeltaTrailingTruckCompatibility{internal static string Status;internal static void Register(HarmonyLib.Harmony h){} }

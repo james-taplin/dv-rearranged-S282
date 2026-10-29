@@ -42,6 +42,7 @@ namespace MPAPI
         public static IClient Client;
         public static string MultiplayerVersion="fixture",LoadedApiVersion="fixture";
         public bool IsHost;
+        public bool IsSinglePlayer;
         public int CompatibilityCalls;
         public void SetModCompatibility(string id,MPAPI.Types.MultiplayerCompatibility value)=>CompatibilityCalls++;
         public static event Action<IServer> ServerStarted;
@@ -76,7 +77,8 @@ namespace RearrangedS282
     }
     public static class MultiplayerSync
     {
-        public const int Protocol=1;
+        public const int Protocol=2;
+        public static long SessionEpoch=100;
         public static string BuildIdentity="core-build-and-assets";
         public static string Status;
         public static Action<string> BroadcastState;
@@ -87,13 +89,17 @@ namespace RearrangedS282
         public static bool CanChange,HostRequestResult=true;
         public static readonly List<string> Received=new();
         public static readonly List<string> States=new(){"snapshot-A","snapshot-B"};
+        public static readonly List<string> TargetedSnapshots=new();
+        public static Action<string> OnReceiveState;
         public static void BeginHost()=>Hosts++;
         public static void BeginClient()=>Clients++;
         public static void EndSession()=>Ended++;
         public static void AcceptClient(bool canChange,string message){CanChange=canChange;Status=message;Accepts++;}
         public static void RejectClient(string message){CanChange=false;Status=message;Rejects++;}
         public static IEnumerable<string> Snapshot()=>States;
-        public static void ReceiveState(string json)=>Received.Add(json);
+        public static IEnumerable<string> SnapshotFor(string guid){TargetedSnapshots.Add(guid);return new[]{"only-"+guid};}
+        public static long RevisionFor(string guid)=>guid=="car"?4:0;
+        public static void ReceiveState(string json){Received.Add(json);OnReceiveState?.Invoke(json);}
         public static bool TryHostRequest(string guid,int arrangement,long revision,out string reason){HostRequests++;reason="fixture core refusal";return HostRequestResult;}
     }
 }

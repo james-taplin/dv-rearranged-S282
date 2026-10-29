@@ -13,7 +13,7 @@ namespace RearrangedS282
 
         internal static bool UsesReservoirClearance(int id) => id == (int)WheelArrangementType.s262 ||
             id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big ||
-            id == (int)WheelArrangementType.s284Big;
+            id == (int)WheelArrangementType.s284Big || id == (int)WheelArrangementType.s482Big;
 
         private void ApplyLargeDriverClearance(int id, float radius)
         {

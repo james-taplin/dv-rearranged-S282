@@ -28,7 +28,7 @@ namespace RearrangedS282
             }
 #endif
             var cars = UnityEngine.Object.FindObjectsOfType<TrainCar>()
-                .Where(c => c.carType == TrainCarType.LocoSteamHeavy && !c.derailed && !c.isExploded &&
+                .Where(c => S282Target.IsNormal(c) && !c.derailed && !c.isExploded &&
                     c.entity != null && c.entity.IsConverted && Mathf.Abs(c.GetForwardSpeed()) <= .01f &&
                     (c.GetComponent<WheelRearranger>() == null || c.GetComponent<WheelRearranger>().currentWA == WheelArrangementType.s282))
                 .OrderBy(c => c.ID, StringComparer.Ordinal).ToArray();
@@ -87,9 +87,21 @@ namespace RearrangedS282
                 ["activeLocomotiveEngines"] = car.SimController.simFlow.OrderedSimComps.OfType<ReciprocatingSteamEngine>()
                     .Count(e => !(e is ArticulatedRearEngine aux) || aux.Active && !aux.TenderMode),
                 ["tenderSelected"] = owner.PoweredTenderSelected,
+                ["malletDriverPitch"] = owner.MalletDriverPitchReport(),
+                ["franklinLinkages"] = owner.FranklinLinkageReport(),
+                ["franklinClearanceMeshes"] = owner.FranklinRearNoseClearanceCasings,
                 ["tender"] = owner.TenderEngineReport(),
                 ["hasSupportedTender"] = HasTestTender(car),
                 ["compactFrameEndAllowanceM"] = id == 47 ? .10f : 0f,
+                ["compactTriplexCrankPins"] = id != 47 ? null : new JArray(car.GetComponentsInChildren<MeshRenderer>(true)
+                    .Where(r => r.name == "s282_mech_connect_to_cutoff_base" && r.gameObject.activeInHierarchy)
+                    .Select(r => new JObject {
+                        ["drive"] = r.transform.parent?.parent?.name,
+                        ["enabled"] = r.enabled,
+                        ["mesh"] = r.GetComponent<MeshFilter>()?.sharedMesh != null,
+                        ["detailLod"] = car.GetComponentsInChildren<LODGroup>(true)
+                            .Any(g => g.GetLODs().Length != 0 && g.GetLODs()[0].renderers.Contains(r))
+                    })),
                 ["pipeOverlapPolicy"] = "Small local fitting overlaps allowed; pipe socket gaps and presentation errors remain failures. Clipping appearance is a manual check."
             };
         }
@@ -107,12 +119,54 @@ namespace RearrangedS282
             if ((bool?)row["tenderSelected"] != tender || tender && !PoweredTenderPolicy.Supports(id))
                 throw new InvalidOperationException("Powered-tender selection disagrees with the structural test case.");
             var state = row["tender"] as JObject;
+            int franklinCount = id == 31 || id == 32 ? 4 : id == 38 || id == 40 || id == 47 ? 6 : 0;
+            var linkages = row["franklinLinkages"] as JArray;
+            if (linkages == null || linkages.Count != franklinCount || linkages.Any(link =>
+                new[] { "mainRod", "crank" }.Any(part => new[] { "enabled", "mesh", "detailLod" }
+                    .Any(field => (bool?)link[part]?[field] != true))))
+                throw new InvalidOperationException("Franklin engines need visible main rods and crank pins in detail LODs.");
+            if ((int?)row["franklinClearanceMeshes"] != (id == 32 ? 2 : 0))
+                throw new InvalidOperationException("Franklin rear cylinder clearance treatment is missing or applied to the wrong arrangement.");
+            int heldDrivers = WheelArrangement.IsArticulatedId(id)
+                ? 2 * WheelArrangement.LocomotiveWheels(id).Skip(1).Take(WheelArrangement.LocomotiveWheels(id).Length - 2).Count(n => n == 6) : 0;
+            var pitch = row["malletDriverPitch"] as JArray;
+            if (pitch == null || pitch.Count != heldDrivers || pitch.Any(p => (bool?)p["passed"] != true))
+                throw new InvalidOperationException("Mallet first driver position is not held at its coupling-rod pitch after animation.");
             if (tender && ((bool?)row["hasSupportedTender"] != true || (bool?)state?["attached"] != true ||
                 (bool?)state?["sourceReady"] != true || ((int?)state?["sourceStaticCount"] ?? 0) <= 0 ||
+                (bool?)state?["undercarriagePresentationReady"] != true ||
+                (bool?)state?["underframeSteamConnection"]?["trailingSupportRegistered"] != true ||
                 ((int?)state?["unexpectedFranklinAssemblies"] ?? -1) != 0 ||
                 (bool?)state?["exhaustOutlet"] != true || (bool?)state?["visualEffects"] != true || (bool?)state?["audioEffects"] != true))
                 throw new InvalidOperationException("Powered tender geometry, source cache, exhaust, particle or audio bindings are missing.");
             if (!tender && state != null) throw new InvalidOperationException("Ordinary-tender case retained a powered engine.");
+            if (id == 47)
+            {
+                var pins = row["compactTriplexCrankPins"] as JArray;
+                if (pins == null || pins.Count != 6 || pins.Any(p => (bool?)p["enabled"] != true ||
+                    (bool?)p["mesh"] != true || (bool?)p["detailLod"] != true))
+                    throw new InvalidOperationException("Compact triplex needs six visible, meshed crank pins in detail LODs, including both front pins.");
+            }
+        }
+
+        internal static void ValidateOilCupPresentation(JObject row)
+        {
+            if ((bool?)row["ready"] != true)
+                throw new InvalidOperationException("Oilcup presentation did not finish initializing.");
+            if ((int?)row["uncoveredBigEnds"] != 0 || (bool?)row["coverageComplete"] != true)
+                throw new InvalidOperationException("Driven-wheel bearings lack dedicated oiling points.");
+            if ((bool?)row["countsMatch"] != true)
+                throw new InvalidOperationException("Oilcup count or unique refill-port ownership disagrees with the active bearings.");
+            if ((bool?)row["lidControlsBound"] != true)
+                throw new InvalidOperationException("Visible oilcup lid has no native control bound to its own door port.");
+            if ((float?)row["maximumProviderGapM"] > .002f)
+                throw new InvalidOperationException("Visible oilcup has drifted away from its provider.");
+            if ((float?)row["maximumGuideGapM"] > .035f)
+                throw new InvalidOperationException("Fixed guide oilcup has no nearby guide mounting surface.");
+            if ((float?)row["maximumCouplingSeatGapM"] > .002f)
+                throw new InvalidOperationException("Oilcup is floating away from its coupling-rod bearing.");
+            if ((bool?)row["nativeLubricatorAnimationBound"] != true)
+                throw new InvalidOperationException("Native lubricator ratchet has no active animation reference.");
         }
 
         private static IEnumerator RunAll(WheelRearranger runner, TrainCar subject, TrainCar control)
@@ -159,6 +213,9 @@ namespace RearrangedS282
                     try
                     {
                         if (!switched) throw new InvalidOperationException(runner.LastConventionalError ?? "Conversion refused; check the game log.");
+                        result["quartering"] = runner.QuarteringReport();
+                        if ((bool)result["quartering"]["passed"] != true)
+                            throw new InvalidOperationException("Left/right drivetrain quartering is incorrect; see quartering pairs and wheel angles.");
                         var changed = Capture(subject); result["converted"] = changed;
                         result["steamConnections"] = runner.SteamConnectionReport();
                         var connections = (JObject)result["steamConnections"];
@@ -179,14 +236,7 @@ namespace RearrangedS282
                             throw new InvalidOperationException("Calibrated reference pull exceeds the rated design pull/grip ceiling.");
                         var cupPresentation = runner.CaptureOilCupPresentation();
                         result["oilcupPresentation"] = cupPresentation;
-                        if ((bool?)cupPresentation["ready"] != true)
-                            throw new InvalidOperationException("Oilcup presentation did not finish initializing.");
-                        if ((bool?)cupPresentation["countsMatch"] != true)
-                            throw new InvalidOperationException("Oilcup count or unique refill-port ownership disagrees with the active bearings.");
-                        if ((float?)cupPresentation["maximumProviderGapM"] > .002f)
-                            throw new InvalidOperationException("Visible oilcup has drifted away from its provider.");
-                        if ((float?)cupPresentation["maximumGuideGapM"] > .035f)
-                            throw new InvalidOperationException("Fixed guide oilcup has no nearby guide mounting surface.");
+                        ValidateOilCupPresentation(cupPresentation);
                         if (!JToken.DeepEquals(before["oilcups"], changed["oilcups"]))
                             throw new InvalidOperationException("Native oilcup circuit or position binding changed.");
                         var wheels = WheelArrangement.LocomotiveWheels(id);

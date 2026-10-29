@@ -24,7 +24,6 @@ namespace RearrangedS282
     internal partial class WheelRearranger
     {
         private const string BigEndCupPrefix = "[Rearranged big end ";
-        private const float BigEndCupLift = .14f;   // native main-rod cup sits this far above the pin
         private readonly List<Transform> bigEndMarkers = new List<Transform>();
         private readonly List<GameObject> bigEndCups = new List<GameObject>();
 
@@ -98,8 +97,8 @@ namespace RearrangedS282
                     if (cup.cup != null) created.Add(cup);
                 }
                 Main.Logger.Log($"Big-end oiling: {created.Count} extra cups on {currentWA} " +
-                    $"({plan.allocation.Count(a => a >= 0 && a < BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} left, " +
-                    $"{plan.allocation.Count(a => a >= BigEndOilingPlan.NativePoints + BigEndOilingPlan.ExtraPerSide)} right).");
+                    $"({plan.sites.Where((s, i) => s.Left && plan.allocation[i] >= 0).Count()} left, " +
+                    $"{plan.sites.Where((s, i) => !s.Left && plan.allocation[i] >= 0).Count()} right).");
             }
             catch (Exception ex)
             {
@@ -111,13 +110,52 @@ namespace RearrangedS282
             yield return null; yield return null;
             if (generation != bigEndGeneration) yield break;
             var flow = car != null ? car.SimController?.simFlow : null;
-            if (flow == null) yield break;
-            foreach (var (cup, cupFeeders) in created)
+            if (flow == null) { ClearBigEndCups(); yield break; }
+            bool spawnedControl = false;
+            try
             {
-                if (cup == null) continue;
-                foreach (var feeder in cupFeeders)
-                    if (feeder != null && flow.TryGetPort(feeder.portId, out var port))
-                    { feeder.Deinit(); feeder.Init(port, null); feeder.SetupControlChangedListeners(); Append(feeders, feeder); }
+                foreach (var (_, cupFeeders) in created)
+                    foreach (var feeder in cupFeeders)
+                        if (feeder != null && feeder.GetComponent<DV.CabControls.ControlImplBase>() == null)
+                        {
+                            var spec = feeder.GetComponent<DV.CabControls.Spec.ControlSpec>();
+                            if (spec != null) { ControlsInstantiatorBase.Instance.Spawn(spec); spawnedControl = true; }
+                        }
+            }
+            catch (Exception ex)
+            {
+                Main.Logger.Error("Extra oilcup native controls could not be created: " + ex);
+                ClearBigEndCups(); yield break;
+            }
+            if (spawnedControl)
+            {
+                // Native Button implementations initialize their own model and
+                // input state before a feeder pushes the initial simulation value.
+                yield return null;
+                if (generation != bigEndGeneration) yield break;
+            }
+            try
+            {
+                foreach (var (cup, cupFeeders) in created)
+                {
+                    if (cup == null) continue;
+                    foreach (var feeder in cupFeeders)
+                    {
+                        if (feeder == null) continue;
+                        if (!flow.TryGetPort(feeder.portId, out var port))
+                            throw new InvalidOperationException("Extra oilcup lid simulation port is missing: " + feeder.portId);
+                        // ControlSpec normally spawns the platform's native Button
+                        // in Awake. Missing controls must not silently pass readiness.
+                        if (feeder.GetComponent<DV.CabControls.ControlImplBase>() == null)
+                            throw new InvalidOperationException("Extra oilcup lid has no native interaction control: " + feeder.name);
+                        feeder.Deinit(); feeder.Init(port, null); feeder.SetupControlChangedListeners(); Append(feeders, feeder);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Main.Logger.Error("Extra oilcup lid binding failed; reverting to native cups: " + ex);
+                ClearBigEndCups(); yield break;
             }
             BigEndCupsReady = true;
         }
@@ -186,7 +224,11 @@ namespace RearrangedS282
             // Follow the native coupling-rod clock, including its tiny authored rock.
             var marker = new GameObject("[Rearranged big end marker " + pointIndex + "]").transform;
             marker.SetParent(site.Rod, false);
-            marker.position = site.PinWorld + site.Drive.TransformVector(Vector3.up * BigEndCupLift);
+            if (!SeatBigEndMarker(marker, site.Rod, site.PinWorld, MeshFinder.Instance.NativeSideRodMesh))
+            {
+                Object.Destroy(marker.gameObject);
+                throw new InvalidOperationException("Oilcup has no visible coupling-rod bearing beneath it on " + currentWA);
+            }
             var provider = marker.gameObject.AddComponent<PositionSyncProvider>();
             provider.syncTag = tag;
             bigEndMarkers.Add(marker);
@@ -241,6 +283,20 @@ namespace RearrangedS282
                 .Where(t => t.name.StartsWith("[Rearranged big end marker ", StringComparison.Ordinal));
             foreach (var marker in bigEndMarkers.Concat(staleMarkers).Where(m => m != null).Distinct().ToArray()) { marker.gameObject.SetActive(false); Object.Destroy(marker.gameObject); }
             bigEndMarkers.Clear();
+        }
+
+        private static bool SeatBigEndMarker(Transform marker, Transform rod, Vector3 pinWorld, Mesh readable)
+        {
+            if (!OilCupSeat.TryCouplingTop(rod, pinWorld, readable, out var seat)) return false;
+            var nativeBearingMount = rod.Find("s282_mech_push_rod_to_connect/Oiling2");
+            if (nativeBearingMount != null && (seat - nativeBearingMount.position).magnitude < .00001f)
+            {
+                // Follow the connecting rod's own rock, not just the coupling
+                // rod's translating crank clock, throughout the full revolution.
+                marker.SetParent(nativeBearingMount, false); marker.localPosition = Vector3.zero;
+            }
+            else { marker.SetParent(rod, false); marker.position = seat; }
+            return true;
         }
 
         private static string RelativeTo(Transform root, Transform t)

@@ -50,6 +50,7 @@ static class Program
         public void Receive<T>(T packet)where T:BoundedPacket,new()=>((Action<T>)Handlers[typeof(T)])(Wire(packet));
     }
     static HelloPacket Hello()=>new(){Protocol=MultiplayerSync.Protocol,Identity=MultiplayerSync.BuildIdentity};
+    static void Request(Server server,RequestPacket request,IPlayer player){Time.unscaledTime+=.6f;server.Receive(request,player);}
     static WelcomePacket Welcome(long revision=1,bool canChange=true)=>new(){Protocol=MultiplayerSync.Protocol,Identity=MultiplayerSync.BuildIdentity,Accepted=true,CanChange=canChange,PolicyRevision=revision,Message="fixture permission"};
     static void PacketTests()
     {
@@ -59,8 +60,8 @@ static class Program
         var welcome=Wire(new WelcomePacket{Protocol=1,Identity="same-build",Accepted=true,CanChange=false,PolicyRevision=long.MaxValue,Message="locked"});
         Check(welcome.Valid&&welcome.Protocol==1&&welcome.Identity=="same-build"&&welcome.Accepted&&!welcome.CanChange&&welcome.PolicyRevision==long.MaxValue&&welcome.Message=="locked","Welcome binary round trip");
         var state=Wire(new StatePacket{Json="{\"car\":\"A\"}"});Check(state.Valid&&state.Json=="{\"car\":\"A\"}","State binary round trip");
-        var request=Wire(new RequestPacket{CarGuid="A-guid",Arrangement=47,ExpectedRevision=long.MaxValue});
-        Check(request.Valid&&request.CarGuid=="A-guid"&&request.Arrangement==47&&request.ExpectedRevision==long.MaxValue,"Request binary round trip");
+        var request=Wire(new RequestPacket{CarGuid="A-guid",Arrangement=47,ExpectedRevision=long.MaxValue,Epoch=long.MaxValue});
+        Check(request.Valid&&request.CarGuid=="A-guid"&&request.Arrangement==47&&request.ExpectedRevision==long.MaxValue&&request.Epoch==long.MaxValue,"Request binary round trip retains revision and epoch");
         Check(Wire(new RequestResultPacket{Message="refused"}).Message=="refused","Result binary round trip");
         Check(Wire(new ApplyFailurePacket{Message="native geometry failed"}).Message=="native geometry failed","Replica-failure binary round trip");
         foreach(var packet in new BoundedPacket[]{Hello(),Welcome(),new StatePacket{Json="payload"},new RequestPacket{CarGuid="guid",Arrangement=47,ExpectedRevision=12},new RequestResultPacket{Message="result"},new ApplyFailurePacket{Message="failure"}})
@@ -88,38 +89,49 @@ static class Program
         var reused=Wire(new StatePacket{Json="valid"});using(var reader=new BinaryReader(new MemoryStream(new byte[]{2,1})))reused.Deserialize(reader);
         Check(!reused.Valid,"Failed second Deserialize cannot retain Valid flag");
     }
+    static void SinglePlayerTests()
+    {
+        cases++;Bridge.Init();int hosts=MultiplayerSync.Hosts,clients=MultiplayerSync.Clients;
+        MultiplayerAPI.Instance.IsSinglePlayer=true;
+        var server=new Server();MultiplayerAPI.StartServer(server);
+        var loopback=new Client();MultiplayerAPI.StartClient(loopback);Bridge.Tick();
+        Check(MultiplayerSync.Hosts==hosts&&MultiplayerSync.Clients==clients,"Native internal single-player server and loopback do not enter multiplayer roles");
+        Check(MultiplayerSync.DrawNetworkGUI==null&&MultiplayerSync.BroadcastState==null&&MultiplayerSync.SendRequest==null,"Internal single-player mode installs no host controls or packet delegates");
+        Check(server.Handlers.Count==0&&loopback.Handlers.Count==0&&loopback.Sent.Count==0,"Single-player internal network has no S282 packets or handshake");
+        MultiplayerAPI.StopClient();MultiplayerAPI.StopServer();MultiplayerAPI.Instance.IsSinglePlayer=false;
+    }
     static void HostTests()
     {
         cases++;Bridge.Init();Bridge.Init();Check(MultiplayerAPI.Instance.CompatibilityCalls==1,"Bridge initializes once");
         var server=new Server();var a=new Player{PlayerId=1,Username="Alice"};var b=new Player{PlayerId=2,Username="Bob"};server.Connected.AddRange(new[]{a,b});
         MultiplayerAPI.StartServer(server);Check(MultiplayerSync.Hosts==1&&MultiplayerSync.DrawNetworkGUI!=null,"Server starts host authority and host UI");
-        var request=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=4};int requests=MultiplayerSync.HostRequests;
-        server.Receive(request,a);Check(MultiplayerSync.HostRequests==requests&&server.Sent.Last().packet is RequestResultPacket,"Unverified guest cannot call host mutation");
+        var request=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=4,Epoch=MultiplayerSync.SessionEpoch};int requests=MultiplayerSync.HostRequests;
+        Request(server,request,a);Check(MultiplayerSync.HostRequests==requests&&server.Sent.Last().packet is RequestResultPacket,"Unverified guest cannot call host mutation");
         server.Ready(a);Check(server.States(a)==0,"Ready event alone does not bypass handshake");
         var badProtocol=new Player{PlayerId=3,Username="WrongProtocol"};var badBuild=new Player{PlayerId=4,Username="WrongBuild"};server.Connect(badProtocol);server.Connect(badBuild);
         server.Receive(new HelloPacket{Protocol=99,Identity=MultiplayerSync.BuildIdentity},badProtocol);Check(!server.Welcome(badProtocol).Accepted&&server.States(badProtocol)==0,"Protocol mismatch gets no state snapshot");
         server.Receive(new HelloPacket{Protocol=MultiplayerSync.Protocol,Identity="other-build"},badBuild);Check(!server.Welcome(badBuild).Accepted,"Build mismatch refused");
-        Time.unscaledTime=1.1f;Bridge.Tick();Check(server.Kicked.Contains(badProtocol)&&server.Kicked.Contains(badBuild),"Mismatched packages are disconnected through native kick API after message grace");
+        Time.unscaledTime+=1.1f;Bridge.Tick();Check(server.Kicked.Contains(badProtocol)&&server.Kicked.Contains(badBuild),"Mismatched packages are disconnected through native kick API after message grace");
         server.Receive(Hello(),a);server.Receive(Hello(),b);Check(server.Welcome(a).Accepted&&server.Welcome(a).CanChange&&server.States(a)==2,"Verified guest gets permission and full snapshot");
-        server.Receive(request,a);Check(MultiplayerSync.HostRequests==requests+1,"Verified permitted guest reaches core mutation validator");
+        Request(server,request,a);Check(MultiplayerSync.HostRequests==requests+1,"Verified permitted guest reaches core mutation validator");
         cases++;GUILayout.Values["Alice may change arrangements"]=false;MultiplayerSync.DrawNetworkGUI();GUILayout.Values.Clear();
         Check(!server.Welcome(a).CanChange&&server.Welcome(b).CanChange,"Per-player lock updates only selected permission");
-        int states=server.States(a);server.Receive(request,a);Check(MultiplayerSync.HostRequests==requests+1&&server.States(a)==states+2,"Locked request refused, authoritative snapshot retained");
+        int states=server.States(a);Request(server,request,a);Check(MultiplayerSync.HostRequests==requests+1&&server.States(a)==states,"Locked request refused without a full snapshot replay");
         MultiplayerSync.BroadcastState("latest");Check(server.Sent.Count(p=>p.packet is StatePacket s&&s.Json=="latest")==2,"Locked guest still receives accepted state broadcasts");
-        server.Receive(request,b);Check(MultiplayerSync.HostRequests==requests+2,"Other guest retains radio access");
+        Request(server,request,b);Check(MultiplayerSync.HostRequests==requests+2,"Other guest retains radio access");
         GUILayout.Values["Allow guests to change arrangements"]=false;MultiplayerSync.DrawNetworkGUI();GUILayout.Values.Clear();
         Check(!server.Welcome(a).CanChange&&!server.Welcome(b).CanChange,"Global guest lock reaches all verified guests");
-        server.Receive(request,b);Check(MultiplayerSync.HostRequests==requests+2,"Global guest lock enforced at host boundary");
+        Request(server,request,b);Check(MultiplayerSync.HostRequests==requests+2,"Global guest lock enforced at host boundary");
         GUILayout.Values["Allow guests to change arrangements"]=true;MultiplayerSync.DrawNetworkGUI();GUILayout.Values.Clear();
         Check(!server.Welcome(a).CanChange&&server.Welcome(b).CanChange,"Unlock global control preserves individual lock");
         cases++;server.Disconnect(a);var reused=new Player{PlayerId=1,Username="Carol"};server.Connected.Add(reused);server.Ready(reused);
         Check(server.States(reused)==0,"Recycled player ID requires a fresh handshake");
         server.Receive(Hello(),reused);Check(server.Welcome(reused).CanChange,"Recycled player ID does not inherit departed player's lock");
         server.Receive(new HelloPacket{Protocol=99,Identity="wrong"},b);int sent=server.States(b);MultiplayerSync.BroadcastState("post-reject");Check(server.States(b)==sent,"Newly rejected build loses broadcast membership");
-        cases++;var silent=new Player{PlayerId=7,Username="Silent"};server.Connect(silent);server.Ready(silent);Time.unscaledTime=45;Bridge.Tick();Check(!server.Kicked.Contains(silent),"Missing handshake has full 45 second ready grace");
-        Time.unscaledTime=47;Bridge.Tick();Check(server.Kicked.Contains(silent),"Ready same-ID client without a handshake is disconnected after 45 seconds");
+        cases++;var silent=new Player{PlayerId=7,Username="Silent"};server.Connect(silent);server.Ready(silent);float readyAt=Time.unscaledTime;Time.unscaledTime=readyAt+44;Bridge.Tick();Check(!server.Kicked.Contains(silent),"Missing handshake has full 45 second ready grace");
+        Time.unscaledTime=readyAt+45.1f;Bridge.Tick();Check(server.Kicked.Contains(silent),"Ready same-ID client without a handshake is disconnected after 45 seconds");
         var departed=new Player{PlayerId=8,Username="Departed"};server.Connect(departed);server.Ready(departed);server.Disconnect(departed);var fresh=new Player{PlayerId=8,Username="Fresh"};server.Connect(fresh);server.Receive(Hello(),fresh);Time.unscaledTime=100;Bridge.Tick();Check(!server.Kicked.Contains(fresh),"Departed player's pending timeout cannot kick recycled compatible player ID");
-        cases++;server.Receive(new ApplyFailurePacket{Message="native apply failed"},fresh);requests=MultiplayerSync.HostRequests;server.Receive(request,fresh);Check(MultiplayerSync.HostRequests==requests,"Guest reporting failed native replica immediately loses mutation access");Time.unscaledTime=102;Bridge.Tick();Check(server.Kicked.Contains(fresh),"Failed native replica disconnects through native server kick API");
+        cases++;server.Receive(new ApplyFailurePacket{Message="native apply failed"},fresh);requests=MultiplayerSync.HostRequests;Request(server,request,fresh);Check(MultiplayerSync.HostRequests==requests,"Guest reporting failed native replica immediately loses mutation access");Time.unscaledTime+=1.1f;Bridge.Tick();Check(server.Kicked.Contains(fresh),"Failed native replica disconnects through native server kick API");
         int ended=MultiplayerSync.Ended;MultiplayerAPI.StopServer();Check(MultiplayerSync.DrawNetworkGUI==null&&MultiplayerSync.BroadcastState==null&&MultiplayerSync.Ended==ended+1,"Server stop releases callbacks and core session");
     }
     static void ClientTests()
@@ -130,7 +142,7 @@ static class Program
         Time.unscaledTime=2;Bridge.Tick();Check(client.Sent.OfType<HelloPacket>().Count()==2,"Unanswered handshake retries");
         int received=MultiplayerSync.Received.Count;client.Receive(new StatePacket{Json="early"});Check(MultiplayerSync.Received.Count==received,"Unordered state buffered before matching welcome");
         client.Receive(Welcome());Check(MultiplayerSync.CanChange&&MultiplayerSync.Received.Last()=="early","Matching welcome unlocks permission and drains early snapshot");
-        MultiplayerSync.SendRequest("car",47,91);var sent=client.Sent.OfType<RequestPacket>().Last();Check(sent.CarGuid=="car"&&sent.Arrangement==47&&sent.ExpectedRevision==91,"Client forwards expected state revision unchanged");
+        MultiplayerSync.SendRequest("car",47,91);var sent=client.Sent.OfType<RequestPacket>().Last();Check(sent.CarGuid=="car"&&sent.Arrangement==47&&sent.ExpectedRevision==91&&sent.Epoch==MultiplayerSync.SessionEpoch,"Client forwards expected state revision and current epoch");
         client.Receive(Welcome(3,false));client.Receive(Welcome(2,true));Check(!MultiplayerSync.CanChange,"Stale permission revision cannot undo host lock");
         client.Receive(new RequestResultPacket{Message="useful refusal"});Check(MultiplayerSync.Status=="useful refusal","Host request result reaches client status");
         int rejected=MultiplayerSync.Rejects,accepted=MultiplayerSync.Accepts;MultiplayerSync.ReportFailure(new string('x',3000));
@@ -146,10 +158,70 @@ static class Program
         client.Receive(Welcome());Check(client.Sent.OfType<HelloPacket>().Count()==1,"Early snapshot overflow explicitly requests fresh snapshot after welcome");
         client.Receive(new StatePacket{Json="fresh-snapshot"});Check(MultiplayerSync.Received.Last()=="fresh-snapshot","Client accepts replacement snapshot after bounded overflow");
         MultiplayerAPI.StopClient();
+        cases++;client=new Client();MultiplayerAPI.StartClient(client);
+        for(int n=0;n<1025;n++)client.Receive(new StatePacket{Json="early-"+n});
+        client.Receive(new StatePacket{Json="invalid-after-overflow"});
+        MultiplayerSync.OnReceiveState=json=>MultiplayerSync.ReportFailure("fixture invalid host state");
+        client.Receive(Welcome());MultiplayerSync.OnReceiveState=null;
+        Check(client.Sent.OfType<ApplyFailurePacket>().Count()==1&&!client.Sent.OfType<HelloPacket>().Any(),"Failed early replica reports once without retrying an overflow resnapshot");
+        MultiplayerAPI.StopClient();
+    }
+    static void TrafficAndSessionTests()
+    {
+        cases++;Time.unscaledTime=200;var server=new Server();MultiplayerAPI.StartServer(server);
+        var player=new Player{PlayerId=10,Username="Eve"};
+        server.Receive(Hello(),player);Check(server.Sent.Count==0,"Premature hello before native connected callback is ignored for safe retry");
+        server.Connect(player);server.Receive(Hello(),player);Check(server.Welcome(player).Accepted,"Hello after native connected callback accepts normally");
+        var request=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=4,Epoch=MultiplayerSync.SessionEpoch};
+        int requests=MultiplayerSync.HostRequests,states=server.States(player),results=server.Sent.Count;
+        server.Receive(request,player);for(int n=0;n<1000;n++)server.Receive(request,player);
+        Check(MultiplayerSync.HostRequests==requests+1,"Burst of 1001 requests reaches core only once within half-second window");
+        Check(server.Sent.Count<=results+2&&server.States(player)==states,"Rate-limit notices are bounded and request spam sends no state snapshots");
+        cases++;Time.unscaledTime+=.6f;GUILayout.Values["Eve may change arrangements"]=false;MultiplayerSync.DrawNetworkGUI();GUILayout.Values.Clear();
+        server.Receive(request,player);Check(MultiplayerSync.HostRequests==requests+1&&server.States(player)==states,"Permission denial never amplifies into a full snapshot");
+        GUILayout.Values["Eve may change arrangements"]=true;MultiplayerSync.DrawNetworkGUI();GUILayout.Values.Clear();
+        Time.unscaledTime+=.6f;MultiplayerSync.HostRequestResult=false;
+        var stale=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=3,Epoch=MultiplayerSync.SessionEpoch};
+        int targeted=MultiplayerSync.TargetedSnapshots.Count;server.Receive(stale,player);
+        Check(MultiplayerSync.TargetedSnapshots.Count==targeted+1&&server.States(player)==states+1,"Stale revision sends only the requested car's current state");
+        Time.unscaledTime+=.6f;server.Receive(stale,player);Check(server.States(player)==states+1,"Repeated stale request cannot amplify targeted recovery traffic");
+        cases++;Time.unscaledTime+=5f;states=server.States(player);requests=MultiplayerSync.HostRequests;
+        var oldEpoch=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=4,Epoch=MultiplayerSync.SessionEpoch-1};
+        server.Receive(oldEpoch,player);Check(MultiplayerSync.HostRequests==requests&&server.States(player)==states+2,"Old epoch never mutates and gets one bounded current snapshot");
+        Time.unscaledTime+=.6f;server.Receive(oldEpoch,player);Check(server.States(player)==states+2,"Old-epoch recovery cannot replay all cars repeatedly");
+        states=server.States(player);for(int n=0;n<1000;n++)server.Receive(Hello(),player);
+        Check(server.States(player)==states,"Repeated matching hellos cannot serialize snapshots immediately");
+        Time.unscaledTime+=2f;Bridge.Tick();Check(server.States(player)==states,"Pending overflow resnapshot obeys full-snapshot interval");
+        Time.unscaledTime+=3f;Bridge.Tick();Check(server.States(player)==states+2,"Throttled hello recovery is queued rather than lost");
+        MultiplayerSync.HostRequestResult=true;
+        cases++;var wrong=new Player{PlayerId=11,Username="Wrong"};server.Connect(wrong);
+        server.Receive(new HelloPacket{Protocol=99,Identity="wrong"},wrong);float mismatchAt=Time.unscaledTime;
+        for(int n=0;n<50;n++){Time.unscaledTime=mismatchAt+.9f;server.Receive(new HelloPacket{Protocol=99,Identity="wrong"},wrong);}
+        Time.unscaledTime=mismatchAt+1.2f;Bridge.Tick();Check(server.Kicked.Contains(wrong),"Repeated wrong-build hellos cannot postpone a scheduled disconnect");
+        cases++;var canonical=new Player{PlayerId=12,Username="FreshWrapper"};server.Connect(canonical);
+        var packetWrapper=new Player{PlayerId=12,Username="FreshWrapper"};
+        server.Receive(new HelloPacket{Protocol=99,Identity="wrong"},packetWrapper);Time.unscaledTime+=1.1f;Bridge.Tick();
+        Check(server.Kicked.Contains(canonical)&&!server.Kicked.Contains(packetWrapper),"Delayed kick uses native cached player identity when packet callback has a fresh wrapper");
+        cases++;var second=new Server();MultiplayerAPI.StartServer(second);requests=MultiplayerSync.HostRequests;
+        server.Receive(request,player);server.Receive(Hello(),player);
+        Check(MultiplayerSync.HostRequests==requests&&second.Sent.Count==0,"Old server packet handlers cannot feed a replacement session");
+        var current=new Player{PlayerId=10,Username="NewEve"};second.Connect(current);second.Receive(Hello(),current);
+        Check(second.Welcome(current).CanChange,"Replacement server does not inherit old permissions or request limits");
+        MultiplayerAPI.Instance.IsSinglePlayer=true;MultiplayerAPI.StartServer(new Server());
+        Check(MultiplayerSync.DrawNetworkGUI==null&&MultiplayerSync.BroadcastState==null,"Transition back to native single player removes host callbacks");
+        MultiplayerAPI.StopServer();MultiplayerAPI.Instance.IsSinglePlayer=false;
+        cases++;var oldClient=new Client();MultiplayerAPI.StartClient(oldClient);var newClient=new Client();MultiplayerAPI.StartClient(newClient);
+        int accepts=MultiplayerSync.Accepts,rejects=MultiplayerSync.Rejects,received=MultiplayerSync.Received.Count;
+        oldClient.Receive(Welcome(999));oldClient.Receive(new StatePacket{Json="old-session"});
+        Check(MultiplayerSync.Accepts==accepts&&MultiplayerSync.Received.Count==received,"Old client welcome/state cannot initialize a replacement connection");
+        newClient.Receive(Welcome());oldClient.Receive(new WelcomePacket{Protocol=99,Identity="wrong",PolicyRevision=1000});
+        newClient.Receive(new StatePacket{Json="new-session"});
+        Check(MultiplayerSync.Rejects==rejects&&MultiplayerSync.Received.Last()=="new-session","Old client rejection cannot break current accepted session");
+        MultiplayerAPI.StopClient();
     }
     static int Main(string[] args)
     {
-        PacketTests();HostTests();ClientTests();
+        PacketTests();SinglePlayerTests();HostTests();ClientTests();TrafficAndSessionTests();
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"Bridge.cs","Packets.cs"},limitations="Actual bridge and packet source compiled unchanged against managed MPAPI, Unity and core-boundary doubles. This validates codec and adapter policy, not the real transport, native player identity, live simulation or Unity rendering."};
         File.WriteAllText(args[0],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine($"Bridge/packet validation passed {checks} checks across {cases} cases.");return 0;
     }

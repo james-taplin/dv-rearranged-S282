@@ -31,10 +31,7 @@ namespace RearrangedS282
                 if (applied) MultiplayerSync.OnApplied(car, id);
                 return applied;
             }
-            finally
-            {
-                if (!applied) MultiplayerSync.OnSwitchFailed(car);
-            }
+            finally { if (!applied) MultiplayerSync.OnSwitchFailed(car); }
 #else
             if (id != (int)WheelArrangementType.s282 && id != (int)WheelArrangementType.s284)
             {

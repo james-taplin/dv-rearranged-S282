@@ -21,15 +21,14 @@ namespace RearrangedS282
 		{
 			get { return _instance ??= new MeshFinder(); }
 		}
-		private static readonly String dvFolderPath = Directory.GetParent(Path.GetDirectoryName(Main.ModPath)).Parent.FullName;
-		private static readonly String assetStudioPath = Path.Combine(Main.ModPath, @"AssetStudioModCLI_net472_win64_contained\");
-		private static readonly String assetStudioEXEName = "AssetStudioModCLI.exe";
-		private static readonly String importPathFull = System.IO.Path.Combine(dvFolderPath, @"DerailValley_Data\resources.assets");
-		private static readonly String exportPathFull = System.IO.Path.Combine(Main.ModPath, @"assets");
+		private static readonly MeshExportPaths exportPaths = new MeshExportPaths(Main.ModPath, UnityEngine.Application.dataPath);
+		private static string assetStudioPath => exportPaths.ToolDirectory;
+		private static string exportPathFull => exportPaths.ExportDirectory;
 		private static readonly String sideRodMeshName = "s282_mech_wheels_connect";
 
 		public Mesh TwoAxleSideRodMesh
 		{ get; private set; }
+		internal Mesh NativeSideRodMesh { get; private set; }
 		public Mesh ThreeAxleSideRodMesh
 		{ get; private set; }
 		public Mesh FiveSixAxleSideRodMesh
@@ -71,9 +70,13 @@ namespace RearrangedS282
 			if (mesh == null) throw new ArgumentNullException(nameof(mesh));
 			string name = mesh.name.Replace(" Instance", "").Replace("(Clone)", "").Trim();
 			if (name != "s282_mech_push_rod_to_connect" && name != "s282_mech_push_rod_to_connect_LOD1" &&
-				name != "s282_mech_cutoff_to_cylinder_rod" && name != "s282_mech_cutoff_to_cylinder_rod_LOD1")
+				name != "s282_mech_cutoff_to_cylinder_rod" && name != "s282_mech_cutoff_to_cylinder_rod_LOD1" &&
+				name != "bogie2_LOD0" && name != "bogie2_LOD1")
 				throw new InvalidOperationException("Unsupported native retarget mesh: " + name);
-			generateMeshFromGameFiles(name);
+			// Tender cradle LODs are static native assets. Reuse the local cache
+			// when switching arrangements rather than launching two extractors again.
+			bool tenderCradle = name == "bogie2_LOD0" || name == "bogie2_LOD1";
+			if (!tenderCradle || !File.Exists(Path.Combine(exportPathFull, name + ".obj"))) generateMeshFromGameFiles(name);
 			var readable = new OBJLoader().Load(Path.Combine(exportPathFull, name + ".obj"));
 			if (readable == null || !readable.isReadable || readable.vertexCount == 0)
 			{
@@ -207,38 +210,19 @@ namespace RearrangedS282
 		//and puts it into an OBJ file for us to load later
 		private void generateMeshFromGameFiles(string meshName)
 		{
-			//https://stackoverflow.com/questions/1469764/run-command-prompt-commands
-
-			//Ideally we'd just run the AssetStudio executable directly. But our version
-			//of AssetStudio is 32 bit, and DV is 64 bit (I think it's impossible to run
-			//a 32 bit executable directly from a 64 bit process).
-
-			//The proper solution would be to either:
-			//	- recompile AssetStudio as a net472 64 bit execuable
-			//		- for some reason, UnityModManager didn't like the AssetStudio
-			//		  version for 6.0 or above; maybe because of folders within folders?
-			//	- add AssetStudio as a library
-			//	- wait till the altfuture eula releases
-
-			var process = new System.Diagnostics.Process();
-			process.StartInfo.FileName = Path.Combine(assetStudioPath, assetStudioEXEName);
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = false;
-			process.StartInfo.CreateNoWindow = true;
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.Arguments =
-				$"\"{importPathFull}\" " +
-				$"-o \"{exportPathFull}\" " +
-				$"-t mesh --filter-by-name \"{meshName}\"";
-			process.Start();
+			using var process = new System.Diagnostics.Process { StartInfo = exportPaths.CreateStartInfo(meshName) };
+			try { process.Start(); }
+			catch (Win32Exception ex)
+			{
+				throw new InvalidOperationException("Rearranged S282 could not start its bundled mesh exporter at " +
+					exportPaths.Executable + ". Reinstall the complete Nexus ZIP; check antivirus quarantine history if the executable is removed. " + ex.Message, ex);
+			}
 			if (!process.WaitForExit(60000))
 			{
 				process.Kill();
 				throw new InvalidOperationException("Rod mesh extraction timed out after 60 seconds.");
 			}
 			if (process.ExitCode != 0) throw new InvalidOperationException("Rod mesh extraction failed: " + process.ExitCode);
-			process.Dispose();
-			//Main.Logger.Log(process.StandardOutput.ReadToEnd());
 		}
 
 		//In previous versions of the mod, AssetStudio generated a bunch of log files. This cleans them up
@@ -346,6 +330,8 @@ namespace RearrangedS282
 			}
 			if (sideRodMesh.vertexCount < 508 || sideRodMesh.triangles.Length < 524 * 3)
 				throw new InvalidOperationException("S282 connecting rod topology is incompatible with the original geometry recipes.");
+			NativeSideRodMesh = sideRodMesh;
+			UnityEngine.Object.DontDestroyOnLoad(sideRodMesh);
 
 			//Load the new two axle siderod mesh into the game
 			TwoAxleSideRodMesh = UnityEngine.Object.Instantiate(sideRodMesh);

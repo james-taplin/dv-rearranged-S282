@@ -1,0 +1,139 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using RearrangedS282;
+using UnityEngine;
+using DV.Wheels;
+using DV.Simulation.Ports;
+class Program
+{
+    static int checks, cases, pairs;
+    static void Check(bool ok, string why) { checks++; if (!ok) throw new Exception(why); }
+    static Animator Make(string name, Transform parent, RuntimeAnimatorController controller, int wheels = 4)
+    {
+        var go = new GameObject(name); go.transform.SetParent(parent); var a = go.Add<Animator>(); a.runtimeAnimatorController = controller;
+        a.state = new() { fullPathHash = controller.State, normalizedTime = 0 };
+        for (int i = 1; i <= wheels; i++) new GameObject("s282_wheels_driving_" + i).transform.SetParent(go.transform);
+        var reader = go.Add<AnimatorPortReader>(); reader.parameterName = "Cutoff"; reader.portId = "reverser";
+        return a;
+    }
+    static void Main(string[] args)
+    {
+        var native = new RuntimeAnimatorController { State = DriveQuartering.NativeState };
+        // The old order reproduces the loss under Unity's documented state-reset contract.
+        var frame = new GameObject("inactive articulation frame"); frame.SetActive(false);
+        var oldL = Make("old L", null, native); var oldR = Make("old R", null, native);
+        DriveQuartering.Play(oldL, native.State, .75f, false); DriveQuartering.Play(oldR, native.State, 0, false);
+        oldL.transform.SetParent(frame.transform); oldR.transform.SetParent(frame.transform); frame.SetActive(true);
+        oldL.Evaluate(); oldR.Evaluate();
+        Check(MathF.Abs(Quaternion.Angle(oldL.transform.children[0].localRotation, oldR.transform.children[0].localRotation)) < .01f,
+            "Old apply-before-parenting scenario did not reproduce lost quartering");
+        Check(DriveQuartering.ErrorDegrees(0, 0, .75f, 0) > 89f, "Collapsed pair escaped phase check");
+
+        foreach (float cycle in new[] { -12.875f, -1f, -.1f, 0, .125f, .5f, .999f, 17.25f })
+        foreach (int hash in new[] { DriveQuartering.NativeState, DriveQuartering.FranklinState, DriveQuartering.Franklin4444State })
+        {
+            var controller = new RuntimeAnimatorController { State = hash };
+            var l = Make("left", frame.transform, controller); var r = Make("right", frame.transform, controller);
+            DriveQuartering.Play(l, hash, cycle + .75f, true); DriveQuartering.Play(r, hash, cycle, true);
+            foreach (float delta in new[] { 0f, .021f, -.043f, .155f })
+            {
+                l.Evaluate(delta); r.Evaluate(delta);
+                Check(DriveQuartering.ErrorDegrees(l.state.normalizedTime, r.state.normalizedTime, .75f, 0) < .002f, "Cycle/forward/reverse phase drift");
+                Check(MathF.Abs(Quaternion.Angle(l.transform.children[0].localRotation, r.transform.children[0].localRotation) - 90) < .01f, "Pose quartering failed");
+            }
+            int count = l.plays + r.plays;
+            frame.SetActive(false); frame.SetActive(true); l.Evaluate(); r.Evaluate();
+            Check(DriveQuartering.ErrorDegrees(l.state.normalizedTime, r.state.normalizedTime, .75f, 0) < .002f, "Disable/re-enable lost quartering");
+            Check(count == l.plays + r.plays, "Quartering seeks during normal playback");
+            Check(MathF.Abs(DriveQuartering.Capture(l, .75f) - DriveQuartering.Cycle(l.state.normalizedTime - .75f)) < .0001f, "Capture failed");
+        }
+
+        foreach (int id in Enumerable.Range(0, WheelArrangement.SupportedCount))
+        foreach (bool tender in PoweredTenderPolicy.Supports(id) ? new[] { false, true } : new[] { false })
+        {
+            cases++;
+            var car = new GameObject("car"); var l = Make("native L", car.transform, native); var r = Make("native R", car.transform, native);
+            var rotation = car.Add<PoweredWheelRotationViaAnimation>();
+            rotation.animatorSetups = new[] { new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair { animator = l, startTimeOffset = .75f },
+                new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair { animator = r, startTimeOffset = 0 } };
+            var owner = new WheelRearranger(car, l, r);
+            int engines = WheelArrangement.IsArticulatedId(id) ? WheelArrangement.LocomotiveWheels(id).Length - 2 : 1;
+            var controller = id == 32 ? AssetBundleLoader.FranklinBAnimCtrl4444 :
+                id == 31 || id == 38 || id == 40 || id == 47 ? AssetBundleLoader.FranklinBAnimCtrl : native;
+            l.runtimeAnimatorController = r.runtimeAnimatorController = controller;
+            for (int i = 1; i < engines; i++)
+            {
+                var a = Make("clone L", car.transform, controller, 5); var b = Make("clone R", car.transform, controller, 5);
+                rotation.animatorSetups = rotation.animatorSetups.Concat(new[] {
+                    new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair { animator = a, startTimeOffset = .75f },
+                    new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair { animator = b, startTimeOffset = 0 } }).ToArray();
+            }
+            owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
+            Animator tl = null, tr = null;
+            if (tender)
+            {
+                tl = Make("tender L", null, native); tr = Make("tender R", null, native);
+                // A stale, unquartered host must not contaminate the tender pair.
+                r.state.normalizedTime = l.state.normalizedTime;
+                var clock = new GameObject("clock").Add<TenderDriveAnimation>();
+                var sim = new ArticulatedSimulation(); sim.MiddleEngine.chuffFrequencyReadOut.Value = 12; sim.MainEngine.crankRpm.Value = -100;
+                clock.Initialize(sim, tl, tr, l, r, .75f, 0);
+                tl.Evaluate(); tr.Evaluate(); owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
+                int speed = Animator.StringToHash("SpeedMultiplier");
+                Check(tl.floats[speed] == -3 && tr.floats[speed] == -3, "Tender's existing frequency/direction calculation changed");
+                GroupCrankAnimation.Owned.Add(tl); GroupCrankAnimation.Owned.Add(tr);
+                tl.SetFloat(speed, 0); tr.SetFloat(speed, 0);
+                typeof(TenderDriveAnimation).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(clock, null);
+                Check(tl.floats[speed] == 0 && tr.floats[speed] == 0, "Tender fallback must not overwrite an independent native phase owner");
+                GroupCrankAnimation.Owned.Clear();
+                typeof(TenderDriveAnimation).GetMethod("OnDisable", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(clock, null);
+                Check(tl.floats[speed] == 0 && tr.floats[speed] == 0 && !tl.GetComponents<AnimatorPortReader>().Last().bound,
+                    "Tender teardown/reader cleanup failed");
+            }
+            owner.Arrangement(id, tl, tr);
+            if(id==33)
+            {
+                // The actual driverless layout hides both drivetrain roots.
+                l.gameObject.SetActive(false);r.gameObject.SetActive(false);
+                Check((bool)owner.QuarteringReport()["passed"] && ((JArray)owner.QuarteringReport()["pairs"]).Count==0,
+                    "Driverless layout must have no active engine pairs");
+                l.gameObject.SetActive(true);r.gameObject.SetActive(true);owner.Arrangement(10);
+                owner.Apply(.25f,false);l.Evaluate();r.Evaluate();
+                Check((bool)owner.QuarteringReport()["passed"],"Driverless return to stock restores quartering");
+                continue;
+            }
+            var report = owner.QuarteringReport();
+            Check((bool)report["passed"], "Valid active-pair matrix failed: " + id + " " + report);
+            pairs += ((JArray)report["pairs"]).Count;
+            r.state.normalizedTime = l.state.normalizedTime; r.Evaluate();
+            Check(!(bool)owner.QuarteringReport()["passed"], "Structural phase/pose fault escaped");
+            owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
+            r.transform.children[0].localRotation = l.transform.children[0].localRotation;
+            Check(!(bool)owner.QuarteringReport()["passed"], "Correct clocks hid incorrect wheel poses");
+            r.Evaluate();
+            r.gameObject.SetActive(false);
+            Check(!(bool)owner.QuarteringReport()["passed"], "Missing right engine passed");
+            r.gameObject.SetActive(true); r.Evaluate();
+            // Model returning native flags with the geometry snapshot, then stock.
+            l.runtimeAnimatorController = r.runtimeAnimatorController = native;
+            l.keepAnimatorControllerStateOnDisable = r.keepAnimatorControllerStateOnDisable = false;
+            rotation.animatorSetups = rotation.animatorSetups.Take(2).ToArray(); owner.Arrangement(10);
+            owner.Apply(.25f, false); l.Evaluate(); r.Evaluate();
+            Check((bool)owner.QuarteringReport()["passed"] && !l.keepAnimatorControllerStateOnDisable && !r.keepAnimatorControllerStateOnDisable,
+                "Stock restore retained mod retention flags or lost quartering");
+        }
+        foreach (float bad in new[] { float.NaN, float.PositiveInfinity, float.NegativeInfinity })
+        { bool rejected = false; try { DriveQuartering.Cycle(bad); } catch (ArgumentOutOfRangeException) { rejected = true; } Check(rejected, "Nonfinite phase accepted"); }
+        Check(DriveQuartering.Capture(null, .75f) == 0, "Uninitialized source should use a safe initial cycle");
+        int linkageChecks = LinkageReportFixture.Run();
+        var result = new { passed = true, checks, linkageChecks, arrangementTenderCases = cases, measuredEnginePairs = pairs,
+            oldOrderFailedAsExpected = true, runtimeExercised = false,
+            limitation = "Actual production phase helper, pair diagnostics and tender initialization against managed Unity lifecycle/pose stand-ins. Does not validate real Animator scheduling, rendered linkage or game lifecycle." };
+        File.WriteAllText(args[0], JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+        Console.WriteLine(JsonSerializer.Serialize(result));
+    }
+}

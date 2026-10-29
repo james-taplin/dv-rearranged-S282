@@ -37,6 +37,16 @@ internal static partial class Program {
             Check(CarChanger.Game.ComponentProcessor.HideCalls==1,"Real Harmony: unrelated modification keeps native body hiding");
             other.Owner.ReturnToDefault();
             Check(PatchAppliedChange.PhysicalResetCalls==1,"Real Harmony: unrelated modification keeps its native reset callback");
+            foreach(bool unique in new[]{true,false}) {
+                var excluded=new Fixture(unique?"Unique S282":"Custom heavy steam");excluded.Car.uniqueCar=unique;
+                if(!unique)excluded.Car.carLivery=new(){id="LocoS282A"};
+                int applyCalls=PatchAppliedChange.PhysicalApplyCalls,resetCalls=PatchAppliedChange.PhysicalResetCalls,hideCalls=CarChanger.Game.ComponentProcessor.HideCalls;
+                excluded.Owner.ApplyS282730A(excluded.Owner.Config);
+                Check(PatchAppliedChange.PhysicalApplyCalls==applyCalls+1&&excluded.Roots().Length==0,"Real Harmony: excluded Delta car retains native apply: "+unique);
+                Check(CarChanger.Game.ComponentProcessor.HideCalls==hideCalls+1,"Real Harmony: excluded Delta car retains native hiding: "+unique);
+                excluded.Owner.ReturnToDefault();
+                Check(PatchAppliedChange.PhysicalResetCalls==resetCalls+1,"Real Harmony: excluded Delta car retains native reset: "+unique);
+            }
             var report=new JObject{["passed"]=true,["checks"]=new JArray(Checks),["harmonyVersion"]=typeof(Harmony).Assembly.GetName().Version.ToString(),
                 ["limitations"]="Actual installed Harmony runtime patches production Delta adapter and visual source. Optional-mod methods and Unity/native hierarchy are stand-ins; no game/Mono execution or rendering tested."};
             Directory.CreateDirectory(args[0]);File.WriteAllText(System.IO.Path.Combine(args[0],"validation.json"),report.ToString());

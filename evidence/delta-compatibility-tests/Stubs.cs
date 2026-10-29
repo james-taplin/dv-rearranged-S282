@@ -194,8 +194,18 @@ public sealed class TrainCar : UnityEngine.MonoBehaviour {
     public Bogie[] Bogies;
     public DV.ThingTypes.TrainCarType carType=DV.ThingTypes.TrainCarType.LocoSteamHeavy;
     public bool isExploded;
+    public bool uniqueCar;
+    public DV.ThingTypes.TrainCarLivery carLivery=DV.Globals.G.Types.Normal;
 }
-namespace DV.ThingTypes {public enum TrainCarType {LocoSteamHeavy,Other}}
+namespace DV.ThingTypes {
+    public enum TrainCarType {LocoSteamHeavy,Other}
+    public sealed class TrainCarLivery {public string id;}
+    public sealed class DVObjectModel {
+        public readonly TrainCarLivery Normal=new(){id="LocoS282A"};
+        public bool TryGetLivery(string id,out TrainCarLivery livery){livery=id=="LocoS282A"?Normal:null;return livery!=null;}
+    }
+}
+namespace DV {public sealed class Globals {public static Globals G=new();public DV.ThingTypes.DVObjectModel Types=new();}}
 namespace RearrangedS282 {
     public static class Main {public static readonly TestLogger Logger=new();}
     public sealed class TestLogger {

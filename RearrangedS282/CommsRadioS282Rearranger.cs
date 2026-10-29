@@ -23,8 +23,6 @@ namespace RearrangedS282
 			SelectWheelArrangement,
 		}
 
-		// Radios are per-player objects. Resolve this mode's owner before copying
-		// its display, sounds and laser origin; another radio may be awake too.
 		private CommsRadioController Controller => GetComponent<CommsRadioController>();
 
 		public ButtonBehaviourType ButtonBehaviour { get; private set; }
@@ -67,7 +65,7 @@ namespace RearrangedS282
             if (Stage2RuntimeChecks.Running) { ReapplyStatus = "Wait for the structural test to finish before reapplying."; return; }
 #endif
 			var target = SettingsTarget;
-			if (target == null || target.carType != TrainCarType.LocoSteamHeavy || signalOrigin == null ||
+			if (!S282Target.IsNormal(target) || signalOrigin == null ||
 				(target.transform.position - signalOrigin.position).magnitude > SIGNAL_RANGE)
 			{
 				ReapplyStatus = "Highlight the S282 with the wheel-arranger radio before opening UMM.";
@@ -187,7 +185,7 @@ namespace RearrangedS282
 				return;
 			}
 
-			if (car.carType != TrainCarType.LocoSteamHeavy)
+			if (!S282Target.IsNormal(car))
 			{
 				Debug.LogError("Tried to rearrange something that wasn't an S282.");
 				return;
@@ -288,8 +286,7 @@ namespace RearrangedS282
 						trainCar = TrainCar.Resolve(Hit.transform.root);
 
 						//Only highlight this traincar if it's an unexploded S282
-						if (trainCar != null
-							&& trainCar.carType == TrainCarType.LocoSteamHeavy
+						if (S282Target.IsNormal(trainCar)
 							&& !trainCar.transform.GetComponent<ExplosionModelHandler>().usingExplodedModel)
 						{
 							PointToCar(trainCar);
@@ -332,7 +329,7 @@ namespace RearrangedS282
 			switch (CurrentState)
 			{
 				case State.SelectS282:
-					if (PointedCar != null && PointedCar.carType == TrainCarType.LocoSteamHeavy)
+					if (S282Target.IsNormal(PointedCar))
 					{
 						SelectedCar = PointedCar;
 						PointedCar = null;
@@ -408,7 +405,7 @@ namespace RearrangedS282
 				Main.Logger.Error("Tried to select null locomotive");
 				return false;
 			}
-			if (SelectedCar.carType != TrainCarType.LocoSteamHeavy)
+			if (!S282Target.IsNormal(SelectedCar))
 			{
 				Main.Logger.Error("Tried to rearrange something that wasn't an S282");
 				return false;

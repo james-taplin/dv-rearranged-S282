@@ -55,11 +55,8 @@ namespace RearrangedS282
             poweredDefinition = car.transform.Find("[sim]/poweredAxles").GetComponent<LocoSim.Definitions.ConfigurablePortDefinition>();
             originalDefinition = poweredDefinition.value;
 #if B99_ALL_STANDARD
-            // Multiplayer mirrors all live native ports, including the host's
-            // selected powered-axle count, before our arrangement may arrive.
-            // On first replica setup the untouched per-car definition still
-            // describes the stock baseline. Accept it only when every physical
-            // stock count independently agrees; retain the guard otherwise.
+            // Native MP may mirror the selected axle port before the custom
+            // layout arrives. Only accept the intact physical stock baseline.
             if (MultiplayerSync.IsClient && MultiplayerSync.ApplyingRemote &&
                 originalShared.numOfAxles == 6 && car.NumberOfAxles == 6 &&
                 originalPowered.Length == 4 && originalDefinition == 4f)
@@ -74,9 +71,7 @@ namespace RearrangedS282
             originalAnimationRadii = rotations.Select(r => r.wheelRadius).ToArray();
             originalCircumferences = rotations.Select(r => r.wheelCircumference).ToArray();
             if (originalShared.numOfAxles != car.NumberOfAxles || originalPowered.Length != 4 || originalPort != 4f)
-                throw new InvalidOperationException("Stage 2 requires an unmodified four-driver S282 with consistent axle data. " +
-                    $"Car {car.ID}: entity axles={originalShared.numOfAxles}, car axles={car.NumberOfAxles}, " +
-                    $"powered wheels={originalPowered.Length}, powered-axle port={originalPort}.");
+                throw new InvalidOperationException($"Stage 2 requires an unmodified four-driver S282: entity axles={originalShared.numOfAxles}, car axles={car.NumberOfAxles}, powered wheels={originalPowered.Length}, powered-axle port={originalPort}.");
             ConventionalPhysics.RpmPerMetrePerSecond(originalForceRadius);
         }
 

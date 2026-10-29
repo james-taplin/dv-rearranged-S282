@@ -55,12 +55,13 @@ namespace RearrangedS282
             return string.Equals(id as string, DeltaId, StringComparison.Ordinal);
         }
 
-        private static bool IsDeltaChange(object change) => change != null && configField != null && IsDelta(configField.GetValue(change));
+        private static bool IsDeltaChange(object change) => change != null && configField != null &&
+            IsDelta(configField.GetValue(change)) && S282Target.IsNormal(carField?.GetValue(change) as TrainCar);
 
         private static void BeginApply(object __instance, object config, out object __state)
         {
             __state = applyingDelta;
-            if (IsDelta(config)) applyingDelta = __instance;
+            if (IsDelta(config) && S282Target.IsNormal(carField?.GetValue(__instance) as TrainCar)) applyingDelta = __instance;
         }
 
         private static Exception EndApply(object __state, Exception __exception)
@@ -81,6 +82,7 @@ namespace RearrangedS282
             if (!IsDelta(__1)) return true;
             var owner = __0 as Component;
             var car = carField.GetValue(__0) as TrainCar;
+            if (!S282Target.IsNormal(car)) return true;
             var body = bodyField.GetValue(__0) as GameObject;
             try
             {

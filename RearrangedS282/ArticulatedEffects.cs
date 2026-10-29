@@ -113,7 +113,9 @@ namespace RearrangedS282
             foreach (var particle in copy.GetComponentsInChildren<ParticleSystem>(true))
                 Safe(() => particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear));
             copy.SetActive(false);
-            copy.transform.SetParent(null, true);
+            // These are owned clones, so native deferred destruction can leave
+            // them in place. OnDisable may be running inside tender/car pooling;
+            // detaching a child during that parent's activation change is illegal.
             UnityEngine.Object.Destroy(copy);
         }
 
@@ -389,8 +391,9 @@ namespace RearrangedS282
                         throw new InvalidOperationException("Erie tender outlet mapping unavailable.");
                     return tenderLocal;
                 }
-                return rearranger.TryMapArticulatedOutlet(origin, centre, secondary.Index, out var mapped)
+                var local = rearranger.TryMapArticulatedOutlet(origin, centre, secondary.Index, out var mapped)
                     ? mapped : carLocal + Vector3.back * EngineSeparation;
+                return local + rearranger.FranklinRearOutletOffset(centre, secondary.Index);
             }
             private ParticleBinding particles;
             private Transform particleTender;

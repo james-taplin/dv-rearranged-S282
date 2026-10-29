@@ -6,14 +6,6 @@ using DV.Simulation.Cars;
 using DV.Wheels;
 using LocoSim.Implementations;
 
-namespace RearrangedS282
-{
-    internal static class MultiplayerSync
-    {
-        internal static bool IsClient, ApplyingRemote;
-    }
-}
-
 namespace UnityEngine
 {
     public class Object
@@ -178,7 +170,6 @@ public sealed class BrakeFixture{public float brakingFactor;}
 public sealed class GroundFixture{public bool IsGrounded=true;}
 public sealed class TrainCar:UnityEngine.MonoBehaviour
 {
-    public string ID="physics-fixture";
     public EntityFixture entity=new EntityFixture();
     public SimController SimController=new SimController();
     public int numberOfAxles=6;

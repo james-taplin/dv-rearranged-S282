@@ -311,7 +311,10 @@ namespace RearrangedS282
                 }
                 target.Sort((a, b) => a.Angle.CompareTo(b.Angle));
                 var angles = source.Select(k => k.Angle).Concat(target.Select(k => k.Angle)).OrderBy(a => a).ToList();
-                for (int i = angles.Count - 1; i > 0; i--) if (angles[i] - angles[i - 1] < .000001f) angles.RemoveAt(i);
+                // Near-coincident authored/source angles otherwise create strips
+                // narrower than float precision at body-space Z around 10 m.
+                // Weld within 0.006 degrees (under 0.02 mm at these radii).
+                for (int i = angles.Count - 1; i > 0; i--) if (angles[i] - angles[i - 1] < .0001f) angles.RemoveAt(i);
                 int width = angles.Count + 1, rows = 17, count = width * rows;
                 var positions = new Vector3[count]; var normals = new Vector3[count];
                 var startRing = new AdapterKnot[width]; var endRing = new AdapterKnot[width];

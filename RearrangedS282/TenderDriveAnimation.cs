@@ -15,14 +15,17 @@ namespace RearrangedS282
         private Animator left, right;
         private readonly List<AnimatorPortReader> cutoffReaders = new List<AnimatorPortReader>();
         private static readonly int Speed = Animator.StringToHash("SpeedMultiplier");
-        internal void Initialize(ArticulatedSimulation sim, Animator l, Animator r, Animator sourceL, Animator sourceR)
+        internal void Initialize(ArticulatedSimulation sim, Animator l, Animator r, Animator sourceL, Animator sourceR,
+            float leftOffset, float rightOffset)
         {
             simulation = sim; left = l; right = r;
+            float cycle = DriveQuartering.Capture(sourceL, leftOffset);
             foreach (var pair in new[] { (target: l, source: sourceL), (target: r, source: sourceR) })
             {
-                // Native left/right phase offset retained at attachment.
-                var state = pair.source.GetCurrentAnimatorStateInfo(0);
-                pair.target.Play(0, 0, state.normalizedTime % 1f);
+                // The tender is its own engine. Establish quartering from the
+                // native offsets even if a host Animator has a queued pose.
+                DriveQuartering.Play(pair.target, DriveQuartering.NativeState,
+                    cycle + (pair.target == l ? leftOffset : rightOffset), true);
                 // The native host reader exists even while a Franklin controller
                 // is selected (and that controller has no Cutoff parameter).
                 // Reuse its authored port/modifiers with the tender's native gear.
@@ -41,8 +44,8 @@ namespace RearrangedS282
             float frequency = simulation != null && simulation.IsTenderEngine && simulation.IsMiddleActive
                 ? simulation.MiddleEngine.chuffFrequencyReadOut.Value / (simulation.MiddleEngine.numCylinders * 2f) : 0f;
             float direction = simulation != null ? Mathf.Sign(simulation.MainEngine.crankRpm.Value) : 1f;
-            if (left != null) left.SetFloat(Speed, frequency * direction);
-            if (right != null) right.SetFloat(Speed, frequency * direction);
+            if (left != null && !GroupCrankAnimation.Owns(left)) left.SetFloat(Speed, frequency * direction);
+            if (right != null && !GroupCrankAnimation.Owns(right)) right.SetFloat(Speed, frequency * direction);
         }
         private void OnDisable()
         {

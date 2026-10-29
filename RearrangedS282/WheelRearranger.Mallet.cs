@@ -131,6 +131,7 @@ namespace RearrangedS282
             UpdateMalletSparks();
             ConfigureNativeArticulation((int)WheelArrangementType.s2662, mallet.PinZ);
             BindArticulatedLods();
+            foreach (var drive in new[] { driveL, driveR, malletRearL, malletRearR }) HoldMalletDriverPitch(drive);
             Main.Logger.Log($"Articulated S282 2-6-6-2: {2f * mallet.Radius:0.00} m drivers; engines at {mallet.FrontOffset:0.00}/{mallet.RearOffset:0.00}, " +
                 $"pin {mallet.PinZ:0.00}, rear cylinders {mallet.RearCylinderFront:0.00}, last driver {mallet.RearLastDriver:0.00}, trailing axle {mallet.TrailingZ:0.00} (body z).");
         }
@@ -269,12 +270,8 @@ namespace RearrangedS282
             var pairs = clones.Select((clone, i) => (source: i % 2 == 0 ? lfAnimator : rfAnimator, target: clone.GetComponent<Animator>())).ToArray();
             articulatedRotation.animatorSetups = articulatedOriginalAnimators.Concat(pairs.Select(p =>
                 new PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair {animator=p.target, startTimeOffset=Offset(p.source)})).ToArray();
-            // Every engine shares the native crank phase, as on the 2-4-4-2.
-            foreach (var pair in pairs)
-            {
-                var state = pair.source.GetCurrentAnimatorStateInfo(0);
-                pair.target.Play(state.shortNameHash, 0, state.normalizedTime % 1f);
-            }
+            // Quartering is applied after parenting and activation; reading the
+            // front Animator here could still return its pre-conversion state.
         }
 
         private void BindMalletBrakeHeat() => BindEngineBrakeHeat(new[] { malletRearL, malletRearR }, 1, 2, 3);
@@ -415,12 +412,15 @@ namespace RearrangedS282
                 parameters = Source.parameters.Where(x => targetHashes.Contains(x.nameHash)).ToArray();
             }
             foreach (var parameter in parameters)
+            {
+                if (parameter.name == "SpeedMultiplier" && GroupCrankAnimation.Owns(Target)) continue;
                 switch (parameter.type)
                 {
                     case AnimatorControllerParameterType.Float: Target.SetFloat(parameter.nameHash, Source.GetFloat(parameter.nameHash)); break;
                     case AnimatorControllerParameterType.Int: Target.SetInteger(parameter.nameHash, Source.GetInteger(parameter.nameHash)); break;
                     case AnimatorControllerParameterType.Bool: Target.SetBool(parameter.nameHash, Source.GetBool(parameter.nameHash)); break;
                 }
+            }
         }
     }
 }

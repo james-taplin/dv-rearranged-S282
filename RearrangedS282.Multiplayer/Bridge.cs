@@ -17,10 +17,19 @@ namespace RearrangedS282.Multiplayer
         private static bool initialized, accepted, rejected, earlyOverflow;
         private static bool allowGuests = true;
         private static float nextHello;
+        private static float nextTrafficTick;
         private static long policyRevision, receivedPolicyRevision;
+        private const float RequestInterval = .5f, NoticeInterval = 2f, SnapshotInterval = 5f;
+        private static readonly HashSet<byte> connected = new HashSet<byte>();
         private static readonly HashSet<byte> verified = new HashSet<byte>();
         private static readonly HashSet<byte> blocked = new HashSet<byte>();
         private static readonly List<string> earlyStates = new List<string>();
+        private sealed class PeerTraffic
+        {
+            internal float NextHello, NextRequest, NextNotice, NextRecovery, NextSnapshot;
+            internal bool PendingSnapshot;
+        }
+        private static readonly Dictionary<byte, PeerTraffic> traffic = new Dictionary<byte, PeerTraffic>();
         private sealed class PendingKick
         {
             internal IPlayer Player;
@@ -51,21 +60,41 @@ namespace RearrangedS282.Multiplayer
 
         private static void OnServerStarted(IServer instance)
         {
+            // Multiplayer also runs an internal server/loopback client for its
+            // ordinary single-player mode. That is still offline S282 play.
+            if (MultiplayerAPI.Instance.IsSinglePlayer)
+            {
+                if (server != null) OnServerStopped();
+                client = null;
+                accepted = rejected = earlyOverflow = false;
+                earlyStates.Clear();
+                MultiplayerSync.DrawNetworkGUI = null;
+                MultiplayerSync.EndSession();
+                return;
+            }
             if (ReferenceEquals(server, instance)) return;
+            if (server != null) OnServerStopped();
             server = instance;
             client = null;
-            verified.Clear(); blocked.Clear(); earlyStates.Clear(); pendingKicks.Clear();
-            allowGuests = true; policyRevision = 1;
-            instance.RegisterSerializablePacket<HelloPacket>(OnHello);
-            instance.RegisterSerializablePacket<RequestPacket>(OnRequest);
-            instance.RegisterSerializablePacket<ApplyFailurePacket>(OnApplyFailure);
+            accepted = rejected = earlyOverflow = false;
+            connected.Clear(); verified.Clear(); blocked.Clear(); earlyStates.Clear(); pendingKicks.Clear(); traffic.Clear();
+            allowGuests = true; policyRevision = 1; nextTrafficTick = 0;
+            // Old API instances retain their packet registrations until their
+            // transport is disposed. Never let one feed a replacement session.
+            instance.RegisterSerializablePacket<HelloPacket>((packet, player) => { if (ReferenceEquals(server, instance)) OnHello(packet, player); });
+            instance.RegisterSerializablePacket<RequestPacket>((packet, player) => { if (ReferenceEquals(server, instance)) OnRequest(packet, player); });
+            instance.RegisterSerializablePacket<ApplyFailurePacket>((packet, player) => { if (ReferenceEquals(server, instance)) OnApplyFailure(packet, player); });
             instance.OnPlayerConnected += OnPlayerConnected;
             instance.OnPlayerReady += OnPlayerReady;
             instance.OnPlayerDisconnected += OnPlayerDisconnected;
             MultiplayerSync.BeginHost();
             MultiplayerSync.BroadcastState = Broadcast;
             MultiplayerSync.DrawNetworkGUI = DrawHostGUI;
-            foreach (IPlayer player in instance.Players.Where(p => p != null && !p.IsHost && p.IsLoaded).ToArray()) OnPlayerReady(player);
+            foreach (IPlayer player in instance.Players.Where(p => p != null && !p.IsHost).ToArray())
+            {
+                connected.Add(player.PlayerId);
+                if (player.IsLoaded) OnPlayerReady(player);
+            }
             Log("Host arrangement authority started; guests may request changes.");
         }
 
@@ -76,7 +105,7 @@ namespace RearrangedS282.Multiplayer
             server.OnPlayerReady -= OnPlayerReady;
             server.OnPlayerDisconnected -= OnPlayerDisconnected;
             server = null;
-            verified.Clear(); blocked.Clear(); earlyStates.Clear(); pendingKicks.Clear();
+            connected.Clear(); verified.Clear(); blocked.Clear(); earlyStates.Clear(); pendingKicks.Clear(); traffic.Clear();
             MultiplayerSync.BroadcastState = null;
             MultiplayerSync.DrawNetworkGUI = null;
             MultiplayerSync.EndSession();
@@ -84,9 +113,23 @@ namespace RearrangedS282.Multiplayer
 
         private static bool CanChange(IPlayer player) => player.IsHost || (allowGuests && !blocked.Contains(player.PlayerId));
 
+        private static PeerTraffic TrafficFor(IPlayer player)
+        {
+            if (!traffic.TryGetValue(player.PlayerId, out var limits)) traffic[player.PlayerId] = limits = new PeerTraffic();
+            return limits;
+        }
+
         private static void OnHello(HelloPacket packet, IPlayer player)
         {
-            if (server == null || player == null || !packet.Valid) return;
+            if (server == null || player == null || player.IsHost || !packet.Valid || !connected.Contains(player.PlayerId)) return;
+            if (pendingKicks.TryGetValue(player.PlayerId, out var pending) && !pending.AwaitingHello) return;
+            var limits = TrafficFor(player);
+            if (Time.unscaledTime < limits.NextHello)
+            {
+                if (verified.Contains(player.PlayerId)) limits.PendingSnapshot = true;
+                return;
+            }
+            limits.NextHello = Time.unscaledTime + NoticeInterval;
             bool match = packet.Protocol == MultiplayerSync.Protocol && packet.Identity == MultiplayerSync.BuildIdentity;
             if (!match)
             {
@@ -97,7 +140,6 @@ namespace RearrangedS282.Multiplayer
                 Log("Rejected arrangement handshake from " + player.Username + ": different build or protocol.");
                 return;
             }
-            if (pendingKicks.TryGetValue(player.PlayerId, out var pending) && !pending.AwaitingHello) return;
             pendingKicks.Remove(player.PlayerId);
             verified.Add(player.PlayerId);
             SendWelcome(player, true, PermissionMessage(player));
@@ -114,6 +156,7 @@ namespace RearrangedS282.Multiplayer
 
         private static void ScheduleKick(IPlayer player, string reason)
         {
+            if (pendingKicks.TryGetValue(player.PlayerId, out var pending) && !pending.AwaitingHello) return;
             reason = BoundedReason(reason);
             server.SendWhisperChatMessage(reason, player);
             pendingKicks[player.PlayerId] = new PendingKick
@@ -143,6 +186,7 @@ namespace RearrangedS282.Multiplayer
         private static void OnPlayerReady(IPlayer player)
         {
             if (server == null || player == null || player.IsHost) return;
+            connected.Add(player.PlayerId);
             if (!verified.Contains(player.PlayerId))
             {
                 // The native mod check compares IDs only; an older S282 with the
@@ -164,20 +208,27 @@ namespace RearrangedS282.Multiplayer
         private static void OnPlayerDisconnected(IPlayer player)
         {
             if (player == null) return;
+            connected.Remove(player.PlayerId);
             verified.Remove(player.PlayerId);
             blocked.Remove(player.PlayerId); // IDs are recycled for later players.
             pendingKicks.Remove(player.PlayerId);
+            traffic.Remove(player.PlayerId);
         }
 
         private static void OnPlayerConnected(IPlayer player)
         {
-            // Also makes the API construct its canonical cached wrapper before
-            // early Hello packets, whose handler receives a fresh wrapper.
+            // The native event supplies the canonical cached wrapper; packet
+            // handlers can receive a fresh wrapper for that same player.
             OnPlayerDisconnected(player);
+            if (player != null && !player.IsHost) connected.Add(player.PlayerId);
         }
 
         private static void SendSnapshot(IPlayer player)
         {
+            var limits = TrafficFor(player);
+            if (Time.unscaledTime < limits.NextSnapshot) { limits.PendingSnapshot = true; return; }
+            limits.PendingSnapshot = false;
+            limits.NextSnapshot = Time.unscaledTime + SnapshotInterval;
             foreach (string json in MultiplayerSync.Snapshot())
                 server.SendSerializablePacketToPlayer(new StatePacket { Json = json }, player);
         }
@@ -196,27 +247,55 @@ namespace RearrangedS282.Multiplayer
 
         private static void OnRequest(RequestPacket packet, IPlayer player)
         {
-            if (server == null || player == null || !packet.Valid) return;
+            if (server == null || player == null || player.IsHost || !packet.Valid || !connected.Contains(player.PlayerId)) return;
+            var limits = TrafficFor(player);
+            float now = Time.unscaledTime;
+            if (now < limits.NextRequest)
+            {
+                if (now >= limits.NextNotice)
+                {
+                    limits.NextNotice = now + NoticeInterval;
+                    server.SendSerializablePacketToPlayer(new RequestResultPacket { Message = "Please wait briefly before another arrangement request." }, player);
+                }
+                return;
+            }
+            limits.NextRequest = now + RequestInterval;
             string reason;
             bool changed;
             if (!verified.Contains(player.PlayerId)) { changed = false; reason = "Wait for a matching Rearranged S282 handshake."; }
             else if (!CanChange(player)) { changed = false; reason = "The host has locked arrangement changes for you."; }
+            else if (packet.Epoch != MultiplayerSync.SessionEpoch) { changed = false; reason = "The host's arrangement state refreshed. Wait for synchronization, then select the locomotive again."; }
             else changed = MultiplayerSync.TryHostRequest(packet.CarGuid, packet.Arrangement, packet.ExpectedRevision, out reason);
             server.SendSerializablePacketToPlayer(new RequestResultPacket
-            { Message = changed ? "Arrangement applied by the host." : "Arrangement refused: " + reason }, player);
-            if (!changed && verified.Contains(player.PlayerId)) SendSnapshot(player);
+            { Message = changed ? "Arrangement applied by the host." : "Arrangement refused: " + BoundedReason(reason) }, player);
+            // A permission/operating-condition refusal changes no state. Recover
+            // only stale state, with a per-player bound on serialization/traffic.
+            if (!changed && verified.Contains(player.PlayerId) && CanChange(player) && now >= limits.NextRecovery)
+            {
+                if (packet.Epoch != MultiplayerSync.SessionEpoch)
+                {
+                    limits.NextRecovery = now + SnapshotInterval;
+                    SendSnapshot(player);
+                }
+                else if (packet.ExpectedRevision != MultiplayerSync.RevisionFor(packet.CarGuid))
+                {
+                    limits.NextRecovery = now + NoticeInterval;
+                    foreach (string json in MultiplayerSync.SnapshotFor(packet.CarGuid))
+                        server.SendSerializablePacketToPlayer(new StatePacket { Json = json }, player);
+                }
+            }
         }
 
         private static void OnClientStarted(IClient instance)
         {
-            if (server != null || MultiplayerAPI.Instance.IsHost || ReferenceEquals(client, instance)) return;
+            if (MultiplayerAPI.Instance.IsSinglePlayer || server != null || MultiplayerAPI.Instance.IsHost || ReferenceEquals(client, instance)) return;
             client = instance;
             accepted = rejected = earlyOverflow = false;
             nextHello = 0f; receivedPolicyRevision = -1;
             earlyStates.Clear();
-            instance.RegisterSerializablePacket<WelcomePacket>(OnWelcome);
-            instance.RegisterSerializablePacket<StatePacket>(OnState);
-            instance.RegisterSerializablePacket<RequestResultPacket>(OnResult);
+            instance.RegisterSerializablePacket<WelcomePacket>(packet => { if (ReferenceEquals(client, instance)) OnWelcome(packet); });
+            instance.RegisterSerializablePacket<StatePacket>(packet => { if (ReferenceEquals(client, instance)) OnState(packet); });
+            instance.RegisterSerializablePacket<RequestResultPacket>(packet => { if (ReferenceEquals(client, instance)) OnResult(packet); });
             MultiplayerSync.BeginClient();
             MultiplayerSync.SendRequest = SendRequest;
             MultiplayerSync.ReportFailure = ReportFailure;
@@ -235,8 +314,15 @@ namespace RearrangedS282.Multiplayer
 
         internal static void Tick()
         {
-            if (server != null)
+            if (server != null && Time.unscaledTime >= nextTrafficTick)
             {
+                nextTrafficTick = Time.unscaledTime + .25f;
+                foreach (var entry in traffic.ToArray())
+                {
+                    if (!entry.Value.PendingSnapshot || Time.unscaledTime < entry.Value.NextSnapshot || !verified.Contains(entry.Key)) continue;
+                    var player = server.GetPlayer(entry.Key);
+                    if (player != null && !player.IsHost) SendSnapshot(player);
+                }
                 foreach (var entry in pendingKicks.ToArray())
                 {
                     IPlayer player = server.GetPlayer(entry.Key);
@@ -276,8 +362,9 @@ namespace RearrangedS282.Multiplayer
             if (earlyOverflow)
             {
                 earlyOverflow = false;
-                client.SendSerializablePacketToServer(new HelloPacket
-                { Protocol = MultiplayerSync.Protocol, Identity = MultiplayerSync.BuildIdentity });
+                if (!rejected)
+                    client.SendSerializablePacketToServer(new HelloPacket
+                    { Protocol = MultiplayerSync.Protocol, Identity = MultiplayerSync.BuildIdentity });
             }
         }
 
@@ -298,7 +385,7 @@ namespace RearrangedS282.Multiplayer
         {
             if (client == null || !accepted || rejected) return;
             client.SendSerializablePacketToServer(new RequestPacket
-            { CarGuid = guid, Arrangement = arrangement, ExpectedRevision = revision });
+            { CarGuid = guid, Arrangement = arrangement, ExpectedRevision = revision, Epoch = MultiplayerSync.SessionEpoch });
         }
 
         private static void OnResult(RequestResultPacket packet)

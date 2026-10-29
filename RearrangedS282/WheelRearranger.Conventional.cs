@@ -38,14 +38,12 @@ namespace RearrangedS282
         private bool TrySwitchConventional(int id)
         {
             LastSwitchRestoredStock = false;
-            if (!WheelArrangement.IsSupportedId(id) || skipWheelArrangementChange || conventionalFault) return false;
+            bool remote = MultiplayerSync.ApplyingRemote;
+            if (!WheelArrangement.IsSupportedId(id) || skipWheelArrangementChange || conventionalFault ||
+                !remote && independentDrive != null && !independentDrive.Settled) return false;
             loco = GetComponent<TrainCar>();
             var sim = loco?.SimController;
-            // Replicas may first see the host's settled choice while already in
-            // motion or derailed. Only host-validated replay bypasses these
-            // operating checks; native graph/entity readiness still applies.
-            bool remote = MultiplayerSync.ApplyingRemote;
-            if (loco == null || loco.carType != TrainCarType.LocoSteamHeavy || sim?.simFlow == null ||
+            if (!S282Target.IsNormal(loco) || sim?.simFlow == null ||
                 !sim.simFlow.TryGetPort("throttle.EXT_IN", out var throttle) ||
                 sim.drivingForce == null || sim.wheelslipController == null || loco.adhesionController == null ||
                 (!remote && (loco.derailed || loco.isExploded || Mathf.Abs(loco.GetForwardSpeed()) > .01f ||
@@ -64,6 +62,7 @@ namespace RearrangedS282
             skipWheelArrangementChange = true;
             try
             {
+                ReleaseIndependentDrive();
                 DeltaTrailingTruckCompatibility.Suspend(loco);
                 DetachTenderEngine();
                 if (stockGeometry == null)
@@ -98,6 +97,7 @@ namespace RearrangedS282
                             .Where(t => !originalTransforms.Contains(t) && originalTransforms.Contains(t.parent)).ToArray();
                     }
                 }
+                float quarteringCycle = CaptureQuarteringCycle();
                 if (cylinderCalibration == null)
                     cylinderCalibration = new CylinderCalibration(sim.simFlow.OrderedSimComps.OfType<LocoSim.Implementations.ReciprocatingSteamEngine>().ToArray(),
                         stage2Physics.DriverRadius, stage2Physics.OriginalSlipCoefficient,
@@ -105,7 +105,7 @@ namespace RearrangedS282
                 if (id == 10)
                 {
                     if (wantsTender) { preparedGeometry.Restore(); EnsurePoweredTenderSource(); }
-                    RestoreConventionalStock();
+                    RestoreConventionalStock(quarteringCycle);
                 }
                 else
                 {
@@ -201,8 +201,11 @@ namespace RearrangedS282
                     ApplySteamConnections(id);
                     RefreshConventionalRollingAudio();
                 }
+                if (id != 10) ApplyDriverQuartering(quarteringCycle, true);
                 SelectPoweredTender(wantsTender);
+                ConfigureIndependentDrive(quarteringCycle);
                 UpdateExternalControlPositions();
+                RestoreNativeLubricatorAnimation();
                 ApplyOilCupMounts();
                 B99Oilcups.Bind(loco, loco.loadedExternalInteractables);
                 RefreshBigEndOiling(loco.loadedExternalInteractables);
@@ -222,14 +225,7 @@ namespace RearrangedS282
             {
                 LastConventionalError = ex.Message;
                 Main.Logger.LogException("Conventional trial conversion failed; restoring stock", ex);
-                try
-                {
-                    if (stockGeometry != null)
-                    {
-                        RestoreConventionalStock();
-                        LastSwitchRestoredStock = true;
-                    }
-                }
+                try { if (stockGeometry != null) { RestoreConventionalStock(); LastSwitchRestoredStock = true; } }
                 catch (Exception restore) { Main.Logger.LogException("Stock restoration failed", restore); }
                 // An incomplete setup must never be repeated over partially generated geometry.
                 conventionalFault = stockGeometry != null && preparedGeometry == null;
@@ -238,8 +234,10 @@ namespace RearrangedS282
             finally { skipWheelArrangementChange = false; DeltaTrailingTruckCompatibility.Refresh(loco); }
         }
 
-        private void RestoreConventionalStock()
+        private void RestoreConventionalStock(float? quarteringCycle = null)
         {
+            float cycle = quarteringCycle ?? CaptureQuarteringCycle();
+            ReleaseIndependentDrive();
             DetachTenderEngine();
             poweredTenderSelected = false;
             cylinderCalibration?.Restore();
@@ -254,6 +252,7 @@ namespace RearrangedS282
             Suspend4144Geometry();
             SuspendDriverLayout();
             stockGeometry.Restore();
+            ApplyDriverQuartering(cycle, false);
             // Restore original parent ownership before deactivating generated frames.
             foreach (var t in generatedRoots) if (t != null) t.gameObject.SetActive(false);
             stage2Physics.Restore();
@@ -286,6 +285,7 @@ namespace RearrangedS282
         private void OnDestroy()
         {
             MultiplayerSync.Forget(GetComponent<TrainCar>());
+            ReleaseIndependentDrive();
             cylinderCalibration?.Restore();
             ClearBigEndCups();
             SuspendSteamConnections();
@@ -336,7 +336,9 @@ namespace RearrangedS282
                     bool enabled = r.enabled; restore.Add(() => { if (r != null) r.enabled = enabled; }); }
                 foreach (var a in car.GetComponentsInChildren<Animator>(true))
                 { if (DeltaTrailingTruckCompatibility.IsPresentation(a.transform) || ArticulatedEffects.IsOwnedPresentation(a.transform)) continue;
-                    var controller = a.runtimeAnimatorController; restore.Add(() => { if (a != null) a.runtimeAnimatorController = controller; }); }
+                    var controller = a.runtimeAnimatorController;
+                    bool keepState = a.keepAnimatorControllerStateOnDisable;
+                    restore.Add(() => { if (a != null) { a.runtimeAnimatorController = controller; a.keepAnimatorControllerStateOnDisable = keepState; } }); }
                 foreach (var j in car.GetComponentsInChildren<Joint>(true))
                 { if (DeltaTrailingTruckCompatibility.IsPresentation(j.transform)) continue;
                     var anchor = j.connectedAnchor; bool auto = j.autoConfigureConnectedAnchor;

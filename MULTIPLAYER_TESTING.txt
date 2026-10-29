@@ -1,5 +1,5 @@
-Rearranged S282 B99 2.0.8-alpha
-Initial multiplayer compatibility test
+Rearranged S282 B99 2.0.9-beta
+Multiplayer and independent-wheelslip beta
 29 October 2026
 
 Status
@@ -18,7 +18,7 @@ create a second train-motion network protocol.
 Preparation
 
 Use a disposable sandbox save. Every participant must install this exact ZIP,
-including both RearrangedS282 DLLs, and the same Multiplayer version. The build
+including both RearrangedS282 DLLs, and DV Multiplayer 0.1.16.0-beta. The build
 reference was Multiplayer 0.1.16.0, API 1.1. Start with that version and record
 the actual version from each log. Multiplayer supplies MultiplayerAPI.dll;
 do not copy the build-only API into this mod or replace Multiplayer's API.
@@ -85,7 +85,7 @@ mesh are ready, without needing another radio change. There must be no local
 random layout applied before the host snapshot. Repeat with a newly spawned
 S282 after all players are connected and with host random arrangements on.
 
-5. Physics and native simulation
+5. Physics, independent wheelslip and native simulation
 
 Compare the same locomotive on host and clients using stock 2-8-2, a rigid
 layout with a different number of drivers, a two-engine Mallet, the three-
@@ -100,6 +100,11 @@ driving force or drain the shared boiler twice. Run the same route with host
 and guest at the controls if Multiplayer permits ownership changes. Record
 the current simulation owner if the Multiplayer UI exposes it. Repeat after
 changing ownership; look for force jumps, stalled engines and duplicate audio.
+
+For two- and three-engine locomotive layouts, briefly induce wheel slip and
+compare group RPM, rods, quartering, sparks and sound across all PCs. Try a late
+join during steady movement. The powered tender has no independent slip state;
+its previous pooled/manual traction limits still apply.
 
 For the powered tender, compare coupled, uncoupled, reconnected and ordinary
 tender states. The rear engine, exhaust, cylinder cocks, sound and wheel motion
@@ -162,5 +167,5 @@ cause without the matching current test evidence.
 
 Do not run the existing automated structural test during multiplayer sessions.
 Use ordinary single-player for that stationary test until multiplayer runtime
-behaviour has been accepted. This alpha does not install Multiplayer, push a
+behaviour has been accepted. This beta does not install Multiplayer, push a
 repository, publish a release or claim live multiplayer acceptance.

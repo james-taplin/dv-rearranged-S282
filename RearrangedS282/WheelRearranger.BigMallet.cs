@@ -180,6 +180,8 @@ namespace RearrangedS282
             UpdateMalletSparks();
             ConfigureNativeArticulation((int)kind, bigMallet.PinZ);
             BindArticulatedLods();
+            if (spec.Front == 3) { HoldMalletDriverPitch(driveL); HoldMalletDriverPitch(driveR); }
+            if (spec.Rear == 3) { HoldMalletDriverPitch(rearL); HoldMalletDriverPitch(rearR); }
             Main.Logger.Log($"Articulated S282 {spec.Name}: scale {s:0.000}, {2f * bigMallet.Radius:0.00} m drivers; " +
                 $"engines at {bigMallet.FrontOffset:0.00}/{bigMallet.RearOffset:0.00}, pin {bigMallet.PinZ:0.00}, " +
                 $"rear cylinders {bigMallet.RearCylinderFront:0.00}, last driver {bigMallet.RearLastDriver:0.00}" +

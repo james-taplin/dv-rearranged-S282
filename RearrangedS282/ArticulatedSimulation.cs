@@ -67,7 +67,7 @@ namespace RearrangedS282
 
         private static HarmonyMethod Hook(string method) => new HarmonyMethod(typeof(ArticulatedSimulation), method);
 
-        private static bool IsS282(TrainCar car) => car != null && car.carType == TrainCarType.LocoSteamHeavy &&
+        private static bool IsS282(TrainCar car) => S282Target.IsNormal(car) &&
             car.transform.Find("LocoS282A_Body") != null;
 
         private static void BeforeInitialize(SimController __instance, TrainCar trainCar, DamageController damageController)
@@ -205,7 +205,7 @@ namespace RearrangedS282
                 extendedOrder.Add(item);
                 if (ReferenceEquals(item, main)) extendedOrder.AddRange(new SimComponentDefinition[] { aux, auxMiddle, torque, exhaust });
             }
-            ownedGraph.executionOrder = extendedOrder.ToArray();
+            ownedGraph.executionOrder = IndependentDriveReplication.AppendDefinitions(definitions, extendedOrder.ToArray());
             ownedGraph.connections = wires.ToArray();
             ownedGraph.portReferenceConnections = refs.ToArray();
             originalDamagers = damage.mechanicalPTDamagerPortIds;
@@ -290,10 +290,7 @@ namespace RearrangedS282
             // Every visual engine group uses the same native powered-wheel phase.
             engine.crankRotation = MainEngine.crankRotation;
             engine.prevCrankRotation = MainEngine.crankRotation;
-            // A late replica may already have the host's port snapshot. Keep
-            // that phase; the host's dirty-port stream need not resend it.
-            if (MultiplayerSync.IsSimulationAuthority)
-                engine.crankRotationReadOut.Value = MainEngine.crankRotationReadOut.Value;
+            if (MultiplayerSync.IsSimulationAuthority) engine.crankRotationReadOut.Value = MainEngine.crankRotationReadOut.Value;
             engine.Active = true;
         }
 
@@ -379,6 +376,7 @@ namespace RearrangedS282
         }
         private void OnHealthChanged(float value)
         {
+            if (!MultiplayerSync.IsSimulationAuthority) return;
             if (!Active && isCylinderCrackedReadOut.Value > 0f && value > .95f && healthStateExtIn.Diff > 0f)
             {
                 isCylinderCrackedReadOut.Value = 0f;
@@ -411,9 +409,6 @@ namespace RearrangedS282
         {
             Active = false;
             TenderTorque = TenderExhaust = 0f;
-            // Only the simulation owner clears live outputs. Replicas retain
-            // values from native Multiplayer port snapshots across geometry
-            // setup, reapply and tender attachment changes.
             if (!MultiplayerSync.IsSimulationAuthority) return;
             torqueOut.Value = 0f;
             torqueVelocity = 0f;

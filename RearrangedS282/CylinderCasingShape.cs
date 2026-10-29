@@ -16,6 +16,20 @@ namespace RearrangedS282
         internal const float NativeValveY = 1.3470917f;
         internal const float NativeRearFaceZ = 8.84f;
 
+        internal const float FranklinRearNoseShorteningM = .12f;
+
+        // The 4-4-4-4 front crank can enter the following cylinder nose on
+        // articulation. Shorten only the forward barrel transition: the rear
+        // piston face and shaft mounts stay at their authored Z. The adaptive
+        // steam inlet is reseated from the corrected mesh by SteamCylinder.
+        // The cap and its bolts translate together rather than being scaled.
+        internal static Vector3 CompactFranklinRearNose(Vector3 point)
+        {
+            Finite(point.x); Finite(point.y); Finite(point.z);
+            return new Vector3(point.x, point.y,
+                point.z - FranklinRearNoseShorteningM * Smooth(9.49f, 9.80f, point.z));
+        }
+
         // First used for Prairie, now shared by Pacific/Hudson and rigid x-4-x.
         // The two bore axes stay where the native animation puts them.
         // Resize both barrels, their caps and the entire casting length; only

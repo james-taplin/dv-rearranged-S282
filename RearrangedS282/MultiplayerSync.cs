@@ -21,15 +21,21 @@ namespace RearrangedS282
     // This class owns only the extra arrangement state absent from native car packets.
     internal static class MultiplayerSync
     {
-        internal const int Protocol = 1;
+        internal const int Protocol = 2;
         internal const int MaxStateLength = 32768;
+        internal const int MaxRetainedTombstones = 256;
+        internal const int MaxRetainedStates = 8192;
+        internal const float ReplicaReadyTimeout = 120f;
         private enum Role { Offline, Host, Client, Blocked }
         private static Role role;
-        private static bool accepted, canChange, bridgeLoaded;
+        private static bool accepted, canChange, bridgeLoaded, bridgeStartupBlocked;
         private static int bridgeAttempts;
         private static float nextTick, nextBridgeAttempt;
         private static string buildIdentity;
+        private static long sessionEpoch, lastHostEpoch;
+        private static int retainedTombstones;
         private static TrainCar applyingCar;
+        private static CarSpawner observedSpawner;
         private static readonly Dictionary<string, NetworkArrangement> states = new Dictionary<string, NetworkArrangement>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Settings> profiles = new Dictionary<string, Settings>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Settings> preparing = new Dictionary<string, Settings>(StringComparer.Ordinal);
@@ -38,12 +44,14 @@ namespace RearrangedS282
         private static readonly Dictionary<TrainCar, InstalledProfile> lastApplied = new Dictionary<TrainCar, InstalledProfile>();
         private static readonly Dictionary<string, AppliedState> applied = new Dictionary<string, AppliedState>(StringComparer.Ordinal);
         private static readonly HashSet<string> failed = new HashSet<string>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, float> waitingSince = new Dictionary<string, float>(StringComparer.Ordinal);
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings {
             TypeNameHandling = TypeNameHandling.None, MaxDepth = 8,
             MissingMemberHandling = MissingMemberHandling.Error
         };
 
-        internal static string Status { get; set; } = "Multiplayer is not installed; single player.";
+        internal static string Status { get; set; }
+        internal static long SessionEpoch => sessionEpoch;
         internal static bool IsHost => role == Role.Host;
         internal static bool IsClient => role == Role.Client || role == Role.Blocked;
         internal static bool IsSimulationAuthority => role == Role.Offline || role == Role.Host;
@@ -62,10 +70,16 @@ namespace RearrangedS282
                 {
                     using (var sha = SHA256.Create())
                     {
-                        string main = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(typeof(Main).Assembly.Location))).Replace("-", "");
-                        string path = Path.Combine(Main.ModPath, "RearrangedS282.Multiplayer.dll");
-                        string bridge = File.Exists(path) ? BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-", "") : "missing";
-                        buildIdentity = Main.RunningVersion + ":" + main + ":" + bridge;
+                        string Digest(string path) => File.Exists(path)
+                            ? BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-", "") : "missing";
+                        var parts = new List<string> { "RearrangedS282.dll:" + Digest(typeof(Main).Assembly.Location) };
+                        foreach (string relative in new[] { "RearrangedS282.Multiplayer.dll", "assets/s282_drivetrain", "assets/franklin_casing.obj", "assets/steam_manifold.obj", "assets/steam_transfer.obj" })
+                            parts.Add(relative + ":" + Digest(Path.Combine(Main.ModPath, relative)));
+                        // Identical DLLs with stale or replaced meshes can still
+                        // produce different running gear. Hash the runtime assets
+                        // once too; paths/settings/docs never enter the identity.
+                        string fingerprint = BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(string.Join("|", parts)))).Replace("-", "");
+                        buildIdentity = Main.RunningVersion + ":" + fingerprint;
                     }
                 }
                 return buildIdentity;
@@ -79,20 +93,47 @@ namespace RearrangedS282
             TryLoadBridge();
         }
 
+        private static void ObserveCarDeletion()
+        {
+            var current = CarSpawner.Instance;
+            if (ReferenceEquals(current, observedSpawner)) return;
+            // This native event runs before both pool return and unpooled
+            // destruction, including world unload. A destroyed old singleton
+            // still has its managed event, so detach by reference identity.
+            if (!ReferenceEquals(observedSpawner, null)) observedSpawner.CarAboutToBeDeleted -= Forget;
+            observedSpawner = current;
+            if (current != null) current.CarAboutToBeDeleted += Forget;
+        }
+
         private static void TryLoadBridge()
         {
-            if (bridgeLoaded || bridgeAttempts >= 15 || Time.unscaledTime < nextBridgeAttempt) return;
+            if (bridgeLoaded) return;
             var mod = UnityModManager.FindMod("Multiplayer");
-            if (mod == null || !mod.Active) return;
+            if (mod == null || !mod.Active)
+            {
+                // Failed optional startup must not leave ordinary single player
+                // locked after Multiplayer is disabled. A loaded adapter handles
+                // its real native server/client stop events itself.
+                if (!bridgeLoaded)
+                {
+                    bridgeAttempts = 0;
+                    nextBridgeAttempt = 0;
+                    if (bridgeStartupBlocked) EndSession();
+                }
+                return;
+            }
+            if (bridgeLoaded || bridgeAttempts >= 15 || Time.unscaledTime < nextBridgeAttempt) return;
             bridgeAttempts++;
             nextBridgeAttempt = Time.unscaledTime + 2f;
             role = Role.Blocked;
+            bridgeStartupBlocked = true;
             Status = "Waiting for the Multiplayer API.";
             try
             {
                 var assembly = Assembly.LoadFrom(Path.Combine(Main.ModPath, "RearrangedS282.Multiplayer.dll"));
                 assembly.GetType("RearrangedS282.Multiplayer.Bridge", true).GetMethod("Init", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
                 bridgeLoaded = true;
+                bridgeStartupBlocked = false;
             }
             catch (Exception ex)
             {
@@ -106,6 +147,7 @@ namespace RearrangedS282
         {
             ClearSession();
             role = Role.Host;
+            sessionEpoch = lastHostEpoch = Math.Max(DateTime.UtcNow.Ticks, checked(lastHostEpoch + 1));
             Status = "Hosting; all matching players can use their wheel-arranger radios.";
         }
 
@@ -120,16 +162,21 @@ namespace RearrangedS282
         {
             ClearSession();
             role = Role.Offline;
-            Status = "Multiplayer disconnected; single player.";
+            Status = null;
         }
 
         private static void ClearSession()
         {
             states.Clear(); profiles.Clear(); preparing.Clear(); applied.Clear(); failed.Clear();
+            waitingSince.Clear();
+            sessionEpoch = 0;
+            retainedTombstones = 0;
             applyingCar = null;
             accepted = canChange = false;
             BroadcastState = null; SendRequest = null; ReportFailure = null;
+            DrawNetworkGUI = null;
             nextTick = 0;
+            bridgeStartupBlocked = false;
         }
 
         internal static void AcceptClient(bool allowed, string message)
@@ -171,6 +218,7 @@ namespace RearrangedS282
         internal static void OnApplied(TrainCar car, int id)
         {
             if (!ValidCar(car) || !WheelArrangement.IsSupportedId(id)) return;
+            ObserveCarDeletion();
             var profile = preparing.TryGetValue(car.CarGUID, out var candidate) ? candidate :
                 IsClient && profiles.TryGetValue(car.CarGUID, out var replica) ? replica :
                 lastApplied.TryGetValue(car, out var installed) && string.Equals(installed.Guid, car.CarGUID, StringComparison.Ordinal) ? installed.Settings : CloneSettings(Main.settings);
@@ -179,7 +227,8 @@ namespace RearrangedS282
             if (!IsHost) return;
             profiles[car.CarGUID] = profile;
             var state = new NetworkArrangement { CarGuid = car.CarGUID, Arrangement = id,
-                Revision = checked(RevisionFor(car.CarGUID) + 1), SettingsJson = SerializeSettings(profile) };
+                Epoch = sessionEpoch, Revision = checked(RevisionFor(car.CarGUID) + 1), SettingsJson = SerializeSettings(profile) };
+            if (states.TryGetValue(car.CarGUID, out var previous) && previous.Removed) retainedTombstones--;
             states[car.CarGUID] = state;
             Publish(state);
         }
@@ -203,14 +252,31 @@ namespace RearrangedS282
             lastApplied.Remove(car);
             if (string.IsNullOrEmpty(car.CarGUID)) return;
             string guid = car.CarGUID;
-            applied.Remove(guid); failed.Remove(guid); preparing.Remove(guid);
+            applied.Remove(guid); failed.Remove(guid); preparing.Remove(guid); waitingSince.Remove(guid);
             if (IsHost && states.TryGetValue(guid, out var previous) && !previous.Removed)
             {
-                var removed = new NetworkArrangement { CarGuid = guid, Revision = checked(previous.Revision + 1), Removed = true };
+                var removed = new NetworkArrangement { CarGuid = guid, Epoch = sessionEpoch, Revision = checked(previous.Revision + 1), Removed = true };
                 states[guid] = removed;
                 profiles.Remove(guid);
                 Publish(removed);
+                if (++retainedTombstones >= MaxRetainedTombstones) CompactHostState();
             }
+        }
+
+        private static NetworkArrangement ResetMarker() => new NetworkArrangement { Epoch = sessionEpoch, Reset = true };
+
+        private static void CompactHostState()
+        {
+            // Custom packets are reliably delivered but unordered. Advancing the
+            // epoch makes delayed old updates harmless without retaining every
+            // deleted GUID for the lifetime of a long-running session.
+            var live = states.Values.Where(s => !s.Removed).ToArray();
+            sessionEpoch = lastHostEpoch = checked(Math.Max(sessionEpoch, lastHostEpoch) + 1);
+            states.Clear();
+            retainedTombstones = 0;
+            foreach (var state in live) { state.Epoch = sessionEpoch; states[state.CarGuid] = state; }
+            Publish(ResetMarker());
+            foreach (var state in live) Publish(state);
         }
 
         private static void Publish(NetworkArrangement state)
@@ -220,7 +286,11 @@ namespace RearrangedS282
         }
 
         internal static long RevisionFor(string guid) => guid != null && states.TryGetValue(guid, out var state) ? state.Revision : 0;
-        internal static IEnumerable<string> Snapshot() => states.Values.Select(s => JsonConvert.SerializeObject(s, JsonSettings)).ToArray();
+        internal static IEnumerable<string> Snapshot() => sessionEpoch > 0
+            ? new[] { ResetMarker() }.Concat(states.Values).Select(s => JsonConvert.SerializeObject(s, JsonSettings)).ToArray()
+            : Array.Empty<string>();
+        internal static IEnumerable<string> SnapshotFor(string guid) => guid != null && states.TryGetValue(guid, out var state)
+            ? new[] { JsonConvert.SerializeObject(state, JsonSettings) } : Array.Empty<string>();
 
         internal static bool RequestChange(TrainCar car, int id, out string reason)
         {
@@ -255,7 +325,7 @@ namespace RearrangedS282
             bool result = (car.GetComponent<WheelRearranger>() ?? car.gameObject.AddComponent<WheelRearranger>()).TrySwitchStage2(id);
             if (result) ConventionalSpawn.RecordApplied(car, id);
             else reason = car.GetComponent<WheelRearranger>()?.LastConventionalError ?? "The host refused the change: stop, repair and close the regulator; let driving force and wheel slip settle first.";
-            Status = result ? "Synchronized " + car.ID + ": " + WheelArrangement.WheelArrangementNames[id] : reason;
+            Status = result ? "Applied " + car.ID + ": " + WheelArrangement.WheelArrangementNames[id] : reason;
             return result;
         }
 
@@ -266,25 +336,43 @@ namespace RearrangedS282
             {
                 if (string.IsNullOrEmpty(json) || json.Length > MaxStateLength) throw new InvalidDataException("Arrangement message is too large or empty.");
                 var state = JsonConvert.DeserializeObject<NetworkArrangement>(json, JsonSettings);
-                if (state == null || !ValidGuid(state.CarGuid) || state.Revision <= 0 ||
+                if (state == null || state.Epoch <= 0 || (state.Reset && (state.Removed || state.CarGuid != null || state.SettingsJson != null || state.Revision != 0)) ||
+                    (!state.Reset && (!ValidGuid(state.CarGuid) || state.Revision <= 0 ||
                     (!state.Removed && (!WheelArrangement.IsSupportedId(state.Arrangement) || !ValidProfile(state.SettingsJson))))
+                    ))
                     throw new InvalidDataException("Invalid host arrangement state.");
+                if (state.Epoch < sessionEpoch) return;
+                if (state.Epoch > sessionEpoch)
+                {
+                    sessionEpoch = state.Epoch;
+                    states.Clear(); profiles.Clear(); applied.Clear(); failed.Clear(); waitingSince.Clear();
+                    retainedTombstones = 0;
+                }
+                // A state may overtake its reset marker. Repeating a reset for
+                // the same epoch must never erase already-received newer data.
+                if (state.Reset) return;
                 if (state.Revision <= RevisionFor(state.CarGuid)) return;
-                if (!states.ContainsKey(state.CarGuid) && states.Count >= 4096) throw new InvalidDataException("Too many arrangement identities in this session.");
+                if (!states.ContainsKey(state.CarGuid) && states.Count >= MaxRetainedStates)
+                    throw new InvalidDataException("The host exceeded the supported arrangement snapshot size; reconnect after reducing loaded S282s.");
+                if (state.Removed && (!states.TryGetValue(state.CarGuid, out var prior) || !prior.Removed)) retainedTombstones++;
+                else if (!state.Removed && states.TryGetValue(state.CarGuid, out var priorLive) && priorLive.Removed) retainedTombstones--;
                 states[state.CarGuid] = state;
                 failed.Remove(state.CarGuid);
+                waitingSince.Remove(state.CarGuid);
                 if (state.Removed) { applied.Remove(state.CarGuid); profiles.Remove(state.CarGuid); }
             }
             catch (Exception ex)
             {
-                Status = "Rejected invalid host arrangement data: " + ex.Message;
-                Main.Logger.Warning(Status);
+                FailSession("Rejected invalid host arrangement data: " + ex.Message);
             }
         }
 
         internal static void Tick()
         {
             TryLoadBridge();
+            // Do not query a native world singleton while UMM is loading in
+            // the main menu. An installed profile implies an actual live car.
+            if (IsHost || role == Role.Client && accepted || lastApplied.Count != 0) ObserveCarDeletion();
             if (Time.unscaledTime < nextTick) return;
             nextTick = Time.unscaledTime + .5f;
             if (IsHost)
@@ -299,11 +387,19 @@ namespace RearrangedS282
             {
                 if (!states.TryGetValue(car.CarGUID, out var state) || state.Removed || failed.Contains(car.CarGUID)) continue;
                 if (applied.TryGetValue(car.CarGUID, out var previous) && ReferenceEquals(previous.Car, car) && previous.Revision == state.Revision) continue;
-                if (!ReadyForRemote(car, state.Arrangement)) continue;
-                profiles[car.CarGUID] = DeserializeSettings(state.SettingsJson);
-                applyingCar = car;
                 try
                 {
+                    if (!ReadyForRemote(car, state.Arrangement))
+                    {
+                        if (!waitingSince.TryGetValue(car.CarGUID, out var since)) waitingSince[car.CarGUID] = Time.unscaledTime;
+                        else if (Time.unscaledTime - since >= ReplicaReadyTimeout)
+                            FailReplica(car, "Native simulation, bogies or split running gear did not become ready within two minutes.");
+                        if (role != Role.Client || !accepted) break;
+                        continue;
+                    }
+                    waitingSince.Remove(car.CarGUID);
+                    profiles[car.CarGUID] = DeserializeSettings(state.SettingsJson);
+                    applyingCar = car;
                     if ((car.GetComponent<WheelRearranger>() ?? car.gameObject.AddComponent<WheelRearranger>()).TrySwitchStage2(state.Arrangement))
                     {
                         ConventionalSpawn.RecordApplied(car, state.Arrangement);
@@ -317,21 +413,28 @@ namespace RearrangedS282
                 }
                 catch (Exception ex) { FailReplica(car, ex.Message); }
                 finally { applyingCar = null; }
+                if (role != Role.Client || !accepted) break;
             }
         }
 
         private static void FailReplica(TrainCar car, string reason)
         {
             failed.Add(car.CarGUID);
-            Status = "Could not synchronize " + car.ID + ": " + reason + ". Send the host your Player.log; reload before driving this locomotive.";
-            Main.Logger.Error(Status);
-            try { ReportFailure?.Invoke(Status.Length > 1000 ? Status.Substring(0, 1000) : Status); }
+            FailSession("Could not synchronize " + car.ID + ": " + reason + ". Send the host your Player.log; reload before driving this locomotive.");
+        }
+
+        private static void FailSession(string message)
+        {
+            if (role == Role.Blocked) return;
+            RejectClient(message);
+            Main.Logger.Error(message);
+            try { ReportFailure?.Invoke(message.Length > 1000 ? message.Substring(0, 1000) : message); }
             catch (Exception ex) { Main.Logger.LogException("Could not report arrangement synchronization failure to the host", ex); }
         }
 
         private static IEnumerable<TrainCar> Cars() => CarSpawner.Instance != null ? CarSpawner.Instance.AllCars : Enumerable.Empty<TrainCar>();
         private static bool ValidGuid(string guid) => Guid.TryParse(guid, out _);
-        private static bool ValidCar(TrainCar car) => car != null && car.carType == TrainCarType.LocoSteamHeavy && car.logicCar != null && ValidGuid(car.CarGUID);
+        private static bool ValidCar(TrainCar car) => S282Target.IsNormal(car) && car.logicCar != null && ValidGuid(car.CarGUID);
         private static bool ReadyForRemote(TrainCar car, int id) => car.entity != null && car.entity.IsConverted && car.AreBogiesFullyInitialized() &&
             car.SimController?.simFlow != null && car.SimController.drivingForce != null && car.SimController.wheelslipController != null &&
             car.SimController.tractionPortsFeeder != null && car.SimController.poweredWheels?.poweredWheels != null &&
@@ -341,7 +444,15 @@ namespace RearrangedS282
 
         private static string SerializeSettings(Settings settings) => JsonConvert.SerializeObject(settings, JsonSettings);
         private static Settings DeserializeSettings(string json) => JsonConvert.DeserializeObject<Settings>(json, JsonSettings);
-        private static Settings CloneSettings(Settings settings) => DeserializeSettings(SerializeSettings(settings ?? new Settings()));
+        private static Settings CloneSettings(Settings settings)
+        {
+            var clone = DeserializeSettings(SerializeSettings(settings ?? new Settings()));
+            // XML settings can originate from a newer catalogue. Unknown/future
+            // choices must not invalidate the whole network profile. Normalize
+            // this copy only, preserving the user's own saved preferences.
+            clone.poweredTenderArrangements = clone.poweredTenderArrangements?.Where(PoweredTenderPolicy.Supports).Distinct().ToArray() ?? Array.Empty<int>();
+            return clone;
+        }
         private static bool ValidProfile(string json)
         {
             if (string.IsNullOrEmpty(json) || json.Length > 16384) return false;
@@ -355,6 +466,7 @@ namespace RearrangedS282
 
         internal static void Draw()
         {
+            if (!InSession) return;
             GUILayout.Label("Multiplayer: " + Status);
             if (InSession) GUILayout.Label("The host owns arrangement settings. Changes take effect when the arrangement is applied or reapplied. All peers need the identical test package.");
             DrawNetworkGUI?.Invoke();
@@ -366,6 +478,8 @@ namespace RearrangedS282
 
     internal sealed class NetworkArrangement
     {
+        public long Epoch;
+        public bool Reset;
         public string CarGuid;
         public int Arrangement;
         public long Revision;

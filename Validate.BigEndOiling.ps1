@@ -18,9 +18,10 @@ namespace RearrangedS282
    Enumerable.Range(0, wheels).Select(i => new BigEnd(left, firstZ - 1.5f * i, i == nativeIndex)).ToArray();
   public static int Main()
   {
-   Check(PointIndex(true, 0) == 6 && PointIndex(true, 6) == 12 && PointIndex(false, 0) == 13 && PointIndex(false, 6) == 19 && TotalPoints == 20, "Native six first, then seven left and seven right");
-   bool threw = false; try { PointIndex(true, 7); } catch (ArgumentOutOfRangeException) { threw = true; }
-   Check(threw, "Slot beyond seven rejected");
+   Check(PointIndex(true, 0) == 6 && PointIndex(true, 6) == 12 && PointIndex(false, 0) == 13 && PointIndex(false, 6) == 19, "Every shipped left/right slot retains its save index");
+   Check(PointIndex(true, 7) == 20 && PointIndex(true, 8) == 21 && PointIndex(false, 7) == 22 && PointIndex(false, 8) == 23 && TotalPoints == 24, "New spare points are appended after shipped slots");
+   bool threw = false; try { PointIndex(true, 9); } catch (ArgumentOutOfRangeException) { threw = true; }
+   Check(threw, "Slot beyond nine rejected");
 
    // 2-8-2: four drivers a side, main (third) driver keeps its native cup.
    var mikado = Engine(true, 8, 4, 2).Concat(Engine(false, 8, 4, 2)).ToArray();
@@ -41,10 +42,16 @@ namespace RearrangedS282
    a = Allocate(triplex, out dropped);
    Check(dropped == 0 && a.Count(x => x >= 0) == 4, "Triplex: middle and rear engines get a cup each side");
 
-   // More big ends than spare points.
-   var many = Engine(true, 20, 10, -1).Concat(Engine(false, 20, 10, -1)).ToArray();
+   // 2-10-10-2: two five-axle engines a side; front main bearing keeps its native cup.
+   var bigMallet = Engine(true, 15, 5, 2).Concat(Engine(true, 6, 5, -1)).Concat(Engine(false, 15, 5, 2)).Concat(Engine(false, 6, 5, -1)).ToArray();
+   a = Allocate(bigMallet, out dropped);
+   Check(dropped == 0 && a.Count(x => x >= 0) == 18 && a.Where(x => x >= 0).Distinct().Count() == 18, "2-10-10-2 covers every bearing with distinct native ports");
+   Check(ActivePoints(a).All(x => x), "Largest shipped Mallet uses all 24 oiling points");
+
+   // A future unsupported layout still reports overflow instead of double-booking.
+   var many = Engine(true, 20, 12, -1).Concat(Engine(false, 20, 12, -1)).ToArray();
    a = Allocate(many, out dropped);
-   Check(dropped == 6 && a.Count(x => x >= 0) == 14, "Overflow reported, never double-booked");
+   Check(dropped == 6 && a.Count(x => x >= 0) == 18, "Overflow reported, never double-booked");
 
    var active = ActivePoints(Allocate(mikado, out _));
    Check(active.Length == TotalPoints && active.Take(6).All(x => x), "Native points always active");
@@ -53,11 +60,13 @@ namespace RearrangedS282
 
    var old = new JArray(Enumerable.Range(0, 6).Select(i => new JObject { ["open"] = i == 1, ["oilLevel"] = .1f * i }));
    var fitted = FitSavedPoints(old, TotalPoints);
-   Check(fitted.Count == 20 && (float)fitted[5]["oilLevel"] == .5f && (bool)fitted[1]["open"], "Native levels and lids survive");
+   Check(fitted.Count == 24 && (float)fitted[5]["oilLevel"] == .5f && (bool)fitted[1]["open"], "Native levels and lids survive");
    Check(fitted.Skip(6).All(p => (float)p["oilLevel"] == 1f && !(bool)p["open"]), "New points start full and closed");
    Check(!ReferenceEquals(fitted[0], old[0]), "Saved data is copied, not shared");
-   var longer = new JArray(Enumerable.Range(0, 25).Select(i => new JObject { ["oilLevel"] = .5f }));
-   Check(FitSavedPoints(longer, TotalPoints).Count == 20, "Longer saves trimmed");
+   var shipped = new JArray(Enumerable.Range(0, 20).Select(i => new JObject { ["oilLevel"] = i / 25f, ["open"] = i % 2 == 1 }));
+   fitted = FitSavedPoints(shipped, TotalPoints);
+   Check(fitted.Count == 24 && Enumerable.Range(0, 20).All(i => JToken.DeepEquals(fitted[i], shipped[i])), "All shipped 20-point levels and lids retain their exact indices");
+   Check(fitted.Skip(20).All(p => (float)p["oilLevel"] == 1f && !(bool)p["open"]), "Appended Mallet points start full and closed");
    Check(FitSavedPoints(null, TotalPoints).All(p => (float)p["oilLevel"] == 1f), "Missing save data starts full");
    Console.WriteLine(checks);
    return 0;

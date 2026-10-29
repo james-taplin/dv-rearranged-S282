@@ -15,7 +15,7 @@ $end = $source.LastIndexOf('#endif')
 if ($start -lt 0 -or $end -lt $start) { throw 'Actual production native-engine gate section was not found.' }
 # Compile the exact production subtype bodies, with the real native engine,
 # definitions, ports and Unity's own managed math. No native physics stand-ins.
-$gate = 'using LocoSim.Definitions; using LocoSim.Implementations; namespace RearrangedS282 { internal static class MultiplayerSync { internal static bool IsSimulationAuthority = true; }' + [Environment]::NewLine + $source.Substring($start, $end - $start)
+$gate = 'using LocoSim.Definitions; using LocoSim.Implementations; namespace RearrangedS282 {' + [Environment]::NewLine + $source.Substring($start, $end - $start)
 $gate | Set-Content -LiteralPath (Join-Path $projectDirectory 'ActualEngineGate.cs') -Encoding utf8
 $project = @"
 <Project Sdk="Microsoft.NET.Sdk">
@@ -49,6 +49,7 @@ $graphProject = @"
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><DefineConstants>B99_ALL_STANDARD</DefineConstants><EnableDefaultCompileItems>false</EnableDefaultCompileItems><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
   <ItemGroup>
     <Compile Include="$sourcePath" />
+    <Compile Include="$root\RearrangedS282\IndependentDriveReplication.cs" />
     <Compile Include="$root\evidence\articulated-simulation-tests\GraphStubs.cs" />
     <Compile Include="$root\evidence\articulated-simulation-tests\GraphProbe.cs" />
     <Reference Include="Newtonsoft.Json"><HintPath>$managed\Newtonsoft.Json.dll</HintPath></Reference>

@@ -73,7 +73,7 @@ namespace RearrangedS282
                 if (rb == null || rb.isKinematic || rb.IsSleeping()) continue;
                 float v = bogie.transform.InverseTransformDirection(rb.velocity).z;
                 float ramp = Mathf.Clamp01(Mathf.Abs(v) / .1f);
-                if (ramp > 0f) rb.AddForce(bogie.transform.forward * (-Mathf.Sign(v) * perBogie * ramp));
+                if (ramp > 0f) bogie.ApplyForce(-Mathf.Sign(v) * perBogie * ramp);
             }
         }
 
