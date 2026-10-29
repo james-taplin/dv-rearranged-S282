@@ -42,7 +42,9 @@ try {
             Check ((Get-FileHash -LiteralPath $file).Hash -eq $expected) "Seed asset/exporter/licence byte identity: $($entry.FullName)"
         }
     } finally { $seed.Dispose() }
-    Add-Type -Path (Join-Path $mod 'AssetStudioModCLI_net472_win64_contained\Mono.Cecil.dll')
+    # Load the metadata reader from bytes so Windows can remove the inspection
+    # directory after validation instead of holding its DLL open until exit.
+    [void][Reflection.Assembly]::Load([IO.File]::ReadAllBytes((Join-Path $mod 'AssetStudioModCLI_net472_win64_contained\Mono.Cecil.dll')))
     foreach ($name in 'RearrangedS282','RearrangedS282.Multiplayer') {
         $assembly = [Mono.Cecil.AssemblyDefinition]::ReadAssembly((Join-Path $mod ($name + '.dll')))
         try {
@@ -59,7 +61,7 @@ try {
     }
     $report = [ordered]@{ passed=$true; checks=$checks.Count; labels=@($checks); zipSHA256=(Get-FileHash -LiteralPath $PackagePath).Hash; version=$info.Version; installed=$false; liveMultiplayerValidated=$false }
     $report | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out 'validation.json') -Encoding utf8
-    $report | Select-Object passed,checks,version,zipSHA256,installed,liveMultiplayerValidated | ConvertTo-Json
+    [pscustomobject]$report | Select-Object passed,checks,version,zipSHA256,installed,liveMultiplayerValidated | ConvertTo-Json
 } finally {
     $resolved = [IO.Path]::GetFullPath($stage)
     if (-not $resolved.StartsWith($out.TrimEnd([char]92) + [char]92, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolved) -notmatch '^inspect-[a-f0-9]{32}$') { throw 'Unsafe inspection cleanup target' }
