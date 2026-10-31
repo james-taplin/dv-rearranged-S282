@@ -30,9 +30,16 @@ Managed gates passed:1871quartering+190linkage,2305structural,126rear-driver,
 No force-calculation or multiplayer transport change; no incompatible visual
 settings combination established. Preserve Settings.xml/captures/saves.
 
-Source checkpoint ready for clean2.0.9.3-beta package build/install; installed
-mod remains2.0.8-slip-test until delivery receipt is recorded. Live coupled car
-forces, save/reload, camera visibility and actual hostguest acceptance unverified.
+Built, packaged and installed 2.0.9.3-beta from source checkpoint 3540e61.
+Both DLL builds: zero warnings/errors. Portable package: 80 checks; all 38
+members hash-match installed files. All 39 local files, including Settings.xml,
+caches and captures, were preserved; obsolete trial notes and DLL cache removed.
+Game closed for install; no full installation backup, push or upload performed.
+Desktop ZIP: C:/Users/james/Desktop/Derail Valley Mods/RearrangedS282-B99-2.0.9.3-beta-Nexus/RearrangedS282-B99-2.0.9.3-beta.zip
+SHA256: 1498085A0A13584860B35C98192F1288A9ABF55AB563582AFD0900B80D5C095F
+Receipt: build/repair-2.0.9.3-beta/installation-receipt.json
+Live coupled car forces, save/reload, camera visibility and actual host/guest
+acceptance remain unverified. Native fixture passes are not reporter acceptance.
 Private native assets/player payloads stay ignored underbuild, never distributed.
 The old Unity project-version dialog is avoided by reusing the preserved2019.4
 standalone fixture; no real project/game save opened for these regressions.

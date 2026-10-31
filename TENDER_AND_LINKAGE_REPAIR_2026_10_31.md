@@ -159,8 +159,23 @@ as well as personal settings, particularly with a multiplayer host.
 
 ## Delivery state
 
-Target version: 2.0.9.3-beta, a repair test build. Native mechanism gates passed;
-package/install pending final clean native-reference compilation. Live coupled
+Built, packaged and installed **2.0.9.3-beta** from local source checkpoint
+`3540e61a43ec3e52dd0fb4e47c566a309990b7b4`. Both native-reference DLL builds
+completed with zero warnings/errors. The complete portable archive passed 80
+package checks; assets, exporter and licences retain the verified seed bytes.
+All 38 archive members match the installed files byte for byte. All 39 local files, including Settings.xml, mesh caches and captures, were
+preserved; only obsolete trial notes and
+the old generated DLL cache were removed. No full installation backup was made.
+
+Installed path: `B:/SteamLibrary/steamapps/common/Derail Valley/Mods/RearrangedS282`.
+Desktop archive:
+`C:/Users/james/Desktop/Derail Valley Mods/RearrangedS282-B99-2.0.9.3-beta-Nexus/RearrangedS282-B99-2.0.9.3-beta.zip`.
+Archive SHA256: `1498085A0A13584860B35C98192F1288A9ABF55AB563582AFD0900B80D5C095F`.
+Core DLL: `B2B9B3F1382CD87412D90861DB99C49E438106D1015CCF25FD4D366116F7E0BE`.
+Bridge: `E3CDED021EAEF4FEC72A469E7BFA542E1E7CE7AD6D66C0A898CC83ACE6CFA4CD`.
+Installation receipt: `build/repair-2.0.9.3-beta/installation-receipt.json`.
+No push, upload or publication was performed. The game was closed for install.
+Live coupled
 vehicle driving, save/reload, camera LOD and host/guest acceptance are not
 claimed by these isolated tests. Private game geometry and generated player
 payloads remain outside Git and the distributed mod archive.
