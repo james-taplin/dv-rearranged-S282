@@ -1,3 +1,30 @@
+## Current package: 2.0.9.1-beta - 31 October 2026
+
+James explicitly corrected the release name: 2.0.9.1-beta, not 2.0.9-beta.1.
+All previous arrangement/slip fixes remain included. Four-part assembly version
+must be 2.0.9.1 and informational/UMM version must be 2.0.9.1-beta. Builders and
+archive validator now support that numeric version. Earlier archives retained.
+
+Investigated the report quoting 'use the complete matching test package'. Its
+only source is optional adapter startup after 15 failed attempts, NOT the peer
+identity handshake. The tester's Player.log was not supplied and local current
+logs do not contain that failure, so a specific original cause is unconfirmed.
+New UI distinguishes missing adapter, missing native API, API readiness and
+underlying load exceptions; complete stack remains in Player.log. Do not blame
+a mismatched ZIP or remove online fail-closed protection without evidence.
+
+A related initialization defect was reproduced: setting initialized=true before
+startup succeeded meant a failed attempt could make the retry return a false
+success. Initialization now marks success last, detaches failed callbacks and
+destroys its failed runner. Core reasserts the startup lock after failed session
+cleanup. Managed regression failed old source and passes the correction.
+See MULTIPLAYER_STARTUP_REPORT_2026_10_31.md and ignored loader-report evidence.
+
+Source remains on codex/s282-multiplayer. No owned-locomotive policy, main branch,
+installed mod or game save changes. Repair appearance report remains separate.
+Build/package receipts record the final source commit and archive hashes; no
+Nexus upload is performed.
+
 ## Current hotfix: 2.0.9-beta.1 - 31 October 2026
 
 Supersedes the current-version label below, retaining the complete selected base.

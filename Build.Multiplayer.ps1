@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.9-beta.1',
+    [string]$Version = '2.0.9.1-beta',
     [string]$GamePath = 'B:\SteamLibrary\steamapps\common\Derail Valley',
     [string]$MultiplayerApiPath = 'B:\GitHub repo\dads-decals\lib\MultiplayerAPI.dll',
     [string]$SeedPackage = 'B:\GitHub repo\rearranged-s282-independent-slip\build\independent-integration\RearrangedS282-2.0.8-slip-test.zip',
@@ -8,7 +8,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-if ($Version -notmatch '^\d+\.\d+\.\d+-(?:beta(?:\.\d+)?|alpha|mp\.alpha\.\d+)$') { throw 'Use an explicit multiplayer prerelease version.' }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?-(?:beta(?:\.\d+)?|alpha|mp\.alpha\.\d+)$') { throw 'Use an explicit multiplayer prerelease version.' }
 if (-not $OutputDirectory) { $OutputDirectory = "C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-$Version-Test" }
 if (-not $CandidateDirectory) { $CandidateDirectory = Join-Path $root "build\multiplayer-$Version" }
 $seedHash = 'B3677FC1D8D42F9423E702C044DB75B84E0E31C5C9EDB71CD62AD56C4D35B94D'

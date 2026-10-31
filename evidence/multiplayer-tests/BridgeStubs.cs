@@ -44,10 +44,12 @@ namespace MPAPI
         public bool IsHost;
         public bool IsSinglePlayer;
         public int CompatibilityCalls;
-        public void SetModCompatibility(string id,MPAPI.Types.MultiplayerCompatibility value)=>CompatibilityCalls++;
+        public bool FailCompatibility;
+        public void SetModCompatibility(string id,MPAPI.Types.MultiplayerCompatibility value){CompatibilityCalls++;if(FailCompatibility){FailCompatibility=false;throw new InvalidOperationException("Injected API registration failure");}}
         public static event Action<IServer> ServerStarted;
         public static event Action<IClient> ClientStarted;
         public static event Action ServerStopped,ClientStopped;
+        public static int LifecycleSubscribers => (ServerStarted?.GetInvocationList().Length??0)+(ClientStarted?.GetInvocationList().Length??0)+(ServerStopped?.GetInvocationList().Length??0)+(ClientStopped?.GetInvocationList().Length??0);
         public static void StartServer(IServer server){Server=server;Instance.IsHost=true;ServerStarted?.Invoke(server);}
         public static void StopServer(){Server=null;Instance.IsHost=false;ServerStopped?.Invoke();}
         public static void StartClient(IClient client){Client=client;Instance.IsHost=false;ClientStarted?.Invoke(client);}
@@ -56,9 +58,9 @@ namespace MPAPI
 }
 namespace UnityEngine
 {
-    public class Object { public static void DontDestroyOnLoad(Object value){} }
+    public class Object { public static int Destroyed;public static void DontDestroyOnLoad(Object value){} public static void Destroy(Object value){Destroyed++;} }
     public class MonoBehaviour:Object { }
-    public sealed class GameObject:Object { public GameObject(string name){} public T AddComponent<T>()where T:new()=>new(); }
+    public sealed class GameObject:Object { public static bool FailComponent;public static int Components;public GameObject(string name){} public T AddComponent<T>()where T:new(){if(FailComponent){FailComponent=false;throw new InvalidOperationException("Injected runner creation failure");}Components++;return new();} }
     public static class Time { public static float unscaledTime; }
     public static class GUILayout
     {

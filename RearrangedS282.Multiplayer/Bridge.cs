@@ -43,19 +43,34 @@ namespace RearrangedS282.Multiplayer
         {
             if (initialized) return;
             if (!MultiplayerAPI.IsMultiplayerLoaded) throw new InvalidOperationException("Multiplayer API is not ready.");
-            initialized = true;
-            MultiplayerAPI.Instance.SetModCompatibility("RearrangedS282", MultiplayerCompatibility.All);
-            MultiplayerAPI.ServerStarted += OnServerStarted;
-            MultiplayerAPI.ClientStarted += OnClientStarted;
-            MultiplayerAPI.ServerStopped += OnServerStopped;
-            MultiplayerAPI.ClientStopped += OnClientStopped;
-            var go = new GameObject("RearrangedS282 Multiplayer");
-            UnityEngine.Object.DontDestroyOnLoad(go);
-            go.AddComponent<Runner>();
-            if (MultiplayerAPI.Server == null && MultiplayerAPI.Client == null) MultiplayerSync.EndSession();
-            if (MultiplayerAPI.Server != null) OnServerStarted(MultiplayerAPI.Server);
-            if (MultiplayerAPI.Client != null) OnClientStarted(MultiplayerAPI.Client);
-            Log("Using DV Multiplayer " + MultiplayerAPI.MultiplayerVersion + ", API " + MultiplayerAPI.LoadedApiVersion + ".");
+            GameObject go = null;
+            try
+            {
+                MultiplayerAPI.Instance.SetModCompatibility("RearrangedS282", MultiplayerCompatibility.All);
+                MultiplayerAPI.ServerStarted += OnServerStarted;
+                MultiplayerAPI.ClientStarted += OnClientStarted;
+                MultiplayerAPI.ServerStopped += OnServerStopped;
+                MultiplayerAPI.ClientStopped += OnClientStopped;
+                go = new GameObject("RearrangedS282 Multiplayer");
+                UnityEngine.Object.DontDestroyOnLoad(go);
+                go.AddComponent<Runner>();
+                if (MultiplayerAPI.Server == null && MultiplayerAPI.Client == null) MultiplayerSync.EndSession();
+                if (MultiplayerAPI.Server != null) OnServerStarted(MultiplayerAPI.Server);
+                if (MultiplayerAPI.Client != null) OnClientStarted(MultiplayerAPI.Client);
+                Log("Using DV Multiplayer " + MultiplayerAPI.MultiplayerVersion + ", API " + MultiplayerAPI.LoadedApiVersion + ".");
+                initialized = true;
+            }
+            catch
+            {
+                MultiplayerAPI.ServerStarted -= OnServerStarted;
+                MultiplayerAPI.ClientStarted -= OnClientStarted;
+                MultiplayerAPI.ServerStopped -= OnServerStopped;
+                MultiplayerAPI.ClientStopped -= OnClientStopped;
+                OnClientStopped();
+                OnServerStopped();
+                if (go != null) UnityEngine.Object.Destroy(go);
+                throw;
+            }
         }
 
         private static void OnServerStarted(IServer instance)

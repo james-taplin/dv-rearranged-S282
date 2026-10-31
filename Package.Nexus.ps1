@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.9-beta.1',
+    [string]$Version = '2.0.9.1-beta',
     [string]$ReleaseName = '',
     [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods',
     [string]$CandidateDirectory
@@ -9,7 +9,7 @@ param(
 # CHANGELOG and CREDITS from release-copy\$ReleaseName. Uploads nothing.
 $ErrorActionPreference = 'Stop'
 if (-not $ReleaseName) { $ReleaseName = $Version }
-if ($Version -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$' -or $ReleaseName -notmatch '^\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$') { throw 'Invalid version or release name.' }
+if ($Version -notmatch '^\d+\.\d+(?:\.\d+){0,2}(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$' -or $ReleaseName -notmatch '^\d+\.\d+(?:\.\d+){0,2}(?:-[a-zA-Z][a-zA-Z0-9.-]*)?$') { throw 'Invalid version or release name.' }
 $root = $PSScriptRoot
 $candidate = if ($CandidateDirectory) { $CandidateDirectory } else { Join-Path $root "build\multiplayer-$Version" }
 $receipt = Get-Content -LiteralPath (Join-Path $candidate 'build-receipt.json') -Raw | ConvertFrom-Json

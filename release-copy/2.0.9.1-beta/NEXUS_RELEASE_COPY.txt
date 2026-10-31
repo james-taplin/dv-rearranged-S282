@@ -1,0 +1,11 @@
+FILE: RearrangedS282-B99-2.0.9.1-beta.zip
+VERSION: 2.0.9.1-beta
+TYPE: Optional experimental multiplayer beta hotfix
+
+DESCRIPTION.txt is plain text for the Nexus description editor.
+CHANGELOG.txt describes the arrangement and startup corrections.
+FILE_INFO.txt has installation and dependency information.
+
+Use this complete package on every peer. Do not mix its DLLs with 2.0.9-beta
+or install both builds together. Multiplayer remains optional for single player.
+Nothing is installed or uploaded automatically.

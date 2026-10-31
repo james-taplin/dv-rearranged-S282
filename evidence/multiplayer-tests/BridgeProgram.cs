@@ -100,9 +100,23 @@ static class Program
         Check(server.Handlers.Count==0&&loopback.Handlers.Count==0&&loopback.Sent.Count==0,"Single-player internal network has no S282 packets or handshake");
         MultiplayerAPI.StopClient();MultiplayerAPI.StopServer();MultiplayerAPI.Instance.IsSinglePlayer=false;
     }
+    static void StartupRetryTests()
+    {
+        cases++;
+        MultiplayerAPI.Instance.FailCompatibility=true;
+        bool threw=false;try{Bridge.Init();}catch(InvalidOperationException){threw=true;}
+        Check(threw,"API registration failure is surfaced to the optional loader");
+        GameObject.FailComponent=true;threw=false;try{Bridge.Init();}catch(InvalidOperationException){threw=true;}
+        Check(threw,"Failed API initialization can retry rather than returning false success");
+        Check(UnityEngine.Object.Destroyed==1,"Failed runner initialization cleans up its own persistent GameObject");
+        Check(MultiplayerAPI.LifecycleSubscribers==0,"Failed startup detaches every native lifecycle callback before retry");
+        Bridge.Init();
+        Check(GameObject.Components==1,"Retry after runner failure creates one working runner");
+        Check(MultiplayerAPI.LifecycleSubscribers==4,"Successful retry installs one copy of each native lifecycle callback");
+    }
     static void HostTests()
     {
-        cases++;Bridge.Init();Bridge.Init();Check(MultiplayerAPI.Instance.CompatibilityCalls==1,"Bridge initializes once");
+        cases++;int previousCalls=MultiplayerAPI.Instance.CompatibilityCalls;Bridge.Init();Bridge.Init();Check(MultiplayerAPI.Instance.CompatibilityCalls==previousCalls,"Successful bridge initialization is idempotent after failed startup retries");
         var server=new Server();var a=new Player{PlayerId=1,Username="Alice"};var b=new Player{PlayerId=2,Username="Bob"};server.Connected.AddRange(new[]{a,b});
         MultiplayerAPI.StartServer(server);Check(MultiplayerSync.Hosts==1&&MultiplayerSync.DrawNetworkGUI!=null,"Server starts host authority and host UI");
         var request=new RequestPacket{CarGuid="car",Arrangement=19,ExpectedRevision=4,Epoch=MultiplayerSync.SessionEpoch};int requests=MultiplayerSync.HostRequests;
@@ -221,7 +235,7 @@ static class Program
     }
     static int Main(string[] args)
     {
-        PacketTests();SinglePlayerTests();HostTests();ClientTests();TrafficAndSessionTests();
+        PacketTests();StartupRetryTests();SinglePlayerTests();HostTests();ClientTests();TrafficAndSessionTests();
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"Bridge.cs","Packets.cs"},limitations="Actual bridge and packet source compiled unchanged against managed MPAPI, Unity and core-boundary doubles. This validates codec and adapter policy, not the real transport, native player identity, live simulation or Unity rendering."};
         File.WriteAllText(args[0],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine($"Bridge/packet validation passed {checks} checks across {cases} cases.");return 0;
     }

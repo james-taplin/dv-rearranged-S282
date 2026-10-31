@@ -1,11 +1,13 @@
 param(
-    [string]$Version = '2.0.9-beta.1',
+    [string]$Version = '2.0.9.1-beta',
     [string]$PackagePath,
     [string]$SeedPackage = 'B:\GitHub repo\rearranged-s282-independent-slip\build\independent-integration\RearrangedS282-2.0.8-slip-test.zip',
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\multiplayer-2.0.9-validation\package')
 )
 $ErrorActionPreference = 'Stop'
 if (-not $PackagePath) { $PackagePath = Join-Path $PSScriptRoot "release\$Version\RearrangedS282-B99-$Version.zip" }
+$numericVersion = [version]($Version -replace '-.*$', '')
+$expectedAssemblyVersion = [version]::new($numericVersion.Major, $numericVersion.Minor, [Math]::Max(0,$numericVersion.Build), [Math]::Max(0,$numericVersion.Revision)).ToString(4)
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $out = [IO.Path]::GetFullPath($OutputDirectory)
@@ -51,7 +53,7 @@ try {
         $assembly = [Mono.Cecil.AssemblyDefinition]::ReadAssembly((Join-Path $mod ($name + '.dll')))
         try {
             $assemblyVersionText = @($assembly.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'System.Reflection.AssemblyInformationalVersionAttribute' })[0].ConstructorArguments[0].Value
-            Check ($assembly.Name.Name -eq $name -and $assembly.Name.Version.ToString() -eq '2.0.9.0' -and $assemblyVersionText -eq $Version) "$name compiled version matches release"
+            Check ($assembly.Name.Name -eq $name -and $assembly.Name.Version.ToString() -eq $expectedAssemblyVersion -and $assemblyVersionText -eq $Version) "$name compiled version matches release"
             if ($name -eq 'RearrangedS282') {
                 Check (@($assembly.MainModule.AssemblyReferences | Where-Object { $_.Name -match 'Multiplayer|MPAPI' }).Count -eq 0) 'Main DLL has no Multiplayer/API assembly dependency'
                 Check (@($assembly.MainModule.Types | Where-Object FullName -EQ 'RearrangedS282.IndependentDrive').Count -eq 1) 'Experimental independent drive is included'

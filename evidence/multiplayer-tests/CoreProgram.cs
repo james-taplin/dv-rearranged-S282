@@ -162,6 +162,14 @@ static class Program
     {
         cases++;Reset();string path=Core.ModPath;Core.ModPath=Path.Combine(Path.GetTempPath(),"s282-no-adapter-"+Guid.NewGuid().ToString("N"));
         UnityModManagerNet.UnityModManager.CurrentMod=new UnityModManagerNet.UnityModManager.ModEntry{Active=true};MultiplayerSync.Initialize();Check(MultiplayerSync.IsClient&&!MultiplayerSync.IsSimulationAuthority,"Failed optional startup locks uncertain multiplayer integration");
+        for(int attempt=0;attempt<15;attempt++){Time.unscaledTime+=2;Tick();}
+        Check(MultiplayerSync.Status.Contains("RearrangedS282.Multiplayer.dll")&&!MultiplayerSync.Status.Contains("complete matching test package"),"Exhausted missing-adapter retries identify the missing DLL rather than imply a peer mismatch");
+        var describe=typeof(MultiplayerSync).GetMethod("BridgeFailureReason",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
+        string Reason(Exception error)=>(string)describe.Invoke(null,new object[]{error});
+        Check(Reason(new System.Reflection.TargetInvocationException(new InvalidOperationException("Multiplayer API is not ready."))).Contains("API is not ready"),"API readiness failures are unwrapped and distinguished from missing package files");
+        Check(Reason(new FileNotFoundException("dependency missing","MultiplayerAPI, Version=1.1.0.0")).Contains("MultiplayerAPI.dll is unavailable"),"Missing native API points to Multiplayer installation rather than a peer mismatch");
+        Check(Reason(new TypeInitializationException("bridge",new MissingMethodException("Missing native signature"))).Contains("MissingMethodException: Missing native signature"),"API signature failures retain their concrete root cause");
+        Check(Reason(new Exception(new string('a',400)+"\nend")).Length<250&&!Reason(new Exception("a\nb")).Contains("\n"),"Startup UI bounds and flattens exception text while full exceptions remain logged");
         UnityModManagerNet.UnityModManager.CurrentMod.Active=false;Tick();MultiplayerSync.Draw();Check(!MultiplayerSync.InSession&&MultiplayerSync.IsSimulationAuthority&&MultiplayerSync.Status==null&&GUILayout.Labels.Count==0,"Disabling failed optional integration restores silent single player");
         UnityModManagerNet.UnityModManager.CurrentMod.Active=true;MultiplayerSync.Initialize();Check(MultiplayerSync.IsClient,"Reenabling can retry an earlier failed optional startup");
         UnityModManagerNet.UnityModManager.CurrentMod=null;Tick();Core.ModPath=path;

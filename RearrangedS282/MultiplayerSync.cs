@@ -137,10 +137,35 @@ namespace RearrangedS282
             }
             catch (Exception ex)
             {
-                Status = bridgeAttempts < 15 ? "Waiting for Multiplayer integration to finish loading; arrangement changes are locked."
-                    : "Multiplayer integration could not load. Rearrangement is locked; use the complete matching test package and restart.";
+                // A failed adapter may already have entered and cleaned up a
+                // native session. Restore the uncertain-startup lock afterward.
+                role = Role.Blocked;
+                bridgeStartupBlocked = true;
+                string cause = BridgeFailureReason(ex);
+                Status = bridgeAttempts < 15 ? "Waiting for Multiplayer integration: " + cause + " Retrying; arrangement changes are locked."
+                    : "Multiplayer integration could not start: " + cause + " Arrangement changes are locked. See Player.log and restart after correcting the load error.";
                 if (bridgeAttempts == 1 || bridgeAttempts == 15) Main.Logger.LogException(Status, ex);
             }
+        }
+
+        private static string BridgeFailureReason(Exception error)
+        {
+            while ((error is TargetInvocationException || error is TypeInitializationException) && error.InnerException != null)
+                error = error.InnerException;
+            if (error is ReflectionTypeLoadException types && types.LoaderExceptions?.FirstOrDefault(e => e != null) is Exception loader)
+                return BridgeFailureReason(loader);
+            if (error is FileNotFoundException missing)
+            {
+                string name = missing.FileName ?? "";
+                if (name.IndexOf("RearrangedS282.Multiplayer", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return "Missing RearrangedS282.Multiplayer.dll; reinstall the complete " + Main.RunningVersion + " ZIP.";
+                if (name.IndexOf("MultiplayerAPI", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return "MultiplayerAPI.dll is unavailable; check DV Multiplayer's installation and UMM load errors.";
+            }
+            if (error is InvalidOperationException && error.Message == "Multiplayer API is not ready.")
+                return "DV Multiplayer's API is not ready; check its UMM load status and Player.log.";
+            string detail = error.GetType().Name + ": " + error.Message.Replace('\r', ' ').Replace('\n', ' ');
+            return detail.Length > 240 ? detail.Substring(0, 240) + "..." : detail;
         }
 
         internal static void BeginHost()
