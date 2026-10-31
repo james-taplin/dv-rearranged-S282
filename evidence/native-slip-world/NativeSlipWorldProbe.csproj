@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="NativeSlipWorldProbe.cs" />
     <Compile Include="GroupAnimationProbe.cs" />
+    <Compile Include="..\..\RearrangedS282\MalletAnimatorMirror.cs" />
     <Compile Include="..\..\RearrangedS282\GroupCrankAnimation.cs" />
     <Compile Include="..\..\RearrangedS282\DriveQuartering.cs" />
     <Compile Include="..\..\RearrangedS282\NativeSlipEntitySchema.cs" />

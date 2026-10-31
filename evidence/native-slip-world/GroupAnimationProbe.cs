@@ -12,6 +12,13 @@ using Newtonsoft.Json.Linq;
 using RearrangedS282;
 using UnityEngine;
 
+public sealed class TenderClockTimingProbe : MonoBehaviour
+{
+    public Animator target;
+    public float speed = 1f;
+    void LateUpdate() { target.SetFloat("SpeedMultiplier", speed); }
+}
+
 public static class GroupAnimationProbe
 {
     static readonly List<string> checks=new List<string>();
@@ -80,7 +87,32 @@ public static class GroupAnimationProbe
             Check(Near(Phase(animators[0]),.9f)&&Near(Phase(animators[1]),.15f),"Replicated offsets replace the late joiner's previous local phase baseline");
             pa.Value=.05f; yield return null; yield return null;
             Check(Near(Phase(animators[0]),.25f)&&Near(Phase(animators[1]),.5f),"Replicated offsets follow later native engine phase updates and preserve quartering");
-            File.WriteAllText(output,new JObject{["passed"]=true,["checks"]=new JArray(checks),["limitations"]="Real Unity player, synthetic controller/wheel, actual native AnimatorPortReader and Port, production GroupCrankAnimation and DriveQuartering. RSE is detached with only crank phase readout initialized; no cylinder Tick, actual S282/Franklin meshes, native global driver leasing, or live car lifecycle tested."}.ToString());
+            var clockSource = new GameObject("host-speed"); roots.Add(clockSource);
+            var sourceAnimator = clockSource.AddComponent<Animator>(); sourceAnimator.runtimeAnimatorController=controller;
+            sourceAnimator.cullingMode=AnimatorCullingMode.AlwaysAnimate; sourceAnimator.SetFloat("SpeedMultiplier",0);
+            var clockTarget = new GameObject("tender-speed"); roots.Add(clockTarget);
+            new GameObject("wheel").transform.SetParent(clockTarget.transform,false);
+            var targetAnimator = clockTarget.AddComponent<Animator>(); targetAnimator.runtimeAnimatorController=controller;
+            targetAnimator.cullingMode=AnimatorCullingMode.AlwaysAnimate; targetAnimator.Play("Drive",0,0);
+            var mirror=clockTarget.AddComponent<MalletAnimatorMirror>(); mirror.Source=sourceAnimator; mirror.Target=targetAnimator;
+            mirror.CopySpeed=false; // Same configuration as AttachTenderEngine.
+            var clock=clockTarget.AddComponent<TenderClockTimingProbe>(); clock.target=targetAnimator;
+            yield return null; yield return null;
+            float tenderStart=targetAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            yield return new WaitForSecondsRealtime(.1f);
+            float tenderEnd=targetAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            Check(tenderEnd-tenderStart > .001f,"Tender animation advances when phase-owned host SpeedMultiplier is zero");
+            targetAnimator.Play("Drive",0,.5f);
+            clock.speed=-1f;
+            yield return null; yield return null;
+            tenderStart=targetAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            yield return new WaitForSecondsRealtime(.1f);
+            tenderEnd=targetAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            Check(tenderEnd-tenderStart < -.001f,"Tender clock reverses its own animation while host speed remains zero: " + tenderStart + " -> " + tenderEnd + " speed=" + targetAnimator.GetFloat("SpeedMultiplier"));
+            clock.enabled=false; mirror.CopySpeed=true; sourceAnimator.SetFloat("SpeedMultiplier",.6f);
+            yield return null; yield return null;
+            Check(Mathf.Abs(targetAnimator.GetFloat("SpeedMultiplier")-.6f)<.0001f,"Ordinary non-tender mirror continues copying host speed");
+            File.WriteAllText(output,new JObject{["passed"]=true,["checks"]=new JArray(checks),["limitations"]="Real Unity player, synthetic controller/wheel, actual native AnimatorPortReader and Port, production GroupCrankAnimation, MalletAnimatorMirror and DriveQuartering. Tender clock is represented by a LateUpdate speed writer. RSE is detached with only crank phase readout initialized; no cylinder Tick, actual S282/Franklin meshes, native global driver leasing, or live car lifecycle tested."}.ToString());
             Debug.Log("GROUP_ANIMATION_PASS "+checks.Count);
         }
         finally

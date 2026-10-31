@@ -20,7 +20,9 @@ if ($PlayerMode) {
     '{"name":"S282.NativeSlipBootstrap","references":[],"autoReferenced":true}'|Set-Content (Join-Path $bootstrap 'S282.NativeSlipBootstrap.asmdef') -Encoding utf8
 }
 '{"dependencies":{"com.unity.modules.physics":"1.0.0","com.unity.modules.jsonserialize":"1.0.0","com.unity.modules.animation":"1.0.0"}}' | Set-Content (Join-Path $fixture 'Packages\manifest.json') -Encoding utf8
-'m_EditorVersion: 2019.4.40f1' | Set-Content (Join-Path $fixture 'ProjectSettings\ProjectVersion.txt') -Encoding utf8
+# Avoid a possible UTF-8 BOM/version parsing issue after a blocking upgrade
+# dialog: write the editor's own complete version format as ASCII.
+[IO.File]::WriteAllText((Join-Path $fixture 'ProjectSettings\ProjectVersion.txt'), "m_EditorVersion: 2019.4.40f1`r`nm_EditorVersionWithRevision: 2019.4.40f1 (ffc62b691db5)`r`n", [Text.Encoding]::ASCII)
 [IO.File]::WriteAllText((Join-Path $run 'managed-path.txt'),$managed)
 & 'C:\Program Files\dotnet\dotnet.exe' build (Join-Path $PSScriptRoot 'evidence\native-slip-world\NativeSlipWorldProbe.csproj') -c Release "-p:ManagedPath=$managed" -o (Join-Path $run 'probe-bin') --ignore-failed-sources
 if ($LASTEXITCODE -ne 0) { throw 'Native World probe compilation failed.' }

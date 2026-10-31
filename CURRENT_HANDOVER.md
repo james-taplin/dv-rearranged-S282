@@ -1,3 +1,44 @@
+## Powered tender wheel regression: 2.0.9.2-beta test - 31 October 2026
+
+James reported stationary powered tender wheels in 2.0.9.1-beta; session role
+and arrangement were not specified. The tender-related source and native DV
+assemblies were compared with the 2.0.7-beta binary and subsequent changes.
+IndependentDrive sets the locomotive Animator speed parameter to zero while
+its native phase reader owns the pose. The tender mirror writes that zero in
+Update, before animation evaluation; the tender clock writes its correct speed
+in LateUpdate, too late to prevent the next mirror update from overwriting it.
+The original 2.0.7 binary has both writers but lacks that independent owner.
+
+Actual production mirror behavior reproduced the stationary tender in a real
+Unity 2019.4.40f1 standalone player using a synthetic controller and a simulated
+LateUpdate tender clock. The fix lets the tender clones opt out of copying only
+host speed; their existing tender clock owns speed and the mirror retains other
+parameters. The same player passes forward/reverse and ordinary mirror checks.
+The exact reported game session has not been reproduced and live vehicle,
+coupling, save/reload, both sides, host and guest acceptance remain outstanding.
+
+Native compilation: zero warnings/errors; actual native steam engine 72 checks,
+graph/lifecycle 56, native player animation 16, slip port/authority 32/27,
+multiplayer bridge/core 219/135, tender cleanup 2402, audio 2553, clone/follower
+126 pass. Fixture stand-ins and native-player limitations remain; see
+TENDER_WHEEL_REGRESSION_2026_10_31.md. Compiled comparison with 2.0.9.1-beta:
+2074 same-name methods unchanged; only attachment, mirror Update and its
+constructor differ, with three mirror compiler-generated methods renamed.
+
+Portable 40-file test archive (not installed, pushed or published):
+C:/Users/james/Desktop/Derail Valley Mods/RearrangedS282-B99-2.0.9.2-beta-Tender-Test/RearrangedS282-B99-2.0.9.2-beta-Tender-Test.zip
+SHA256 DD61D4EE0161DC08FF789E76162D3D5F2B3B67244C5EB80F66C135942161C28E.
+Both DLL hashes and all 40 entries match staged files. Build receipt records
+parent 163d081 plus dirty source hashes because package preceded checkpoint.
+The archive is a test candidate; all multiplayer peers need the same build.
+
+The fresh Unity fixture startup displayed a version-mismatch dialog and timed
+out. Its generated ProjectVersion.txt had PowerShell 5's UTF-8 BOM and lacked
+the revision; the runner now writes Unity's full format as ASCII. This likely
+addresses that prompt but a fresh editor launch has not yet verified it. The
+dialog has closed. Reused the previously built isolated player for the actual
+before/after motion checks; no real Unity project or game save was touched.
+
 ## Current package: 2.0.9.1-beta - 31 October 2026
 
 James explicitly corrected the release name: 2.0.9.1-beta, not 2.0.9-beta.1.
