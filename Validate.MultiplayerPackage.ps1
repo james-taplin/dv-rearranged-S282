@@ -1,9 +1,11 @@
 param(
-    [string]$PackagePath = (Join-Path $PSScriptRoot 'release\2.0.9-beta\RearrangedS282-B99-2.0.9-beta.zip'),
+    [string]$Version = '2.0.9-beta.1',
+    [string]$PackagePath,
     [string]$SeedPackage = 'B:\GitHub repo\rearranged-s282-independent-slip\build\independent-integration\RearrangedS282-2.0.8-slip-test.zip',
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\multiplayer-2.0.9-validation\package')
 )
 $ErrorActionPreference = 'Stop'
+if (-not $PackagePath) { $PackagePath = Join-Path $PSScriptRoot "release\$Version\RearrangedS282-B99-$Version.zip" }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $out = [IO.Path]::GetFullPath($OutputDirectory)
@@ -22,7 +24,7 @@ Expand-Archive -LiteralPath $PackagePath -DestinationPath $stage
 try {
     $mod = Join-Path $stage 'RearrangedS282'
     $info = Get-Content -LiteralPath (Join-Path $mod 'Info.json') -Raw | ConvertFrom-Json
-    Check ($info.Id -eq 'RearrangedS282' -and $info.Version -eq '2.0.9-beta' -and $info.EntryMethod -eq 'RearrangedS282.Main.Load') 'UMM identity/version/entry point'
+    Check ($info.Id -eq 'RearrangedS282' -and $info.Version -eq $Version -and $info.EntryMethod -eq 'RearrangedS282.Main.Load') 'UMM identity/version/entry point'
     Check ($info.MultiplayerCompatibility -eq 'All' -and 'Multiplayer' -notin $info.Requirements -and 'LocoMeshSplitter' -in $info.Requirements -and 'Multiplayer' -in $info.LoadAfter) 'Optional Multiplayer and required Mesh Splitter'
     foreach ($name in 'README.txt','CHANGELOG.txt','CREDITS.txt','MULTIPLAYER_TESTING.txt','LICENSE','THIRD_PARTY_NOTICES.txt') {
         Check (Test-Path -LiteralPath (Join-Path $mod $name) -PathType Leaf) "Required document: $name"
@@ -48,12 +50,14 @@ try {
     foreach ($name in 'RearrangedS282','RearrangedS282.Multiplayer') {
         $assembly = [Mono.Cecil.AssemblyDefinition]::ReadAssembly((Join-Path $mod ($name + '.dll')))
         try {
-            $version = @($assembly.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'System.Reflection.AssemblyInformationalVersionAttribute' })[0].ConstructorArguments[0].Value
-            Check ($assembly.Name.Name -eq $name -and $assembly.Name.Version.ToString() -eq '2.0.9.0' -and $version -eq '2.0.9-beta') "$name compiled version matches release"
+            $assemblyVersionText = @($assembly.CustomAttributes | Where-Object { $_.AttributeType.FullName -eq 'System.Reflection.AssemblyInformationalVersionAttribute' })[0].ConstructorArguments[0].Value
+            Check ($assembly.Name.Name -eq $name -and $assembly.Name.Version.ToString() -eq '2.0.9.0' -and $assemblyVersionText -eq $Version) "$name compiled version matches release"
             if ($name -eq 'RearrangedS282') {
                 Check (@($assembly.MainModule.AssemblyReferences | Where-Object { $_.Name -match 'Multiplayer|MPAPI' }).Count -eq 0) 'Main DLL has no Multiplayer/API assembly dependency'
                 Check (@($assembly.MainModule.Types | Where-Object FullName -EQ 'RearrangedS282.IndependentDrive').Count -eq 1) 'Experimental independent drive is included'
                 Check (@($assembly.MainModule.Types | Where-Object FullName -EQ 'RearrangedS282.IndependentDriveReplication').Count -eq 1) 'Native independent-group replication is included'
+                $schema = $assembly.MainModule.Types | Where-Object FullName -EQ 'RearrangedS282.NativeSlipEntitySchema'
+                Check (@($schema.NestedTypes | Where-Object { $_.Interfaces.InterfaceType.FullName -contains 'Unity.Entities.IComponentData' }).Count -eq 0) 'Slip schema requires no late-loaded custom ECS component'
             } else {
                 Check (@($assembly.MainModule.AssemblyReferences | Where-Object { $_.Name -eq 'MultiplayerAPI' -and $_.Version.ToString() -eq '1.1.0.0' }).Count -eq 1) 'Optional bridge targets supplied API 1.1'
             }

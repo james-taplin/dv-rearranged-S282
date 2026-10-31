@@ -178,7 +178,9 @@ namespace RearrangedS282
                 foreach(var group in groups)
                 {
                     group.RpmPort.Value=group.Rpm;
-                    group.Definition.Engine.crankRpm.SetPortReference(group.RpmPort);
+                    // Native SetPortReference connects once; this reference is
+                    // already wired by the graph. Lease only this engine's input.
+                    group.Definition.Engine.crankRpm.port=group.RpmPort;
                     group.PhaseOffsets=group.Definition.Animators.Select((animator,i)=>DriveQuartering.Cycle(
                         (group.Definition.InitialPhases!=null?group.Definition.InitialPhases[i]:animator.GetCurrentAnimatorStateInfo(0).normalizedTime)
                         -group.Definition.Engine.crankRotationReadOut.Value)).ToArray();
@@ -333,7 +335,8 @@ namespace RearrangedS282
                 Forces.Remove(car.SimController.drivingForce);
             if(groups!=null) foreach(var group in groups)
             {
-                if(authority) group.Definition.Engine.crankRpm.SetPortReference(group.OriginalRpm);
+                if(authority && ReferenceEquals(group.Definition.Engine.crankRpm.port,group.RpmPort))
+                    group.Definition.Engine.crankRpm.port=group.OriginalRpm;
                 group.Animation?.Dispose(); group.Animation=null; group.Force=0;
             }
             state?.Dispose(); state=null;

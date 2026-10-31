@@ -1,0 +1,23 @@
+2.0.9-beta.1 - multi-engine arrangement hotfix
+
+Corrected the independent-slip initialization error that could make Mallet and
+triplex arrangements revert to stock 2-8-2. Slip helpers now use only native
+ECS components already registered by the game, rather than requiring a custom
+component discovered before UMM loads the mod.
+
+Corrected independent engine RPM activation and cleanup. Existing connected
+RPM references are now leased and restored directly; the native connect-once
+API is no longer used to reconnect them. Cleanup before activation also leaves
+the original connections alone.
+
+Added a real Unity late-load regression matching the game's ECS/mod load order,
+and corrected the RPM fixture to enforce the actual native connection rules.
+
+Retains 2.0.9-beta's complete 49-arrangement catalogue, independent locomotive-
+group wheelslip, multiplayer radio requests and host player permissions.
+Every online player needs this same complete hotfix package.
+
+Owned-locomotive restrictions are unchanged. This hotfix does not claim a fix
+for the separate report of persistent front tubes/rust after repair.
+Live multiplayer and real locomotive appearance/driving acceptance remain
+pending. Powered-tender independent slip is not implemented.

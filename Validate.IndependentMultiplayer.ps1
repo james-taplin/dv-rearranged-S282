@@ -1,4 +1,7 @@
-param([string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\independent-multiplayer-validation'))
+param(
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\independent-multiplayer-validation'),
+    [string]$DriveSourcePath = (Join-Path $PSScriptRoot 'RearrangedS282\IndependentDrive.cs')
+)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $run = Join-Path $OutputDirectory ([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fff'))
@@ -23,7 +26,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Production independent-drive native port valid
 Get-Content -LiteralPath (Join-Path $run 'native-port-adapter.json') -Raw
 $driveProject = $project.Replace('<Compile Include="' + $root + '\evidence\articulated-simulation-tests\GraphStubs.cs" />', '<Compile Include="' + $root + '\evidence\independent-multiplayer-tests\DriveStubs.cs" />').Replace('<Compile Include="' + $root + '\evidence\independent-multiplayer-tests\PortProbe.cs" />', @"
 <Compile Include="$root\evidence\independent-multiplayer-tests\DriveProbe.cs" />
-    <Compile Include="$root\RearrangedS282\IndependentDrive.cs" />
+    <Compile Include="$DriveSourcePath" />
     <Compile Include="$root\RearrangedS282\GroupForceRouting.cs" />
 "@)
 $drivePath = Join-Path $run 'DriveAuthority.csproj'

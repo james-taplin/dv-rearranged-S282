@@ -51,7 +51,8 @@ namespace LocoSim.Definitions {
 }
 namespace LocoSim.Implementations {
  public sealed class Port {public string id;public int writes;float value;public float Value{get=>value;set{this.value=value;writes++;}}public Port(string owner,LocoSim.Definitions.PortDefinition definition){id=owner+"."+definition.ID;}}
- public sealed class PortReference {public Port port;public int references;public void SetPortReference(Port value){port=value;references++;}}
+ // Native implementation logs and refuses a second connection; it never replaces it.
+ public sealed class PortReference {public Port port;public int references,connectionErrors;public void SetPortReference(Port value){if(port!=null){connectionErrors++;return;}port=value;references++;}}
  public sealed class ReciprocatingSteamEngine {public string id;public PortReference crankRpm=new();public Port crankRotationReadOut,torqueOut,intakeFlowReadOut;public ReciprocatingSteamEngine(string name){id=name;Port P(string field)=>new Port(id,new LocoSim.Definitions.PortDefinition(0,0,field));crankRotationReadOut=P("PHASE");torqueOut=P("TORQUE");intakeFlowReadOut=P("INTAKE");crankRpm.port=P("RPM");}}
  public sealed class SimulationFlow {public readonly Dictionary<string,Port> ports=new();public SimulationFlow(IEnumerable<LocoSim.Definitions.SimComponentDefinition> definitions){foreach(var d in definitions.Cast<LocoSim.Definitions.ConfigurablePortDefinition>()){var p=new Port(d.ID,d.port);p.Value=d.value;ports.Add(p.id,p);}}public bool TryGetPort(string id,out Port port)=>ports.TryGetValue(id,out port);public void Tick(float delta){}}
 }

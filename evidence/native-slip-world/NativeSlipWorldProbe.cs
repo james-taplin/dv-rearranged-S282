@@ -35,6 +35,10 @@ public static class NativeSlipWorldProbe
     static EntityQuery Query(Type type, string name, ComponentSystemBase system) =>
         (EntityQuery)type.GetMethod("<>GetEntityQuery_For" + name + "_From", Flags).Invoke(null, new object[] { system });
 
+    static int HelperCount(EntityManager manager) =>
+        manager.CreateEntityQuery(ComponentType.ReadOnly<WheelslipControllerSystem.WheelslipInputData>()).CalculateEntityCount() +
+        manager.CreateEntityQuery(ComponentType.ReadOnly<AdhesionControllerSystem.AdhesionCalculationData>()).CalculateEntityCount();
+
     public static void Run(string output)
     {
         World world = null;
@@ -68,9 +72,6 @@ public static class NativeSlipWorldProbe
             var carrier = manager.CreateEntity(NativeSlipEntitySchema.AdhesionCarrier(manager));
             var a = manager.CreateEntity(NativeSlipEntitySchema.SlipGroup(manager));
             var b = manager.CreateEntity(NativeSlipEntitySchema.SlipGroup(manager));
-            manager.SetComponentData(carrier,new NativeSlipEntitySchema.Ownership(1,-1));
-            manager.SetComponentData(a,new NativeSlipEntitySchema.Ownership(1,0));
-            manager.SetComponentData(b,new NativeSlipEntitySchema.Ownership(1,1));
             var shared = new AdhesionControllerSystem.StaticSharedAdhesionCalculationData {bogieCount=2,numOfAxles=4};
             manager.SetComponentData(carrier,shared);
             manager.SetComponentData(carrier,new LocalToWorld {Value=float4x4.identity});
@@ -94,7 +95,7 @@ public static class NativeSlipWorldProbe
                     var groupGrip=grip;
                     if(pair.entity==a) groupGrip.wheelslipForceLimitPerAxle*=firstGripMultiplier;
                     float drop=useDrop?dropCurve.Evaluate(manager.GetComponentData<WheelslipControllerSystem.WheelslipOutputData>(pair.entity).wheelslip):1;
-                    NativeSlipEntitySchema.WriteGroupInputs(manager,pair.entity,1,
+                    NativeSlipEntitySchema.WriteGroupInputs(manager,pair.entity,
                         new WheelslipControllerSystem.WheelslipInputData {generatedForce=pair.force,numberOfPoweredAxles=2,maxWheelslipRpm=370,wheelslipToAdhesionDrop=drop,preventWheelslip=preventSlip},
                         shared,groupGrip,new AdhesionControllerSystem.WheelSlideData{wheelSlide=slide});
                 }
@@ -137,14 +138,15 @@ public static class NativeSlipWorldProbe
             for(int i=0;i<200;i++) step(1000,1000,0);
             Check(manager.GetComponentData<WheelslipControllerSystem.WheelslipOutputData>(a).wheelslip==0,"Native prevent-wheelslip input respected");
             bool rejected=false;
-            try { NativeSlipEntitySchema.WriteGroupInputs(manager,a,2,new WheelslipControllerSystem.WheelslipInputData(),shared,new AdhesionControllerSystem.AdhesionWheelslipOutputData(),new AdhesionControllerSystem.WheelSlideData()); }
+            var retired=manager.CreateEntity(NativeSlipEntitySchema.SlipGroup(manager)); manager.DestroyEntity(retired);
+            try { NativeSlipEntitySchema.WriteGroupInputs(manager,retired,new WheelslipControllerSystem.WheelslipInputData(),shared,new AdhesionControllerSystem.AdhesionWheelslipOutputData(),new AdhesionControllerSystem.WheelSlideData()); }
             catch(InvalidOperationException) { rejected=true; }
-            Check(rejected,"Retired activation cannot write current group state");
+            Check(rejected,"Retired versioned entity cannot receive group inputs");
             begin.Update(); manager.CompleteAllJobs(); end.Update();
             manager.DestroyEntity(a); manager.DestroyEntity(b); manager.DestroyEntity(carrier);
             begin.Update(); end.Update();
             Check(!manager.Exists(a) && !manager.Exists(b) && !manager.Exists(carrier),"All three fixture entity identities retired after native buffers drain");
-            Check(manager.CreateEntityQuery(ComponentType.ReadOnly<NativeSlipEntitySchema.Ownership>()).CalculateEntityCount()==0,"No owned helper entities remain");
+            Check(HelperCount(manager)==0,"No owned helper entities remain");
             // Use the actual conversion wrappers and production ordered systems.
             // Dynamic game assemblies did not receive the game's bootstrap event,
             // so deliver that same isolated-World notification explicitly.
@@ -184,7 +186,7 @@ public static class NativeSlipWorldProbe
                 // OnDisable/OnDestroy queueing before the next simulation ECB.
                 Object.DestroyImmediate(helperRoot);
                 elapsed+=.02; world.SetTime(new TimeData(elapsed,.02f)); simulation.Update();
-                Check(samples==finalSamples && manager.CreateEntityQuery(ComponentType.ReadOnly<NativeSlipEntitySchema.Ownership>()).CalculateEntityCount()==0,"Native wrapper retirement drains with no stale samples/helpers, activation "+activation);
+                Check(samples==finalSamples && HelperCount(manager)==0,"Native wrapper retirement drains with no stale samples/helpers, activation "+activation);
             }
             Check(NativeSlipRuntimeState.States.Count==0,"No disposed runtime state registrations remain");
             var invalid=new NativeSlipRuntimeState(parent.transform,manager,2,4);
@@ -196,7 +198,7 @@ public static class NativeSlipWorldProbe
             Check(faults==1 && !invalid.Ready && !invalid.HasCompletedSample && NativeSlipRuntimeState.States.Count==0,"Input fault retires activation before any force-ready sample");
             Object.DestroyImmediate(invalidRoot);
             elapsed+=.02; world.SetTime(new TimeData(elapsed,.02f)); simulation.Update();
-            Check(manager.CreateEntityQuery(ComponentType.ReadOnly<NativeSlipEntitySchema.Ownership>()).CalculateEntityCount()==0,"Faulted native wrappers retire without owned entity leaks");
+            Check(HelperCount(manager)==0,"Faulted native wrappers retire without owned entity leaks");
             var timeType=typeof(World).Assembly.GetType("Unity.Entities.WorldTime",true);
             int frameworkTimeEntities=manager.CreateEntityQuery(ComponentType.ReadOnly(timeType)).CalculateEntityCount();
             Check(frameworkTimeEntities==1 && manager.UniversalQuery.CalculateEntityCount()==1,"Only the native WorldTime singleton remains before World disposal");

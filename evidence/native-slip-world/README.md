@@ -1,3 +1,10 @@
+31 October 2026 correction: release-player bootstrap now loads the native game
+and transform assemblies and initializes TypeManager BEFORE loading the probe,
+matching UMM late loading. This reproduced the original unknown Ownership tag.
+Production no longer introduces a custom ECS component. The corrected late-load
+run passes 46 native and 13 animation checks; see BUGS_2026_10_31.md. Older results
+below used early assembly discovery and did not cover this startup boundary.
+
 # Native calculation-helper feasibility experiment
 
 This branch's first implementation unit is the actual production

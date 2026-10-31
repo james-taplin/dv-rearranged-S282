@@ -13,21 +13,11 @@ namespace RearrangedS282
     // this schema deliberately does not create or immediately destroy entities.
     internal static class NativeSlipEntitySchema
     {
-        internal struct Ownership : IComponentData
-        {
-            public int Generation;
-            public int Group;
-
-            internal Ownership(int generation, int group)
-            {
-                if (generation <= 0 || group < -1) throw new ArgumentOutOfRangeException();
-                Generation = generation;
-                Group = group; // -1 identifies the physical-car carrier.
-            }
-        }
-
+        // Use only components already registered by the game. UMM loads this
+        // assembly after TypeManager initialization; a mod-defined ECS tag would
+        // fail in the player even though an early-loaded fixture can discover it.
+        // The owning runtime retains its private, versioned wrapper identities.
         internal static EntityArchetype AdhesionCarrier(EntityManager manager) => manager.CreateArchetype(
-            ComponentType.ReadWrite<Ownership>(),
             ComponentType.ReadWrite<LocalToWorld>(),
             ComponentType.ReadWrite<AdhesionControllerSystem.StaticSharedAdhesionCalculationData>(),
             ComponentType.ReadWrite<AdhesionControllerSystem.StaticAdhesionCalculationData>(),
@@ -37,7 +27,6 @@ namespace RearrangedS282
             ComponentType.ReadWrite<TrainCarPositionMonitorSystem.IsMovingTag>());
 
         internal static EntityArchetype SlipGroup(EntityManager manager) => manager.CreateArchetype(
-            ComponentType.ReadWrite<Ownership>(),
             ComponentType.ReadWrite<WheelslipControllerSystem.WheelslipInputData>(),
             ComponentType.ReadWrite<WheelslipControllerSystem.WheelslipOutputData>(),
             ComponentType.ReadWrite<AdhesionControllerSystem.WheelSlideData>(),
@@ -45,14 +34,14 @@ namespace RearrangedS282
             ComponentType.ReadWrite<AdhesionControllerSystem.AdhesionWheelslipOutputData>(),
             ComponentType.ReadWrite<TrainCarPositionMonitorSystem.IsMovingTag>());
 
-        internal static void WriteGroupInputs(EntityManager manager, Entity group, int generation,
+        internal static void WriteGroupInputs(EntityManager manager, Entity group,
             WheelslipControllerSystem.WheelslipInputData input,
             AdhesionControllerSystem.StaticSharedAdhesionCalculationData shared,
             AdhesionControllerSystem.AdhesionWheelslipOutputData grip,
             AdhesionControllerSystem.WheelSlideData hostSlide)
         {
-            if (manager.GetComponentData<Ownership>(group).Generation != generation)
-                throw new InvalidOperationException("Slip input belongs to a retired activation.");
+            if (!manager.Exists(group))
+                throw new InvalidOperationException("Slip input belongs to a retired entity.");
             ValidateGroupInputs(input, shared, grip, hostSlide);
             manager.SetComponentData(group, input);
             manager.SetComponentData(group, shared);

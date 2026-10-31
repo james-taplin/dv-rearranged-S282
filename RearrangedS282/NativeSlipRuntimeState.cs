@@ -17,7 +17,6 @@ namespace RearrangedS282
         internal static readonly List<NativeSlipRuntimeState> States = new List<NativeSlipRuntimeState>();
         internal readonly World World;
         private readonly EntityManager manager;
-        private readonly int generation;
         private readonly GameObject root;
         private readonly DVConvertToEntity carrier;
         private readonly DVConvertToEntity[] groups;
@@ -56,18 +55,17 @@ namespace RearrangedS282
             World = manager.World;
             if (DVConvertToEntity.ConvertSystem == null || DVConvertToEntity.ConvertSystem.World != World)
                 throw new InvalidOperationException("Native conversion system is not ready for this car's World.");
-            this.generation = generation;
             inputs = new WheelslipControllerSystem.WheelslipInputData[groupCount];
             shared = new AdhesionControllerSystem.StaticSharedAdhesionCalculationData[groupCount];
             slides = new AdhesionControllerSystem.WheelSlideData[groupCount];
             outputs = new WheelslipControllerSystem.WheelslipOutputData[groupCount];
             written = new bool[groupCount]; groups = new DVConvertToEntity[groupCount]; gripMultipliers = new float[groupCount];
-            root = new GameObject("[Rearranged native group calculations]");
+            root = new GameObject("[Rearranged native group calculations " + generation + "]");
             root.transform.SetParent(parent, false);
             try
             {
-                carrier = Create("adhesion carrier", NativeSlipEntitySchema.AdhesionCarrier(manager), -1);
-                for (int i = 0; i < groupCount; i++) groups[i] = Create("slip group " + i, NativeSlipEntitySchema.SlipGroup(manager), i);
+                carrier = Create("adhesion carrier", NativeSlipEntitySchema.AdhesionCarrier(manager));
+                for (int i = 0; i < groupCount; i++) groups[i] = Create("slip group " + i, NativeSlipEntitySchema.SlipGroup(manager));
                 var simulation = World.GetOrCreateSystem<SimulationSystemGroup>();
                 simulation.AddSystemToUpdateList(World.GetOrCreateSystem<NativeSlipPrepareSystem>());
                 simulation.AddSystemToUpdateList(World.GetOrCreateSystem<NativeSlipBridgeSystem>());
@@ -78,12 +76,11 @@ namespace RearrangedS282
             catch { Dispose(); throw; }
         }
 
-        private DVConvertToEntity Create(string name, EntityArchetype archetype, int group)
+        private DVConvertToEntity Create(string name, EntityArchetype archetype)
         {
             var child = new GameObject(name);
             child.transform.SetParent(root.transform, false);
             var wrapper = child.AddComponent<DVConvertToEntity>();
-            wrapper.OnConverted += (em, entity) => em.SetComponentData(entity, new NativeSlipEntitySchema.Ownership(generation, group));
             wrapper.Initialize(archetype);
             return wrapper;
         }
@@ -138,7 +135,7 @@ namespace RearrangedS282
             {
                 var groupGrip = grip;
                 groupGrip.wheelslipForceLimitPerAxle *= gripMultipliers[i];
-                NativeSlipEntitySchema.WriteGroupInputs(manager, groups[i].Entity, generation, inputs[i], shared[i], groupGrip, slides[i]);
+                NativeSlipEntitySchema.WriteGroupInputs(manager, groups[i].Entity, inputs[i], shared[i], groupGrip, slides[i]);
             }
             bridged = true;
         }

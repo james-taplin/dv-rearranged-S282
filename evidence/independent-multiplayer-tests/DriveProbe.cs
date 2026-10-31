@@ -19,6 +19,7 @@ internal static class DriveProbe
         internal readonly ArticulatedSimulation Simulation;
         internal readonly IndependentDrive.Definition[] Definitions;
         internal readonly IndependentDriveReplication Outputs;
+        internal readonly Port[] OriginalRpm;
         internal Car()
         {
             var go=new GameObject();Vehicle=go.AddComponent<TrainCar>();Owner=go.AddComponent<IndependentDrive>();
@@ -30,6 +31,7 @@ internal static class DriveProbe
                 Animators=new[]{new GameObject().AddComponent<Animator>(),new GameObject().AddComponent<Animator>()},
                 InitialPhases=new[]{.1f,.35f}
             }).ToArray();
+            OriginalRpm=Definitions.Select(d=>d.Engine.crankRpm.port).ToArray();
             Owner.Initialize(Vehicle,Simulation,Definitions);
         }
         internal void Update()=>Invoke(Owner,"Update");
@@ -76,7 +78,7 @@ internal static class DriveProbe
             Check(NativeSlipRuntimeState.Created==1,"Offline/host arrangement owns exactly one native ECS slip state");
             Check(host.NativeForceAllowed(),"Host retains native force fallback until its first completed native slip sample");
             NativeSlipRuntimeState.Latest.Complete();
-            Check(host.Owner.IsOwning&&host.Definitions.All(d=>d.Engine.crankRpm.references==1),"First host native sample activates independent native engine RPM ownership");
+            Check(host.Owner.IsOwning&&host.Definitions.All(d=>d.Engine.crankRpm.references==0 && d.Engine.crankRpm.port.id.EndsWith(".INDEPENDENT_RPM")),"First host native sample leases connected RPM inputs without calling connect-once API");
             Check(host.Outputs.Matches(MultiplayerSync.SessionEpoch,12,2),"Host publishes valid per-group outputs tied to the current arrangement revision");
             host.Definitions[0].Engine.torqueOut.Value=10000;host.Definitions[1].Engine.torqueOut.Value=20000;
             Check(!host.NativeForceAllowed()&&host.Vehicle.Bogies.All(b=>b.appliedForce==500),"Host limits and applies each native group force exactly once through its mapped bogie");
@@ -84,7 +86,15 @@ internal static class DriveProbe
             Check(!host.NativeForceAllowed(),"Authority loss blocks force application before the owner next updates");
             int writes=NativeSlipRuntimeState.GroupWrites;NativeSlipRuntimeState.Latest.Prepare();
             Check(!host.Owner.IsOwning&&NativeSlipRuntimeState.GroupWrites==writes&&NativeSlipRuntimeState.Disposed==1,"Authority loss disposes host ECS ownership before any further input or force work");
-            Check(host.Definitions.All(d=>d.Engine.crankRpm.references==2),"Authority loss restores each former host native RPM input once");
+            Check(host.Definitions.Select(d=>d.Engine.crankRpm.port).SequenceEqual(host.OriginalRpm) && host.Definitions.All(d=>d.Engine.crankRpm.references==0),"Authority loss restores each former host native RPM input once");
+            Role(true);
+            var pending=new Car();pending.Owner.Release();pending.Owner.Release();
+            Check(pending.Definitions.Select(d=>d.Engine.crankRpm.port).SequenceEqual(pending.OriginalRpm),"Teardown before first sample leaves already connected stock RPM inputs intact");
+            var replaced=new Car();NativeSlipRuntimeState.Latest.Complete();
+            var external=new Port("otherOwner",new LocoSim.Definitions.PortDefinition(0,0,"RPM"));
+            replaced.Definitions[0].Engine.crankRpm.port=external;replaced.Owner.Release();
+            Check(ReferenceEquals(replaced.Definitions[0].Engine.crankRpm.port,external),"Retiring an old RPM lease never overwrites a replacement owner");
+            Check(new[]{guest,host,pending,replaced}.SelectMany(c=>c.Definitions).All(d=>d.Engine.crankRpm.connectionErrors==0),"All activation/retirement paths avoid native duplicate-connection errors");
             Directory.CreateDirectory(args[0]);File.WriteAllText(Path.Combine(args[0],"drive-authority.json"),new JObject{
                 ["passed"]=true,["count"]=checks.Count,["checks"]=new JArray(checks),
                 ["limitations"]="Entire production IndependentDrive, IndependentDriveReplication and GroupForceRouting execute with narrow Unity/native ECS/animation API substitutes. Confirms ownership boundaries and integration calls, not real physics magnitudes, native ECS scheduling, network delivery or native animation evaluation. Separate native World and Unity phase fixtures cover those available native boundaries."

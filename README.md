@@ -1,4 +1,11 @@
-# Rearranged S282 - 2.0.9-beta multiplayer development
+# Rearranged S282 - 2.0.9-beta.1 multiplayer development
+
+Current hotfix: **2.0.9-beta.1** corrects the independent-slip ECS late-loading
+failure behind multi-engine arrangement rollback, and the connect-once RPM
+API misuse. See [the investigation](BUGS_2026_10_31.md). The original 2.0.9-beta
+archive and historical validation records are retained. Owned-locomotive
+restrictions are unchanged; repair presentation remains a separate open report.
+
 
 This separate `codex/s282-multiplayer` branch uses the complete **2.0.8-slip-test** source (checkpoint `31389e811d0b99fb68b238174fd59b9264f389ef`), including experimental independent wheelslip. It replaces the earlier multiplayer alpha baseline and carries its latest fixes and 49-layout catalogue.
 

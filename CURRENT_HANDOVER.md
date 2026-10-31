@@ -1,3 +1,32 @@
+## Current hotfix: 2.0.9-beta.1 - 31 October 2026
+
+Supersedes the current-version label below, retaining the complete selected base.
+See BUGS_2026_10_31.md for exact reported symptoms, reproduced causes and evidence.
+The late-loaded custom ECS Ownership component caused independent-slip setup to
+throw and arrangement conversion to restore stock. Removed that unnecessary tag;
+private wrappers/versioned native entities continue to own helper lifetimes.
+Also replaced connect-once RPM calls with scoped reference leases/restoration.
+
+The isolated release-player fixture now initializes the native game ECS registry
+before loading the mod. The old source reproduces the reported exception; the
+fixed source passes 46 native checks and 13 animation checks. A faithful native
+RPM boundary fails old source and passes the fixed 27 ownership checks (plus 32
+port checks). Relevant graph, engine, bridge, core, radio and oiling tests pass.
+Those checks are not a live locomotive or multi-peer acceptance run.
+
+Owned-locomotive restrictions are expected, explicitly confirmed by James, and
+unchanged. Do not remove unique/owned-car safeguards while revisiting this work.
+The repair tubes/rust report remains separate and open; prioritize arrangement
+rollback as James instructed. The reporter already resolved the visual-settings
+freeze; do not claim this hotfix fixes it or blame another mod without evidence.
+
+Build.Multiplayer.ps1 and Package.Nexus.ps1 default to 2.0.9-beta.1. Nexus copy
+is plain text in release-copy/2.0.9-beta.1/DESCRIPTION.txt. Run the package checker
+with -Version 2.0.9-beta.1. The original 2.0.9-beta archive remains unchanged.
+Final receipts record the actual clean commit/hashes; no installation or Nexus
+upload is performed. Keep updates on codex/s282-multiplayer; main/b99-port and
+other checkouts remain outside this hotfix.
+
 ## Current release: multiplayer 2.0.9-beta - 29 October 2026
 
 This section supersedes the older 2.0.8-alpha baseline below. James explicitly

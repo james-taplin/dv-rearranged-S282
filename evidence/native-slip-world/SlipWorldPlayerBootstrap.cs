@@ -23,6 +23,13 @@ public sealed class SlipWorldPlayerBootstrap : MonoBehaviour
         {
             Assembly.LoadFrom(Path.Combine(managed,"UnityEngine.dll"));
             Assembly.LoadFrom(Path.Combine(managed,"Unity.Entities.Hybrid.dll"));
+            // UMM loads mods after the game's ECS registry has initialized.
+            // Reproduce that boundary instead of discovering probe types at startup.
+            Assembly.LoadFrom(Path.Combine(managed,"Assembly-CSharp.dll"));
+            Assembly.LoadFrom(Path.Combine(managed,"Unity.Transforms.dll"));
+            Assembly.LoadFrom(Path.Combine(managed,"Unity.Entities.dll"))
+                .GetType("Unity.Entities.TypeManager",true).GetMethod("Initialize")
+                .Invoke(null,null);
             var assembly=Assembly.LoadFrom(Path.Combine(root,"probe-bin","NativeSlipWorldProbe.dll"));
             assembly.GetType("NativeSlipWorldProbe").GetMethod("Run").Invoke(null,new object[]{Path.Combine(root,"result.json")});
             animation=(IEnumerator)assembly.GetType("GroupAnimationProbe").GetMethod("Run").Invoke(null,new object[]{Path.Combine(root,"animation-result.json")});
