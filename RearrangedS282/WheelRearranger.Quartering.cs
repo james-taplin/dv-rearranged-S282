@@ -54,7 +54,7 @@ namespace RearrangedS282
             int id = (int)currentWA;
             if (id != 31 && id != 32 && id != 38 && id != 40 && id != 47)
                 return rows;
-            if (quarteringRotation?.animatorSetups == null) return rows;
+            var setups = GroupCrankAnimation.DiagnosticSetups(quarteringRotation);
             var groups = GetComponentsInChildren<LODGroup>(true);
             JObject Part(Transform source)
             {
@@ -74,7 +74,7 @@ namespace RearrangedS282
                         g.GetLODs().Length != 0 && g.GetLODs()[0].renderers.Contains(renderer))
                 };
             }
-            foreach (var animator in quarteringRotation.animatorSetups.Select(s => s.animator)
+            foreach (var animator in setups.Select(s => s.animator)
                 .Where(a => a != null && a.isActiveAndEnabled &&
                     (a.runtimeAnimatorController == AssetBundleLoader.FranklinBAnimCtrl ||
                      a.runtimeAnimatorController == AssetBundleLoader.FranklinBAnimCtrl4444)).Distinct())
@@ -91,7 +91,7 @@ namespace RearrangedS282
             var rows = new JArray();
             if (quarteringRotation != null)
             {
-                var active = quarteringRotation.animatorSetups
+                var active = GroupCrankAnimation.DiagnosticSetups(quarteringRotation)
                     .Where(s => s.animator != null && s.animator.isActiveAndEnabled).ToArray();
                 for (int i = 0; i < active.Length; i += 2)
                     rows.Add(QuarteringPairReport("locomotive " + (i / 2 + 1), active[i].animator,
@@ -107,6 +107,46 @@ namespace RearrangedS282
             int expected = engines + (poweredTenderSelected ? 1 : 0);
             return new JObject { ["expectedPairs"] = expected, ["pairs"] = rows,
                 ["passed"] = rows.Count == expected && rows.All(r => (bool)r["passed"]) };
+        }
+
+        internal JObject AnimationOwnershipReport()
+        {
+            JObject Drive(Animator animator, bool tender)
+            {
+                var row = new JObject { ["drive"] = animator != null ? animator.name : null, ["passed"] = false };
+                if (animator == null || !animator.isActiveAndEnabled || !animator.isInitialized || animator.runtimeAnimatorController == null)
+                { row["error"] = "Missing, inactive or uninitialized Animator."; return row; }
+                int speedId = Animator.StringToHash("SpeedMultiplier");
+                bool hasSpeed = animator.parameters.Any(p => p.nameHash == speedId);
+                float speed = hasSpeed ? animator.GetFloat(speedId) : 0f;
+                bool phaseOwned = GroupCrankAnimation.Owns(animator);
+                var mirrors = animator.GetComponents<MalletAnimatorMirror>().Where(m => m.isActiveAndEnabled).ToArray();
+                var tenderClocks = tender ? animator.GetComponentsInParent<TenderDriveAnimation>(true)
+                    .Count(c => c.isActiveAndEnabled && c.Drives(animator)) : 0;
+                row["controller"] = animator.runtimeAnimatorController.name;
+                row["state"] = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+                row["phaseOwned"] = phaseOwned;
+                row["animatorSpeed"] = animator.speed;
+                row["hasSpeedParameter"] = hasSpeed;
+                row["speedMultiplier"] = speed;
+                row["activeMirrors"] = mirrors.Length;
+                row["hostSpeedMirrors"] = mirrors.Count(m => m.CopySpeed);
+                row["tenderClocks"] = tenderClocks;
+                // Zero SpeedMultiplier is correct at rest. Animator.speed must
+                // permit the clock to run, unless a native phase reader owns it.
+                row["passed"] = (int)row["state"] != 0 && hasSpeed && !float.IsInfinity(animator.speed) &&
+                    !float.IsNaN(speed) && !float.IsInfinity(speed) &&
+                    (phaseOwned ? animator.speed == 0f && speed == 0f : animator.speed > 0f) &&
+                    (!tender || !phaseOwned && mirrors.Length == 1 && !mirrors[0].CopySpeed && tenderClocks == 1);
+                return row;
+            }
+            var locomotive = new JArray(GroupCrankAnimation.DiagnosticSetups(quarteringRotation)
+                .Select(s => s.animator).Where(a => a != null && a.isActiveAndEnabled).Distinct().Select(a => Drive(a, false)));
+            var tenderRows = poweredTenderSelected ? new JArray(Drive(tenderDriveL?.GetComponent<Animator>(), true),
+                Drive(tenderDriveR?.GetComponent<Animator>(), true)) : new JArray();
+            return new JObject { ["locomotive"] = locomotive, ["tender"] = tenderRows,
+                ["motionVerified"] = false, ["clearanceVerified"] = false,
+                ["scope"] = "Stationary animation ownership only; no rotation, crank/piston clearance or driving acceptance is inferred." };
         }
 
         private static JObject QuarteringPairReport(string name, Animator left, Animator right, float leftOffset, float rightOffset)
@@ -137,7 +177,7 @@ namespace RearrangedS282
             }
             row["wheels"] = wheels;
             row["passed"] = ls.fullPathHash != 0 && ls.fullPathHash == rs.fullPathHash && error <= 1f &&
-                wheels.All(w => (bool)w["passed"]);
+                wheels.Count > 0 && wheels.All(w => (bool)w["passed"]);
             return row;
         }
 #endif

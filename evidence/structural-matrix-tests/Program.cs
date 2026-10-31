@@ -7,6 +7,9 @@ internal static class Program {
  static JObject Good(int id,bool tender){bool a=WheelArrangement.IsArticulatedId(id),t=WheelArrangement.LocomotiveWheels(id).Length==5;return new JObject{
   ["arrangementId"]=id,["frontFramePieces"]=a?2:0,["middleFramePieces"]=t?2:0,["rearFramePieces"]=a&&id!=47?2:0,
   ["activeLocomotiveEngines"]=t?3:a?2:1,["tenderSelected"]=tender,["hasSupportedTender"]=true,
+  ["effectiveSettings"]=new JObject{["show4CoupledValveGear"]=false},
+  ["animationOwnership"]=new JObject{["locomotive"]=new JArray(Enumerable.Range(0,id==33?0:2*(t?3:a?2:1)).Select(i=>new JObject{["passed"]=true,["phaseOwned"]=a})),["tender"]=new JArray(Enumerable.Range(0,tender?2:0).Select(i=>new JObject{["passed"]=true}))},
+  ["independentDrive"]=a?new JObject{["active"]=true,["ready"]=true}:null,
   ["franklinLinkages"]=new JArray(Enumerable.Range(0,id==31||id==32?4:id==38||id==40||id==47?6:0).Select(i=>new JObject{["drive"]="drive"+i,["mainRod"]=new JObject{["enabled"]=true,["mesh"]=true,["detailLod"]=true},["crank"]=new JObject{["enabled"]=true,["mesh"]=true,["detailLod"]=true}})),
   ["franklinClearanceMeshes"]=id==32?2:0,
   ["malletDriverPitch"]=new JArray(Enumerable.Range(0,a?2*WheelArrangement.LocomotiveWheels(id).Skip(1).Take(WheelArrangement.LocomotiveWheels(id).Length-2).Count(n=>n==6):0).Select(i=>new JObject{["passed"]=true})),
@@ -17,6 +20,17 @@ internal static class Program {
   foreach(int id in Enumerable.Range(0,49)){Check(matrix.Count(c=>c.Id==id&&!c.Tender)==1,"Every arrangement tested ordinary");Check(matrix.Count(c=>c.Id==id&&c.Tender)==(PoweredTenderPolicy.Supports(id)?1:0),"Powered exclusions match runtime policy");}
   foreach(var c in matrix){
    Check(Accept(c.Id,c.Tender,Good(c.Id,c.Tender)),"Valid matrix presentation accepted");
+   var animationBad=Good(c.Id,c.Tender);animationBad.Remove("animationOwnership");Check(!Accept(c.Id,c.Tender,animationBad),"Missing ownership cannot pass");
+   animationBad=Good(c.Id,c.Tender);animationBad.Remove("effectiveSettings");Check(!Accept(c.Id,c.Tender,animationBad),"Missing effective settings cannot pass");
+   foreach(string role in new[]{"locomotive","tender"}){
+    animationBad=Good(c.Id,c.Tender);var drives=(JArray)animationBad["animationOwnership"][role];
+    if(drives.Count>0){drives[0]["passed"]=false;Check(!Accept(c.Id,c.Tender,animationBad),"Invalid active speed/phase writer fails");}
+    animationBad=Good(c.Id,c.Tender);((JArray)animationBad["animationOwnership"][role]).Add(new JObject{["passed"]=true});Check(!Accept(c.Id,c.Tender,animationBad),"Duplicate/unexpected animation drive fails");
+   }
+   if(WheelArrangement.IsArticulatedId(c.Id)){
+    foreach(string field in new[]{"active","ready"}){animationBad=Good(c.Id,c.Tender);animationBad["independentDrive"][field]=false;Check(!Accept(c.Id,c.Tender,animationBad),"Native fallback cannot pass independent validation");}
+    animationBad=Good(c.Id,c.Tender);animationBad["animationOwnership"]["locomotive"][0]["phaseOwned"]=false;Check(!Accept(c.Id,c.Tender,animationBad),"Unowned engine cannot hide behind other active groups");
+   }
    Check(AcceptOil(GoodOil()),"Complete oilcup coverage accepted for every matrix case");
    var franklinBad=Good(c.Id,c.Tender);((JObject)franklinBad).Remove("franklinLinkages");Check(!Accept(c.Id,c.Tender,franklinBad),"Missing Franklin report cannot pass");
    franklinBad=Good(c.Id,c.Tender);((JArray)franklinBad["franklinLinkages"]).Add(new JObject());Check(!Accept(c.Id,c.Tender,franklinBad),"Unexpected or duplicate Franklin engine fails");

@@ -80,9 +80,12 @@ class Program
                 // A stale, unquartered host must not contaminate the tender pair.
                 r.state.normalizedTime = l.state.normalizedTime;
                 var clock = new GameObject("clock").Add<TenderDriveAnimation>();
+                tl.transform.SetParent(clock.transform); tr.transform.SetParent(clock.transform);
                 var sim = new ArticulatedSimulation(); sim.MiddleEngine.chuffFrequencyReadOut.Value = 12; sim.MainEngine.crankRpm.Value = -100;
                 clock.Initialize(sim, tl, tr, l, r, .75f, 0);
                 tl.Evaluate(); tr.Evaluate(); owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
+                tl.gameObject.Add<MalletAnimatorMirror>().CopySpeed = false;
+                tr.gameObject.Add<MalletAnimatorMirror>().CopySpeed = false;
                 int speed = Animator.StringToHash("SpeedMultiplier");
                 Check(tl.floats[speed] == -3 && tr.floats[speed] == -3, "Tender's existing frequency/direction calculation changed");
                 GroupCrankAnimation.Owned.Add(tl); GroupCrankAnimation.Owned.Add(tr);
@@ -93,6 +96,7 @@ class Program
                 typeof(TenderDriveAnimation).GetMethod("OnDisable", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(clock, null);
                 Check(tl.floats[speed] == 0 && tr.floats[speed] == 0 && !tl.GetComponents<AnimatorPortReader>().Last().bound,
                     "Tender teardown/reader cleanup failed");
+                clock.Initialize(sim, tl, tr, l, r, .75f, 0);tl.Evaluate();tr.Evaluate();
             }
             owner.Arrangement(id, tl, tr);
             if(id==33)
@@ -108,13 +112,51 @@ class Program
             }
             var report = owner.QuarteringReport();
             Check((bool)report["passed"], "Valid active-pair matrix failed: " + id + " " + report);
+            var ownership = owner.AnimationOwnershipReport();
+            Check(((JArray)ownership["locomotive"]).Count == engines * 2 &&
+                ((JArray)ownership["tender"]).Count == (tender ? 2 : 0) &&
+                ((JArray)ownership["locomotive"]).Concat((JArray)ownership["tender"]).All(d => (bool)d["passed"]),
+                "Valid stationary ownership rejected");
+            Check(!(bool)ownership["motionVerified"] && !(bool)ownership["clearanceVerified"], "Static checks implied driving acceptance");
+            l.speed = 0;
+            Check(!(bool)owner.AnimationOwnershipReport()["locomotive"][0]["passed"], "Unowned frozen Animator escaped");
+            GroupCrankAnimation.Owned.Add(l);
+            Check((bool)owner.AnimationOwnershipReport()["locomotive"][0]["passed"], "Native phase owner incorrectly rejected");
+            GroupCrankAnimation.Owned.Remove(l); l.speed = 1;
+            if (tender)
+            {
+                var actual = tl.GetComponent<MalletAnimatorMirror>(); actual.CopySpeed = true;
+                var pending = tl.gameObject.Add<MalletAnimatorMirror>(); pending.CopySpeed = false; pending.enabled = false;
+                Check(!(bool)owner.AnimationOwnershipReport()["tender"][0]["passed"], "Inactive configured mirror concealed active zero-speed writer");
+                actual.CopySpeed = false;
+                Check((bool)owner.AnimationOwnershipReport()["tender"][0]["passed"], "Inactive retiring mirror treated as active writer");
+                pending.enabled = true;
+                Check(!(bool)owner.AnimationOwnershipReport()["tender"][0]["passed"], "Duplicate active tender mirrors escaped");
+                pending.enabled = false;
+                var clock = tl.GetComponentsInParent<TenderDriveAnimation>(true).Single(); clock.enabled = false;
+                Check(!(bool)owner.AnimationOwnershipReport()["tender"][0]["passed"], "Disabled tender clock escaped");
+                clock.enabled = true;
+            }
             pairs += ((JArray)report["pairs"]).Count;
+            // A real phase owner leases these registrations away from the native
+            // speed writer. The mechanism inventory must survive that handover.
+            if (WheelArrangement.IsArticulatedId(id))
+            {
+                var registered = rotation.animatorSetups;
+                GroupCrankAnimation.Leases[rotation] = registered;
+                rotation.animatorSetups = Array.Empty<PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair>();
+                Check((bool)owner.QuarteringReport()["passed"], "Phase ownership hid active engine pairs from structural diagnostics");
+                GroupCrankAnimation.Leases.Remove(rotation); rotation.animatorSetups = registered;
+            }
             r.state.normalizedTime = l.state.normalizedTime; r.Evaluate();
             Check(!(bool)owner.QuarteringReport()["passed"], "Structural phase/pose fault escaped");
             owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
             r.transform.children[0].localRotation = l.transform.children[0].localRotation;
             Check(!(bool)owner.QuarteringReport()["passed"], "Correct clocks hid incorrect wheel poses");
             r.Evaluate();
+            foreach (var wheel in l.transform.children.Concat(r.transform.children)) wheel.gameObject.SetActive(false);
+            Check(!(bool)owner.QuarteringReport()["passed"], "Quartered clocks without any visible wheels passed");
+            foreach (var wheel in l.transform.children.Concat(r.transform.children)) wheel.gameObject.SetActive(true);
             r.gameObject.SetActive(false);
             Check(!(bool)owner.QuarteringReport()["passed"], "Missing right engine passed");
             r.gameObject.SetActive(true); r.Evaluate();

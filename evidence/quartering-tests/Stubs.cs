@@ -14,6 +14,13 @@ namespace UnityEngine
         public T[] GetComponents<T>() => gameObject.components.OfType<T>().ToArray();
         public T GetComponent<T>() => gameObject.components.OfType<T>().FirstOrDefault();
         public T[] GetComponentsInChildren<T>(bool inactive) => gameObject.GetComponentsInChildren<T>(inactive);
+        public T[] GetComponentsInParent<T>(bool inactive)
+        {
+            var result = new List<T>();
+            for (var t = transform; t != null; t = t.parent)
+                if (inactive || t.gameObject.activeInHierarchy) result.AddRange(t.gameObject.components.OfType<T>());
+            return result.ToArray();
+        }
     }
     public class MonoBehaviour : Component { public bool enabled = true; public bool isActiveAndEnabled => enabled && gameObject.activeInHierarchy; }
     public class GameObject : Object
@@ -66,9 +73,12 @@ namespace UnityEngine
         public static float Sign(float a) => a < 0 ? -1 : 1;
     }
     public class RuntimeAnimatorController : Object { public int State; }
+    public class AnimatorControllerParameter { public int nameHash = Animator.StringToHash("SpeedMultiplier"); }
     public struct AnimatorStateInfo { public int fullPathHash; public float normalizedTime; }
     public class Animator : MonoBehaviour
     {
+        public float speed = 1f;
+        public AnimatorControllerParameter[] parameters = new[] { new AnimatorControllerParameter() };
         public RuntimeAnimatorController runtimeAnimatorController;
         public bool keepAnimatorControllerStateOnDisable;
         public bool isInitialized = true;
@@ -84,6 +94,7 @@ namespace UnityEngine
             plays++; queued = new() { fullPathHash = hash, normalizedTime = time };
         }
         public void SetFloat(int name, float value) => floats[name] = value;
+        public float GetFloat(int name) => floats.TryGetValue(name, out var value) ? value : 0f;
         public void Evaluate(float cycles = 0)
         {
             if (!isActiveAndEnabled) return;
@@ -128,8 +139,13 @@ namespace RearrangedS282
     internal static class GroupCrankAnimation
     {
         internal static readonly HashSet<Animator> Owned = new();
+        internal static readonly Dictionary<PoweredWheelRotationViaAnimation, PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair[]> Leases = new();
+        internal static PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair[] DiagnosticSetups(PoweredWheelRotationViaAnimation driver) =>
+            driver == null ? Array.Empty<PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair>() :
+            Leases.TryGetValue(driver, out var setups) ? setups : driver.animatorSetups;
         internal static bool Owns(Animator animator) => Owned.Contains(animator);
     }
+    internal sealed class MalletAnimatorMirror : MonoBehaviour { internal bool CopySpeed = true; }
     internal static class AssetBundleLoader
     {
         public static RuntimeAnimatorController FranklinBAnimCtrl = new() { State = DriveQuartering.FranklinState };

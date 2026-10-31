@@ -54,6 +54,13 @@ namespace RearrangedS282
 
         internal static bool Owns(Animator animator) => animator != null && Owners.ContainsKey(animator);
 
+        // Diagnostic inventory must include mechanisms leased away from the
+        // native speed writer. Never restore those writers just to inspect them.
+        internal static PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair[] DiagnosticSetups(PoweredWheelRotationViaAnimation driver) =>
+            driver == null ? Array.Empty<PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair>() :
+            Drivers.TryGetValue(driver, out var lease) ? lease.Original :
+            driver.animatorSetups ?? Array.Empty<PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair>();
+
         // Supply explicit phases immediately after DriveQuartering.Play, whose
         // queued pose need not yet be visible through GetCurrentAnimatorStateInfo.
         // Otherwise this must be called after the initialized pose is evaluated.

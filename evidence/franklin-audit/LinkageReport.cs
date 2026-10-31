@@ -44,6 +44,11 @@ internal static class LinkageReportFixture
             }
             var lod=car.Add<LODGroup>();lod.SetLODs(new[]{new LOD(renderers.ToArray())});
             Check(Valid(owner.FranklinLinkageReport(),count),"Current Franklin mechanisms accepted, native tender excluded");
+            var registered=rotation.animatorSetups;
+            GroupCrankAnimation.Leases[rotation]=registered;
+            rotation.animatorSetups=Array.Empty<PoweredWheelRotationViaAnimation.AnimatorStartTimeOffsetPair>();
+            Check(Valid(owner.FranklinLinkageReport(),count),"Phase-owned Franklin mechanisms remain in the diagnostic inventory");
+            GroupCrankAnimation.Leases.Remove(rotation);rotation.animatorSetups=registered;
             var main=renderers[0];var crank=renderers[1];
             main.enabled=false;Check(!Valid(owner.FranklinLinkageReport(),count),"Hidden main rod rejected");main.enabled=true;
             crank.enabled=false;Check(!Valid(owner.FranklinLinkageReport(),count),"Hidden crank rejected");crank.enabled=true;

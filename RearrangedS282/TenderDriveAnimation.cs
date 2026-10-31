@@ -15,6 +15,8 @@ namespace RearrangedS282
         private Animator left, right;
         private readonly List<AnimatorPortReader> cutoffReaders = new List<AnimatorPortReader>();
         private static readonly int Speed = Animator.StringToHash("SpeedMultiplier");
+        internal bool Drives(Animator target) => (left == target || right == target) && cutoffReaders.Count == 2 &&
+            simulation != null && simulation.IsTenderEngine && simulation.IsMiddleActive;
         internal void Initialize(ArticulatedSimulation sim, Animator l, Animator r, Animator sourceL, Animator sourceR,
             float leftOffset, float rightOffset)
         {

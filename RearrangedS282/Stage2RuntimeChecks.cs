@@ -89,6 +89,9 @@ namespace RearrangedS282
                 ["tenderSelected"] = owner.PoweredTenderSelected,
                 ["malletDriverPitch"] = owner.MalletDriverPitchReport(),
                 ["franklinLinkages"] = owner.FranklinLinkageReport(),
+                ["animationOwnership"] = owner.AnimationOwnershipReport(),
+                ["independentDrive"] = car.GetComponent<IndependentDrive>()?.Report(),
+                ["effectiveSettings"] = MultiplayerSync.SettingsFor(car) != null ? JObject.FromObject(MultiplayerSync.SettingsFor(car)) : null,
                 ["franklinClearanceMeshes"] = owner.FranklinRearNoseClearanceCasings,
                 ["tender"] = owner.TenderEngineReport(),
                 ["hasSupportedTender"] = HasTestTender(car),
@@ -118,6 +121,18 @@ namespace RearrangedS282
                 throw new InvalidOperationException("Active locomotive engine count disagrees with the selected arrangement.");
             if ((bool?)row["tenderSelected"] != tender || tender && !PoweredTenderPolicy.Supports(id))
                 throw new InvalidOperationException("Powered-tender selection disagrees with the structural test case.");
+            var animation = row["animationOwnership"] as JObject;
+            int expectedDrives = id == 33 ? 0 : 2 * (triplex ? 3 : articulated ? 2 : 1);
+            var locoDrives = animation?["locomotive"] as JArray;
+            var tenderDrives = animation?["tender"] as JArray;
+            if (locoDrives == null || tenderDrives == null || locoDrives.Count != expectedDrives ||
+                tenderDrives.Count != (tender ? 2 : 0) || locoDrives.Concat(tenderDrives).Any(d => (bool?)d["passed"] != true))
+                throw new InvalidOperationException("Animation ownership is invalid; inspect active mirrors, Animator speed and phase ownership (stationary check only).");
+            if (row["effectiveSettings"] is not JObject)
+                throw new InvalidOperationException("Effective per-car settings were not captured.");
+            if (articulated && ((bool?)row["independentDrive"]?["active"] != true ||
+                (bool?)row["independentDrive"]?["ready"] != true || locoDrives.Any(d => (bool?)d["phaseOwned"] != true)))
+                throw new InvalidOperationException("Independent wheelslip never acquired every active mechanism; native fallback is not independent-slip validation. Close UMM so simulation can tick and inspect the game log.");
             var state = row["tender"] as JObject;
             int franklinCount = id == 31 || id == 32 ? 4 : id == 38 || id == 40 || id == 47 ? 6 : 0;
             var linkages = row["franklinLinkages"] as JArray;
@@ -177,6 +192,9 @@ namespace RearrangedS282
             var report = new JObject { ["build"] = "articulated-trial", ["version"] = Main.RunningVersion, ["subject"] = subject.ID,
                 ["control"] = control.ID, ["passed"] = false, ["started"] = true, ["expectedCases"] = cases.Length,
                 ["supportedArrangements"] = WheelArrangement.SupportedCount, ["arrangements"] = results };
+            report["localSettings"] = Main.settings != null ? JObject.FromObject(Main.settings) : null;
+            report["motionVerified"] = false;
+            report["clearanceVerified"] = false;
             report["tractiveReference"] = TractiveDiagnostics.ReferenceInfo();
             // This override is local to the subject and never writes settings or saves.
             bool prepared = false;
@@ -335,7 +353,7 @@ namespace RearrangedS282
             report["limitations"] = "Stationary structural checks only. Driving, loaded pull, slip onset, rods, audio, particles and distant/unload behaviour need manual testing.";
             System.IO.File.WriteAllText(System.IO.Path.Combine(Main.ModPath, "stage2-runtime-checks.json"), report.ToString());
             Running = false;
-            Status = (bool)report["passed"] ? "All " + cases.Length + " arrangement/tender cases and repeated Erie checks passed. See stage2-runtime-checks.json."
+            Status = (bool)report["passed"] ? "All " + cases.Length + " stationary structural cases and repeated Erie checks passed. Motion and crank clearance remain untested. See stage2-runtime-checks.json."
                 : "Structural checks failed. See stage2-runtime-checks.json and the game log.";
             Main.Logger.Log(Status);
         }

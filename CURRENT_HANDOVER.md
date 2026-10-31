@@ -1,3 +1,44 @@
+## Read-only gameplay audit; structural diagnostics improved — 31 October 2026
+
+James reports the tender freeze persists in 2.0.9.2-beta and multiplex crank/
+piston clipping also persists (believed Franklin; arrangement/curve unknown).
+The preceding candidate is NOT accepted as a successful live repair. Its
+synthetic speed-writer reproduction did not cover the actual template clone
+chain. Do not present its pass counts as reporter acceptance.
+
+James requested read-only gameplay diagnosis and a repair plan, then authorised
+structural-test improvements and agents. Three agents reviewed tender/settings,
+Franklin and slip integration. See DIAGNOSTIC_REPAIR_PLAN_2026_10_31.md for the
+evidence, confidence, settings analysis and ordered repair/acceptance gates.
+No gameplay fix was applied during this audit; no install, package, push or
+publication. Installed local mod/log still2.0.8-slip-test, not reporter2.0.9.2.
+
+Likely surviving tender cause: deferred destruction leaves inherited mirrors
+alongside the new mirror when attachment's GetComponent sets CopySpeed=false.
+It can configure the retiring instance, leaving the active one copying zero.
+The delivered ZIP contains this exact sequence. A real clone-chain regression
+is required before the smallest explicit-new-mirror-reference repair. Tender
+frequency and direction also come from different engines; repair remains planned.
+No incompatible supported UMM visual combination is established; preserve
+settings and record effective profiles/reapply history. No evidence blames MP.
+The earlier ID32 rear-casting nose correction remains present but never certified
+all Franklin crank/piston/crosshead contacts. Actual S282/Franklin independent
+motion, finite-boiler behaviour and lifecycle were still unverified when slip
+became broadly active. Do not add another casing edit without exact contact.
+
+Implemented diagnostics only: lease-aware quartering/Franklin inventory; actual
+active tender mirrors and bound clocks; native speed/phase ownership; no empty
+wheel-pair passes; independent activation/readiness required so native fallback
+cannot masquerade as independent validation. Local/effective settings captured;
+motionVerified and clearanceVerified explicitly false for stationary checks.
+No writer is enabled/restored by these read-only diagnostic queries.
+
+Regression fails old inventory logic; corrected managed fixtures pass1519
+quartering/ownership,190 Franklin-report and2305 structural-validator checks
+across93 fixture cases. Native-reference Stage3 build:0 warnings/errors.
+No game structural coroutine, actual moving hierarchy, full settings matrix or
+host/guest game run performed. Evidence: build/diagnostic-audit-20261031.
+
 ## Powered tender wheel regression: 2.0.9.2-beta test - 31 October 2026
 
 James reported stationary powered tender wheels in 2.0.9.1-beta; session role
