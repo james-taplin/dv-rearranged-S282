@@ -43,9 +43,14 @@ namespace RearrangedS282
         }
         private void LateUpdate()
         {
-            float frequency = simulation != null && simulation.IsTenderEngine && simulation.IsMiddleActive
-                ? simulation.MiddleEngine.chuffFrequencyReadOut.Value / (simulation.MiddleEngine.numCylinders * 2f) : 0f;
-            float direction = simulation != null ? Mathf.Sign(simulation.MainEngine.crankRpm.Value) : 1f;
+            var engine = simulation != null && simulation.IsTenderEngine && simulation.IsMiddleActive
+                ? simulation.MiddleEngine : null;
+            float frequency = engine != null ? engine.chuffFrequencyReadOut.Value / (engine.numCylinders * 2f) : 0f;
+            // The tender keeps its own native RPM feed when the locomotive's
+            // front engine acquires an independent-slip input. Its diameter
+            // ratio is positive, so the unscaled native input retains the exact
+            // tender direction on both authority and native-port replicas.
+            float direction = engine != null ? Mathf.Sign(engine.crankRpm.Value) : 1f;
             if (left != null && !GroupCrankAnimation.Owns(left)) left.SetFloat(Speed, frequency * direction);
             if (right != null && !GroupCrankAnimation.Owns(right)) right.SetFloat(Speed, frequency * direction);
         }

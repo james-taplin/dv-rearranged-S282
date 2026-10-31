@@ -215,4 +215,4 @@ namespace DV.Wheels { public sealed class PoweredWheel:UnityEngine.Component{pub
 namespace LocoSim.Implementations.Wheels{}
 
 namespace UnityEngine {public sealed class FixtureOilReader:MonoBehaviour{}}
-namespace RearrangedS282 {internal sealed class MalletAnimatorMirror:UnityEngine.MonoBehaviour{internal UnityEngine.Animator Source,Target;}}
+namespace RearrangedS282 {internal sealed class MalletAnimatorMirror:UnityEngine.MonoBehaviour{internal UnityEngine.Animator Source,Target;internal bool CopySpeed=true;}}

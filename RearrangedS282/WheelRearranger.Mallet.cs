@@ -20,6 +20,11 @@ namespace RearrangedS282
         // S282 frame. Front cylinders keep their native front face.
         internal const float MalletScale = .75f;
         private const float MalletEngineGap = .1f, MalletTrailingRadius = .355f;
+        // The 2-6-6-2's front crank/main rod reaches the next cylinder nose at
+        // 15 degrees of articulation with a .10 m gap. Keep the native engine
+        // intact and move its rear assembly 50 mm back; the .15 m gap retains
+        // over 42 mm measured surface clearance through the full native cycle.
+        private const float MalletCylinderClearanceGap = .15f;
         private static readonly string[] MalletEngineSuspension = { "s282a_suspension_l_1", "s282a_suspension_l_2",
             "s282a_suspension_l_3", "s282a_suspension_r_1", "s282a_suspension_r_2", "s282a_suspension_r_3" };
         private static readonly string[] MalletColliders = { "[colliders]/[walkable]/[old]/Exterior/cylinder",
@@ -68,7 +73,7 @@ namespace RearrangedS282
                 FirstDriverShift = d2 + (d2 - d3) - firstLeftDriveWheel.localPosition.z };
             layout.FrontOffset = cylinderFront * (1f - s);
             layout.FrontLastDriver = layout.FrontOffset + s * d3;
-            layout.RearCylinderFront = layout.FrontLastDriver - layout.Radius - MalletEngineGap;
+            layout.RearCylinderFront = layout.FrontLastDriver - layout.Radius - MalletCylinderClearanceGap;
             layout.RearOffset = layout.RearCylinderFront - s * cylinderFront;
             layout.RearLastDriver = layout.RearOffset + s * d3;
             // Hinge just ahead of the rear cylinders, as on a real Mallet.
@@ -194,7 +199,8 @@ namespace RearrangedS282
             }
         }
 
-        private Transform CloneEngineDrive(Transform source, Animator sourceAnimator, string name, Transform parent, Action<Transform> configure)
+        private Transform CloneEngineDrive(Transform source, Animator sourceAnimator, string name, Transform parent, Action<Transform> configure,
+            bool copySpeed = true)
         {
             var clone = Object.Instantiate(source.gameObject, parent).transform;
             clone.name = name;
@@ -210,6 +216,9 @@ namespace RearrangedS282
             PoweredWheelRotater.BindClonedDrive(clone);
             var mirror = clone.gameObject.AddComponent<MalletAnimatorMirror>();
             mirror.Source = sourceAnimator; mirror.Target = clone.GetComponent<Animator>();
+            // Configure this exact replacement. Copied mirrors scheduled for
+            // deferred destruction can still be returned by GetComponent now.
+            mirror.CopySpeed = copySpeed;
             return clone;
         }
 

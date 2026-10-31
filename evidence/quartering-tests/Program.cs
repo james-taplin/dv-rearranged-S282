@@ -81,13 +81,43 @@ class Program
                 r.state.normalizedTime = l.state.normalizedTime;
                 var clock = new GameObject("clock").Add<TenderDriveAnimation>();
                 tl.transform.SetParent(clock.transform); tr.transform.SetParent(clock.transform);
-                var sim = new ArticulatedSimulation(); sim.MiddleEngine.chuffFrequencyReadOut.Value = 12; sim.MainEngine.crankRpm.Value = -100;
+                var sim = new ArticulatedSimulation(); sim.MiddleEngine.chuffFrequencyReadOut.Value = 12;
+                sim.MainEngine.crankRpm.Value = sim.MiddleEngine.crankRpm.Value = -100;
                 clock.Initialize(sim, tl, tr, l, r, .75f, 0);
                 tl.Evaluate(); tr.Evaluate(); owner.Apply(.125f); foreach (var s in rotation.animatorSetups) s.animator.Evaluate();
                 tl.gameObject.Add<MalletAnimatorMirror>().CopySpeed = false;
                 tr.gameObject.Add<MalletAnimatorMirror>().CopySpeed = false;
                 int speed = Animator.StringToHash("SpeedMultiplier");
-                Check(tl.floats[speed] == -3 && tr.floats[speed] == -3, "Tender's existing frequency/direction calculation changed");
+                Check(tl.floats[speed] == -3 && tr.floats[speed] == -3, "Tender uses its native frequency and signed RPM input");
+                foreach (var direction in new[] { (host: 100f, tender: 100f), (host: -100f, tender: -100f), (host: 100f, tender: -100f), (host: -100f, tender: 100f) })
+                {
+                    sim.MainEngine.crankRpm.Value = direction.host; sim.MiddleEngine.crankRpm.Value = direction.tender;
+                    typeof(TenderDriveAnimation).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(clock, null);
+                    float expected = direction.tender < 0f ? -3f : 3f;
+                    Check(tl.floats[speed] == expected && tr.floats[speed] == expected,
+                        "Tender follows its own native RPM sign even when host direction differs");
+                }
+                var lateUpdate = typeof(TenderDriveAnimation).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+                var savedMiddle = sim.MiddleEngine;
+                sim.IsMiddleActive = false; // Normal Restore retains the disabled native engine object.
+                lateUpdate.Invoke(clock, null);
+                Check(tl.floats[speed] == 0 && tr.floats[speed] == 0 && !clock.Drives(tl),
+                    "Inactive native tender simulation stops its retained visual clock");
+                sim.MiddleEngine = null; sim.IsTenderEngine = false; // Failed graph preparation/partial bind.
+                tl.SetFloat(speed, 5); tr.SetFloat(speed, 5);
+                lateUpdate.Invoke(clock, null);
+                Check(tl.floats[speed] == 0 && tr.floats[speed] == 0 && !clock.Drives(tr),
+                    "Unbound middle engine safely stops both tender sides while simulation object survives");
+                var simulationField = typeof(TenderDriveAnimation).GetField("simulation", BindingFlags.NonPublic | BindingFlags.Instance);
+                simulationField.SetValue(clock, null);
+                tl.SetFloat(speed, 5); tr.SetFloat(speed, 5);
+                lateUpdate.Invoke(clock, null);
+                Check(tl.floats[speed] == 0 && tr.floats[speed] == 0 && !clock.Drives(tl),
+                    "Missing simulation safely stops both tender sides");
+                sim.MiddleEngine = savedMiddle; sim.IsMiddleActive = sim.IsTenderEngine = true;
+                simulationField.SetValue(clock, sim); lateUpdate.Invoke(clock, null);
+                Check(tl.floats[speed] == 3 && tr.floats[speed] == 3 && clock.Drives(tl),
+                    "Clock resumes from its active middle engine after simulation rebind");
                 GroupCrankAnimation.Owned.Add(tl); GroupCrankAnimation.Owned.Add(tr);
                 tl.SetFloat(speed, 0); tr.SetFloat(speed, 0);
                 typeof(TenderDriveAnimation).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(clock, null);

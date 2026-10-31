@@ -1,0 +1,21 @@
+REARRANGED S282 2.0.9.3-beta - TENDER AND MALLET REPAIR TEST
+FILE: RearrangedS282-B99-2.0.9.3-beta.zip
+VERSION: 2.0.9.3-beta
+TYPE: Optional experimental repair test beta
+
+DESCRIPTION.txt is plain text for a future description editor.
+CHANGELOG.txt covers the tender mirror/direction and ID 37 Mallet spacing repairs.
+FILE_INFO.txt lists installation and dependency requirements.
+
+Use the same complete package on every peer; use one Rearranged S282 build at
+a time. Multiplayer remains optional for ordinary single player.
+Settings are preserved. Force calculations and multiplayer transport are unchanged.
+Native asset/calculation probes and the production-source sweep passed:
+stock control plus all 11 articulated layouts, 112,320 poses, 547 assertions,
+no unexpected contacts in scope. Sampled independent-phase grids had no contacts;
+these geometry tests do not simulate full-game driving.
+Franklin's 21,600-pose sweep completed without reproducing a new collision;
+its old ID 32 nose control detected 648 contacts. No universal clearance claim.
+Live coupled/host-guest acceptance remains pending.
+
+Prepared release text only. Nothing is uploaded automatically.

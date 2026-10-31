@@ -1,3 +1,42 @@
+## Tender and Walschaerts Mallet repair validated - 31 October 2026
+
+James authorised repair, agents, proper native wheelslip/gear tests, then a new
+complete test build and installation. He explicitly included Walschaerts plexes.
+Prior read-only restriction is superseded. No push/publication is authorised.
+
+2.0.9.3-beta source: exact new tender mirror configured before activation,
+tender's own signed native RPM, safe inactive/unbound-clock stop. Native clone
+chain reproduces old freeze (phase delta0) and corrected run passes276 checks,
+all4wheels/bothsides/reclones/stop-restart/opposed directions. Native joined
+steam/slip/finite-boiler/production-force-method fixture passes30 assertions.
+
+Walschaerts ID37 2-6-6-2 front crank/main rod entered following cylinder at
+strong yaw stresses. Dedicated engine gap .150m replaces .100m only in its rear
+cylinder separation: rear engine/trailing axle back50mm, hinge back25mm, native
+scale/parts/internal motion retained. Common BigMallet/trailing gaps unchanged.
+Final actual-source native sweep PASSED112320poses/547checks across stockcontrol
+and all11articulated layouts, cutoff/yaw/phase grids, no override or unexpected
+contacts. Minimum ID37 surface-separation bound42.308mm. Oldgap1200 and oldID32
+nose648 contacts remain effective negative controls. NewFranklinreport not
+reproduced in covered meshes; existing ID32fix retained. No new casing surgery.
+
+See TENDER_AND_LINKAGE_REPAIR_2026_10_31.md and evidence fixture READMEs for exact
+scope and source hashes. Installed LMS exported actual cylinder/guide meshes;
+older guide replay fidelity gap is recorded, not treated as a gameplay cause.
+
+Managed gates passed:1871quartering+190linkage,2305structural,126rear-driver,
+1421source/40switches,2402cleanup,2553audio,72nativeengine+56graph,32port+27authority,
+219MPbridge+135core. After gap change:3987frame,5349pitch,4067coupling checks pass.
+No force-calculation or multiplayer transport change; no incompatible visual
+settings combination established. Preserve Settings.xml/captures/saves.
+
+Source checkpoint ready for clean2.0.9.3-beta package build/install; installed
+mod remains2.0.8-slip-test until delivery receipt is recorded. Live coupled car
+forces, save/reload, camera visibility and actual hostguest acceptance unverified.
+Private native assets/player payloads stay ignored underbuild, never distributed.
+The old Unity project-version dialog is avoided by reusing the preserved2019.4
+standalone fixture; no real project/game save opened for these regressions.
+
 ## Read-only gameplay audit; structural diagnostics improved — 31 October 2026
 
 James reports the tender freeze persists in 2.0.9.2-beta and multiplex crank/

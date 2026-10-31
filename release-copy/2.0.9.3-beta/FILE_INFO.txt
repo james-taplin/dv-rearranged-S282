@@ -1,0 +1,24 @@
+File title: Rearranged S282 2.0.9.3-beta - tender and Mallet repair test
+Version: 2.0.9.3-beta
+Category: Optional file / experimental repair test beta
+Archive: RearrangedS282-B99-2.0.9.3-beta.zip
+Installation: Unity Mod Manager; one RearrangedS282 folder at archive root.
+Replaces the previous build. Preserve personal Settings.xml; use one complete
+Rearranged S282 package at a time.
+
+Requires DV B99, UMM 0.27.3+, Locomotive Mesh Splitter.
+Online: all players need DV Multiplayer 0.1.16.0-beta and this exact package.
+Offline: Multiplayer is optional. Leave Realistic Firing off for testing.
+
+Repairs tender-mirror setup, tender signed-RPM direction and the reproduced
+ID 37 Mallet front-rod/following-cylinder collision at +/-15 degrees.
+The Mallet gap grows by 50 mm, preserving engine scale and internal motion.
+Force calculations and multiplayer transport are unchanged.
+Retains experimental independent locomotive slip and optional multiplayer.
+Native asset/calculation probes and the scoped production-source sweep passed:
+stock control plus all 11 articulated layouts, 112,320 poses, 547 assertions,
+no unexpected contacts. Sampled independent-phase geometry also had no contacts;
+it does not simulate full-game driving.
+Franklin's 21,600-pose sweep completed without reproducing a new collision.
+Live coupled/host-guest acceptance remains pending. No universal clearance claim.
+See README.txt for limits.

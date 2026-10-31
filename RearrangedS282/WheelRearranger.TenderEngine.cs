@@ -162,13 +162,11 @@ namespace RearrangedS282
             tenderEngineRoot.SetParent(tender.transform, false);
 
             // Drives: copies of the configured four-axle rear engine.
-            tenderDriveL = CloneEngineDrive(tenderSourceL, lfAnimator, "[Rearranged tender drivetrain L]", tenderEngineRoot, d => { });
-            tenderDriveR = CloneEngineDrive(tenderSourceR, rfAnimator, "[Rearranged tender drivetrain R]", tenderEngineRoot, d => { });
             // The tender clock owns playback speed. A phase-driven host keeps its
-            // speed parameter at zero, so copying that value in Update would
-            // stop the tender before its LateUpdate clock can take effect.
-            tenderDriveL.GetComponent<MalletAnimatorMirror>().CopySpeed = false;
-            tenderDriveR.GetComponent<MalletAnimatorMirror>().CopySpeed = false;
+            // speed parameter at zero. Configure the new mirror directly while
+            // cloning, before activation and before copied mirrors are destroyed.
+            tenderDriveL = CloneEngineDrive(tenderSourceL, lfAnimator, "[Rearranged tender drivetrain L]", tenderEngineRoot, d => { }, copySpeed: false);
+            tenderDriveR = CloneEngineDrive(tenderSourceR, rfAnimator, "[Rearranged tender drivetrain R]", tenderEngineRoot, d => { }, copySpeed: false);
             foreach (var (drive, mirrored) in new[] { (tenderDriveL, true), (tenderDriveR, false) })
             {
                 drive.localPosition = new Vector3(0f, 0f, offset);

@@ -1,0 +1,55 @@
+2.0.9.3-beta - tender and Mallet repair test
+
+Corrected final tender-clone mirror configuration. The exact newly added mirror
+receives its copy-speed setting before activation; a disabled inherited mirror
+awaiting Unity destruction can no longer receive that setting in its place.
+This prevents the live mirror from replacing tender playback with a stopped
+host Animator's speed.
+
+Tender playback direction now reads the tender engine's own signed native RPM,
+so independent front-engine slip or an opposed host RPM does not reverse it.
+Inactive or missing tender simulation safely stops playback.
+
+Reproduced a Walschaerts collision on the 2-6-6-2 Mallet (ID 37): its front
+crank/main rod reached the following cylinder at -15 and +15 degrees of
+articulation. A dedicated engine gap of 0.150 m replaces its former 0.100 m gap.
+The complete rear engine and trailing axle move back 50 mm and the calculated
+hinge moves back 25 mm. The 0.75 scale, native meshes and internal motion are
+preserved; shared gaps for other layouts retain their values. Force calculations
+and multiplayer transport are unchanged by these repairs.
+
+Added an actual Unity regression using the game's native S282 controller and
+all four driving wheels on both sides, through the production rear/template/
+tender clone chain, deferred destruction and repeated detach/reapply. Native
+asset playback and native engine calculation probes passed. Managed regressions
+also cover source-cache rebuilding, frame clipping, effects/audio cleanup,
+quartering, multiplayer policy and authority boundaries.
+
+Strengthened structural diagnostics to capture local/effective settings and
+inspect ownership, readiness and animation bindings. Static inventory and pose
+checks cannot establish motion, live traction or multiplayer acceptance.
+
+The final production-source sweep passed without a gap override: stock control
+plus all 11 articulated layouts, 112,320 poses and 547 assertions, with no
+unexpected contacts in the tested scope. ID 37 measured minimum separation of
+42.308 mm at the crank bearing and 42.736 mm at the main rod. Sampled independent-
+phase geometry grids also found no contacts; they do not exercise full-game
+driving or independently slipping coupled vehicles.
+
+The completed Franklin sweep compared 21,600 controller poses without
+reproducing a new collision. Final old-gap and old ID 32 nose controls reproduced
+1,200 and 648 contacts respectively, confirming detection of those known overlaps.
+This does not establish
+a universal clipping fix or clearance certificate. These scoped native probes
+do not replace live coupled-vehicle driving or real host/guest acceptance.
+
+No incompatible visual-settings combination has been confirmed. Preserve
+Settings.xml and reapply changed preferences; online cars use the host's
+effective profile. Reports should include both local and effective settings.
+
+Retains 2.0.9.1-beta's arrangement-initialization/RPM-lease corrections and
+optional-multiplayer startup diagnostics, the complete 49-arrangement catalogue,
+experimental independent locomotive-group slip, radio requests and host locks.
+Online players need the same complete package. Multiplayer is optional offline.
+Powered-tender independent slip and true compound expansion remain unimplemented.
+Live-game and real host/guest validation remain pending.
