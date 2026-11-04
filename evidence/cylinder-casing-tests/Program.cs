@@ -174,6 +174,41 @@ internal static class Program
             nativeHeight=vertices.Max(p=>p.y)-vertices.Min(p=>p.y),nativeLength=vertices.Max(p=>p.z)-vertices.Min(p=>p.z),facesOver90Degrees=turned});
     }
 
+    private static void TriplexNoseCase(JsonElement part)
+    {
+        string name=part.GetProperty("name").GetString();
+        var native=part.GetProperty("vertices").EnumerateArray().Select(Read).ToArray();
+        var snapshot=native.ToArray();
+        var faces=part.GetProperty("triangles").EnumerateArray().Select(t=>t.EnumerateArray().Select(i=>i.GetInt32()).ToArray()).ToArray();
+        Vector3 Map(Vector3 p)=>CylinderCasingShape.CompactFranklinTriplexNose(p);
+        var mapped=native.Select(Map).ToArray();int caps=0,mounts=0;float minJac=float.PositiveInfinity;
+        for(int i=0;i<native.Length;i++)
+        {
+            var p=native[i];var q=mapped[i];
+            Check(Finite(q)&&q.x==p.x&&q.y==p.y,name+": triplex nose preserves bore axes and transverse geometry");
+            Check(Same(native[i],snapshot[i])&&Same(q,Map(snapshot[i])),name+": repeated mapping from native source is deterministic without accumulated shortening");
+            float jac=Jacobian(Map,p);minJac=Math.Min(minJac,jac);
+            Check(jac>.1f,name+": triplex nose remains monotone with a positive longitudinal margin");
+            if(p.z<=9.49f){mounts++;Check(Same(p,q),name+": piston rear face and shaft mounts remain exact");}
+            if(p.z>=9.85f){caps++;Check(Near(q.z,p.z-.20f),name+": forward cap and bolts translate rigidly by 200 mm");}
+        }
+        Check(caps>0&&mounts>0,name+": real Franklin mesh contains both fixed mounts and translated cap");
+        foreach(var t in faces)
+        {
+            var oldNormal=Vector3.Cross(native[t[1]]-native[t[0]],native[t[2]]-native[t[0]]);
+            if(Length(oldNormal)<1e-9f)continue;
+            var newNormal=Vector3.Cross(mapped[t[1]]-mapped[t[0]],mapped[t[2]]-mapped[t[0]]);
+            Check(Length(newNormal)>1e-12f&&Vector3.Dot(oldNormal,newNormal)>0,name+": triplex nose does not collapse or reverse a native triangle");
+        }
+        for(int i=0;i<=400;i++)
+        {
+            float z=9.45f+i*.0012f;
+            Check(Map(new Vector3(1.09f,.71f,z+.0001f)).z>Map(new Vector3(1.09f,.71f,z)).z,
+                name+": triplex transition is monotone between actual vertex samples");
+        }
+        cases.Add(new{name=name+"-triplex-nose",vertices=native.Length,faces=faces.Length,fixedMountVertices=mounts,rigidCapVertices=caps,minJacobian=minJac});
+    }
+
     private static int Main(string[] args)
     {
         try
@@ -184,6 +219,7 @@ internal static class Program
             foreach(var part in source.GetProperty("parts").EnumerateArray())
             {
                 if(part.GetProperty("kind").GetString()=="native"){PrairieCase(part);PrairieCase(part,1.42f);}
+                if(part.GetProperty("kind").GetString()=="franklin")TriplexNoseCase(part);
                 foreach(float s in new[]{.4f,.58f,.65f,.75f,.9f,1,1.198f,1.2879f,1.42f})NativeCase(part,s,s);
                 NativeCase(part,.58f,.58f,.12f);
                 NativeCase(part,.4f,.4f,.12f);

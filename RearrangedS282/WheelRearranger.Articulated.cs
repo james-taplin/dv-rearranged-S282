@@ -656,6 +656,7 @@ namespace RearrangedS282
 
         private void SuspendArticulatedGeometry()
         {
+            SuspendFranklinDriverPins();
             ReleaseMalletDriverPitch();
             // Rod retargeting saved the articulated LOD layout when it was bound;
             // undo it before that layout is restored, or it would be put back after.

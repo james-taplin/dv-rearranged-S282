@@ -74,12 +74,14 @@ namespace RearrangedS282
 				name != "s282_mech_cutoff_rod" && name != "s282_mech_cutoff_rod_LOD1" &&
 				name != "s282_mech_lubricator_rod" && name != "s282_mech_lubricator_rod_LOD1" &&
 				name != "s282_mech_lubricator_part_1" && name != "s282_mech_lubricator_part_1_LOD1" &&
+				name != "s282_wheels_driving_1" && name != "s282_wheels_driving_2" && name != "s282_wheels_driving_3" &&
 				name != "bogie2_LOD0" && name != "bogie2_LOD1")
 				throw new InvalidOperationException("Unsupported native retarget mesh: " + name);
 			// Tender cradle LODs are static native assets. Reuse the local cache
 			// when switching arrangements rather than launching two extractors again.
 			bool tenderCradle = name == "bogie2_LOD0" || name == "bogie2_LOD1";
-			if (!tenderCradle || !File.Exists(Path.Combine(exportPathFull, name + ".obj"))) generateMeshFromGameFiles(name);
+			bool nativePinWheel = name == "s282_wheels_driving_1" || name == "s282_wheels_driving_2" || name == "s282_wheels_driving_3";
+			if ((!tenderCradle && !nativePinWheel) || !File.Exists(Path.Combine(exportPathFull, name + ".obj"))) generateMeshFromGameFiles(name);
 			var readable = new OBJLoader().Load(Path.Combine(exportPathFull, name + ".obj"));
 			if (readable == null || !readable.isReadable || readable.vertexCount == 0)
 			{
@@ -88,7 +90,8 @@ namespace RearrangedS282
 			}
 			if (name == "s282_mech_cutoff_rod" || name == "s282_mech_cutoff_rod_LOD1" ||
 				name == "s282_mech_lubricator_rod" || name == "s282_mech_lubricator_rod_LOD1" ||
-				name == "s282_mech_lubricator_part_1" || name == "s282_mech_lubricator_part_1_LOD1")
+				name == "s282_mech_lubricator_part_1" || name == "s282_mech_lubricator_part_1_LOD1" ||
+				name == "s282_wheels_driving_1" || name == "s282_wheels_driving_2" || name == "s282_wheels_driving_3")
 				NormalizeLinkageImport(readable);
 			return readable;
 		}

@@ -168,6 +168,10 @@ namespace RearrangedS282
                 bool compactRearNose = id == (int)WheelArrangementType.s4444 && template.Franklin &&
                     ((articulatedRearL != null && filter.transform.IsChildOf(articulatedRearL)) ||
                     (articulatedRearR != null && filter.transform.IsChildOf(articulatedRearR)));
+                bool compactTriplexNose = template.Franklin &&
+                    (id == (int)WheelArrangementType.s22222 || id == (int)WheelArrangementType.s24440) &&
+                    ((triplexMiddleL != null && filter.transform.IsChildOf(triplexMiddleL)) ||
+                    (triplexMiddleR != null && filter.transform.IsChildOf(triplexMiddleR)));
                 var nativeToWorld = fullCasing ? CylinderDriveFrame(driveR)
                     : filter.transform.localToWorldMatrix * template.MeshFromNative;
                 var sizeFrame = fullCasing ? body.worldToLocalMatrix * nativeToWorld : nativeToWorld;
@@ -175,7 +179,7 @@ namespace RearrangedS282
                 float sz = sizeFrame.MultiplyVector(Vector3.forward).magnitude;
                 float originY = transform.InverseTransformPoint(nativeToWorld.MultiplyPoint3x4(Vector3.zero)).y;
                 float targetY = CylinderCasingShape.ComputeTargetY(sy, template.MinY, template.PistonY, originY);
-                if (Mathf.Abs(targetY - sy) < .001f && !compactRearNose) continue;
+                if (Mathf.Abs(targetY - sy) < .001f && !compactRearNose && !compactTriplexNose) continue;
                 var meshFromMappedNative = filter.transform.worldToLocalMatrix * nativeToWorld;
                 var vertices = new Vector3[template.Vertices.Length];
                 for (int i = 0; i < vertices.Length; i++)
@@ -185,6 +189,7 @@ namespace RearrangedS282
                         : CylinderCasingShape.TransformVertex(point, sy, sz, targetY,
                             template.RearZ, template.FullZ, template.PistonY, template.Franklin);
                     if (compactRearNose) point = CylinderCasingShape.CompactFranklinRearNose(point);
+                    if (compactTriplexNose) point = CylinderCasingShape.CompactFranklinTriplexNose(point);
                     vertices[i] = fullCasing ? meshFromMappedNative.MultiplyPoint3x4(point)
                         : template.MeshFromNative.MultiplyPoint3x4(point);
                 }

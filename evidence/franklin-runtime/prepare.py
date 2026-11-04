@@ -4,6 +4,7 @@ The generated private fixture uses these method bodies verbatim, with only
 asset-provider identifiers substituted to avoid MeshFinder's exporter process.
 """
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import re
@@ -23,7 +24,7 @@ def member(text, declaration):
     return text[start:end]
 
 
-def prepare():
+def prepare(output_directory=OUT):
     methods = []
     provenance = {}
     for filename, declarations in {
@@ -33,13 +34,17 @@ def prepare():
             'private void ConfigureEngineDrive(',
             'private static Transform RequireArticulatedPart(',
             'private static void SetPartActive(',
-            'private static void EnableGeneratedRenderers('],
+            'private static void EnableGeneratedRenderers(',
+            'private void ConfigureNativeArticulation(int id, float pinZ)',
+            'private void MoveArticulatedPart(',
+            'private sealed class MovedEnginePart'],
         'WheelRearranger.Triplex.cs': [
             'private sealed class TriplexLayout',
             'private TriplexLayout MeasureTriplex(',
             'private float FranklinCylinderFront(',
             'private void ConfigureSingleDriverDrive(',
-            'private void ConfigureTriplexDrive('],
+            'private void ConfigureTriplexDrive(',
+            'private void ConfigureTriplexMiddleArticulation('],
     }.items():
         text = (ROOT/'RearrangedS282'/filename).read_text(encoding='utf-8-sig')
         for declaration in declarations:
@@ -49,25 +54,42 @@ def prepare():
             body = body.replace('MeshFinder.Instance.TwoAxleSideRodMesh', 'FixtureAssets.TwoAxleSideRod')
             body = body.replace('AssetBundleLoader.FranklinBAnimCtrl', 'FixtureAssets.Controller')
             methods.append(body)
-    OUT.mkdir(parents=True, exist_ok=True)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    triplex_source = (ROOT/'RearrangedS282/WheelRearranger.Triplex.cs').read_text(encoding='utf-8-sig')
+    swing_literal = re.search(r'\bTriplexMiddleSwing\s*=\s*([^,;]+)', triplex_source).group(1)
+    provenance['WheelRearranger.Triplex.cs:TriplexMiddleSwing'] = swing_literal
+    configure_sequence = '''ConfigureTriplexMiddleArticulation();
+            ConfigureNativeArticulation(twoCoupled ? ArticulatedSimulation.SixAxleTriplexId : trucks ? ArticulatedSimulation.TriplexId : ArticulatedSimulation.TrucklessTriplexId, triplex.FrontPinZ);
+            // The front engine's hinge rides on the middle engine.
+            MoveArticulatedPart(articulatedPin, articulatedMiddleRoot);'''
+    if configure_sequence not in triplex_source:
+        raise ValueError('Production triplex constraint/reparent sequence changed; review the fixture binding')
+    provenance['WheelRearranger.Triplex.cs:constraintCallSequence'] = hashlib.sha256(configure_sequence.encode()).hexdigest().upper()
     header = '''using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Animations;
 using Object = UnityEngine.Object;
 internal sealed class FranklinConfiguration {
  const float TriplexShortenNative=.45f, TriplexFrontExtra=.25f, TrucklessFrontExtra=.6f, TrucklessEngineGap=.25f, TriplexEngineGap=.08f, MalletTrailingRadius=.355f, MalletEngineGap=.1f;
+ const float TriplexMiddleSwing=PRODUCTION_SWING_LITERAL;
  static readonly Vector3 TriplexOwnTrailingLimit=new Vector3(0,.36f,-3.7f);
  readonly List<Mesh> articulatedMeshes=new List<Mesh>();
  readonly List<Transform> articulatedAssets=new List<Transform>();
  Mesh articulatedSideRod,blindDriver,flangedDriver;
  Transform driveL,secondLeftDriveWheel,rearBogie,MalletBody;
+ Transform transform,articulatedFrontFrame,articulatedFrontRoot,articulatedRearRoot,articulatedPin;
+ Transform articulatedMiddleFrame,articulatedMiddleRoot,triplexMiddlePin,triplexAimRest;
+ PositionConstraint articulatedPosition,triplexMiddlePosition;
+ AimConstraint articulatedAim,triplexMiddleAim;
+ readonly List<MovedEnginePart> articulatedMoved=new List<MovedEnginePart>();
  Transform[] frontFranklin;
  Vector3[] triplexCoupledDriverPositions;
  TriplexLayout triplex;
  static Matrix4x4 EngineMap(float offset,float scale)=>Matrix4x4.TRS(new Vector3(0,0,offset),Quaternion.identity,new Vector3(1,scale,scale));
  public FranklinConfiguration(Transform left,Transform franklin,Transform body,Mesh blind,Mesh flange){
-  driveL=left;secondLeftDriveWheel=left.Find("s282_wheels_driving_2");frontFranklin=new[]{franklin};MalletBody=body;
+  driveL=left;secondLeftDriveWheel=left.Find("s282_wheels_driving_2");frontFranklin=new[]{franklin};MalletBody=body;transform=body;
   rearBogie=new GameObject("native Axle_R datum").transform;rearBogie.SetParent(body,false);rearBogie.localPosition=new Vector3(0,0,3.2f);
   blindDriver=blind;flangedDriver=flange;
   articulatedSideRod=CreateArticulatedSideRod();
@@ -76,8 +98,37 @@ internal sealed class FranklinConfiguration {
  public void Duplex(Transform drive,bool rear)=>ConfigureEngineDrive(drive,FixtureAssets.ShortMainRod,rear);
  public float[] Triplex(bool trucks,bool two){triplex=MeasureTriplex(trucks,two);return new[]{triplex.Scale,triplex.Offsets[0],triplex.Offsets[1],triplex.Offsets[2],triplex.FrontPinZ,triplex.MiddlePinZ,triplex.Shorten};}
  public void TriplexDrive(Transform drive,bool clone)=>ConfigureTriplexDrive(drive,clone);
+ // Constraint setup below is extracted verbatim. Only the unrelated full-frame
+ // mesh splitting callback is omitted: this remains a mechanism-only fixture.
+ private void BindSplitArticulatedFrame(int id,Vector3 worldPin) { }
+ public Transform Support {get;private set;}
+ public Transform FrontHinge=>articulatedPin;
+ public Transform MiddleHinge=>triplexMiddlePin;
+ public Transform MiddleRestTarget=>triplexAimRest;
+ public PositionConstraint FrontPosition=>articulatedPosition;
+ public PositionConstraint MiddlePosition=>triplexMiddlePosition;
+ public AimConstraint FrontAim=>articulatedAim;
+ public AimConstraint MiddleAim=>triplexMiddleAim;
+ public float MiddleSourceWeight=>TriplexMiddleSwing;
+ public void ConfigureTriplexConstraints(Transform frontFrame,Transform frontRoot,
+  Transform middleFrame,Transform middleRoot,Transform rearRoot,Vector3 supportRest) {
+  articulatedFrontFrame=frontFrame;articulatedFrontRoot=frontRoot;articulatedRearRoot=rearRoot;
+  articulatedMiddleFrame=middleFrame;articulatedMiddleRoot=middleRoot;
+  Support=NewArticulatedRoot("Axle_F",transform);Support.localPosition=supportRest;
+  articulatedPin=NewArticulatedRoot("[fixture front articulation pin]",transform);
+  triplexMiddlePin=NewArticulatedRoot("[fixture middle articulation pin]",transform);
+  triplexAimRest=NewArticulatedRoot("[fixture middle aim rest]",transform);
+  articulatedPosition=articulatedFrontFrame.gameObject.AddComponent<PositionConstraint>();
+  articulatedAim=articulatedFrontFrame.gameObject.AddComponent<AimConstraint>();
+  triplexMiddlePosition=articulatedMiddleFrame.gameObject.AddComponent<PositionConstraint>();
+  triplexMiddleAim=articulatedMiddleFrame.gameObject.AddComponent<AimConstraint>();
+  // Same production ordering; IDs are only consumed by the omitted mesh split.
+  ConfigureTriplexMiddleArticulation();
+  ConfigureNativeArticulation(0,triplex.FrontPinZ);
+  MoveArticulatedPart(articulatedPin,articulatedMiddleRoot);
+ }
 '''
-    (OUT/'ProductionConfiguration.cs').write_text(header+'\n'.join(methods)+'\n}\n',encoding='utf-8')
+    (output_directory/'ProductionConfiguration.cs').write_text(header.replace('PRODUCTION_SWING_LITERAL',swing_literal)+'\n'.join(methods)+'\n}\n',encoding='utf-8')
     wals_methods=[]
     for filename,declarations in {
         'WheelRearranger.Mallet.cs':['private sealed class MalletLayout','private float MeasureNativeCylinderFront(', 'private MalletLayout MeasureMallet(', 'private void ConfigureMalletDrive('],
@@ -123,7 +174,7 @@ internal sealed class WalsConfiguration {
   if(coupled==3){ConfigureMalletDrive(drive,clone);HoldMalletDriverPitch(drive);}else ConfigureLongEngine(drive,coupled,clone);
  }
 '''
-    (OUT/'ProductionWalsConfiguration.cs').write_text(wals_header.replace('PRODUCTION_GAP_LITERAL',gap_literal)+'\n'.join(wals_methods)+'\n}\n',encoding='utf-8')
+    (output_directory/'ProductionWalsConfiguration.cs').write_text(wals_header.replace('PRODUCTION_GAP_LITERAL',gap_literal)+'\n'.join(wals_methods)+'\n}\n',encoding='utf-8')
     mesh_source=(ROOT/'RearrangedS282/MeshFinder.cs').read_text(encoding='utf-8-sig')
     rod_members=[]
     for declaration in ['readonly struct Range','private static readonly Range[] verticesToMoveBackward','private static readonly Range[] verticesToMoveForward325','private static readonly Range[] verticesToMoveForward015','private static readonly Range[] facesToHideFor4Coupled','private static readonly Range[] facesToHideFor6Coupled','private void getSideRodMeshes(']:
@@ -142,10 +193,12 @@ internal sealed class ProductionRodRecipes {
  internal Mesh NativeSideRodMesh,TwoAxleSideRodMesh,ThreeAxleSideRodMesh,FiveSixAxleSideRodMesh;
  internal ProductionRodRecipes(string assets){exportPathFull=assets;getSideRodMeshes();}
 '''
-    (OUT/'ProductionRodRecipes.cs').write_text(rod_header+'\n'.join(rod_members)+'\n}\n',encoding='utf-8')
-    (OUT/'configuration-provenance.json').write_text(json.dumps(provenance,indent=2),encoding='utf-8')
-    print(json.dumps({'generated':str(OUT/'ProductionConfiguration.cs'),'exactMethodBodies':len(methods)}))
+    (output_directory/'ProductionRodRecipes.cs').write_text(rod_header+'\n'.join(rod_members)+'\n}\n',encoding='utf-8')
+    (output_directory/'configuration-provenance.json').write_text(json.dumps(provenance,indent=2),encoding='utf-8')
+    print(json.dumps({'generated':str(output_directory/'ProductionConfiguration.cs'),'exactMethodBodies':len(methods)}))
 
 
 if __name__ == '__main__':
-    prepare()
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--output-directory',type=Path,default=OUT)
+    prepare(parser.parse_args().output_directory)

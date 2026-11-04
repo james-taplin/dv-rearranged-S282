@@ -3,6 +3,8 @@ param(
     [string]$PythonPath = 'C:\Users\james\AppData\Local\Python\pythoncore-3.14-64\python.exe',
     [int]$Steps = 720,
     [int[]]$Ids = @(31, 32, 38, 40, 47),
+    # Triplex: synthetic support arc; native constraints determine engine yaw.
+    # Two-engine/Walschaerts: unchanged explicit fixed-pivot yaw stress.
     [float[]]$Yaws = @(-15, 0, 15),
     [switch]$OldNoseControl,
     [switch]$OldMalletGapControl,
@@ -38,6 +40,16 @@ $settings = @{
     ids = $Ids
     yaws = $Yaws
     applyNoseCorrection = -not $OldNoseControl.IsPresent
+}
+if (@($Ids | Where-Object { $_ -in @(38,40,47) }).Count -gt 0) {
+    $nativeGeometry = Get-Content -LiteralPath $geometry -Raw | ConvertFrom-Json
+    $supportDatum = $nativeGeometry.triplexSupportDatum
+    if ($null -eq $supportDatum -or @($supportDatum.positionBody).Count -ne 3 -or
+        $supportDatum.nativeResourceSHA256 -ne $nativeGeometry.nativeSHA256) {
+        throw 'Triplex constraint fixture needs a measured Axle_F body-frame datum from the same native resource.'
+    }
+    $settings.triplexSupportRest = @($supportDatum.positionBody | ForEach-Object { [double]$_ })
+    $settings.triplexSupportSourceSHA256 = $supportDatum.nativeResourceSHA256
 }
 if (@($Ids | Where-Object { $_ -in @(10,37,41,42,43,45,46) }).Count -gt 0) {
     if (-not (Test-Path -LiteralPath $WalsStaticPath)) { throw 'Generate the actual LMS payload with Validate.LmsStaticGeometry.ps1 before building a Walschaerts probe.' }

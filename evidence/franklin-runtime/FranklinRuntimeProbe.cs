@@ -12,6 +12,7 @@ using LocoSim.Implementations;
 using Newtonsoft.Json.Linq;
 using RearrangedS282;
 using UnityEngine;
+using UnityEngine.Animations;
 using Object=UnityEngine.Object;
 
 // Private regression fixture. It never modifies a game installation or save.
@@ -23,7 +24,7 @@ internal static class FixtureAssets
     internal static Mesh LoadObj(string path)=>FranklinRuntimeProbe.Obj(path);
 }
 
-public static class FranklinRuntimeProbe
+public static partial class FranklinRuntimeProbe
 {
     const BindingFlags Static=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
     const string State="LocoS282A_AnimationDriveGear";
@@ -37,6 +38,9 @@ public static class FranklinRuntimeProbe
     static readonly List<string> checks=new List<string>();
     static readonly List<GameObject> roots=new List<GameObject>();
     static readonly JArray results=new JArray();
+    static readonly Dictionary<string,Mesh> nativePinObjImports=new Dictionary<string,Mesh>();
+    static readonly Dictionary<string,int> nativePinProviderCalls=new Dictionary<string,int>();
+    static readonly JArray nativePinImportChecks=new JArray();
     static string outputDirectory;
     public static GameObject DrivetrainSource;
 
@@ -180,7 +184,7 @@ public static class FranklinRuntimeProbe
         var own=source.GetComponent<MeshFilter>();if(own!=null&&own.sharedMesh!=null)return own;
         return source.GetComponentsInChildren<MeshFilter>(true).Single(f=>f.sharedMesh!=null&&f.transform.parent==source&&f.name.StartsWith("[Rearranged retarget]",StringComparison.Ordinal));
     }
-    static void ShapeCasing(Transform franklin,Transform drive,float scale,bool compact)
+    static void ShapeCasing(Transform franklin,Transform drive,float scale,bool compact,bool compactTriplex=false)
     {
         var source=franklin.Find("cylinder/default");var filter=Rendered(source);
         // CacheCasing uses the prefab's native frame; retarget translation is
@@ -191,11 +195,12 @@ public static class FranklinRuntimeProbe
         var native=vertices.Select(nativeFromMesh.MultiplyPoint3x4).ToArray();
         float min=native.Min(v=>v.y),rear=native.Min(v=>v.z)+.16f;
         float target=CylinderCasingShape.ComputeTargetY(scale,min,.71f,0);
-        if(Mathf.Abs(target-scale)<.001f&&!compact)return;
+        if(Mathf.Abs(target-scale)<.001f&&!compact&&!compactTriplex)return;
         for(int i=0;i<vertices.Length;i++)
         {
             var point=CylinderCasingShape.TransformVertex(native[i],scale,scale,target,rear,rear+.20f,.71f,true);
             if(compact)point=CylinderCasingShape.CompactFranklinRearNose(point);
+            if(compactTriplex)point=CylinderCasingShape.CompactFranklinTriplexNose(point);
             vertices[i]=nativeFromMesh.inverse.MultiplyPoint3x4(point);
         }
         var mesh=Object.Instantiate(readable);mesh.vertices=vertices;mesh.RecalculateBounds();filter.sharedMesh=mesh;
@@ -218,6 +223,11 @@ public static class FranklinRuntimeProbe
         internal float Scale,FrontPin,MiddlePin;
         internal bool Wals;
         internal float[] Measured;
+        internal FranklinConfiguration Constraints;
+        internal Vector3 SupportRest;
+        internal readonly JArray ConstraintCases=new JArray();
+        internal readonly List<IDisposable> FranklinPinLeases=new List<IDisposable>();
+        internal readonly List<Mesh> NativePinTestMeshes=new List<Mesh>();
     }
     sealed class Pair
     {
@@ -341,6 +351,7 @@ public static class FranklinRuntimeProbe
                 }
             }
         }
+        if(id==10)AddFranklinAttachmentAudit(layout,id);
         return layout;
     }
     static Layout Build(int id,bool phaseOwned)
@@ -357,6 +368,7 @@ public static class FranklinRuntimeProbe
         if(triplex)
         {
             var measured=configurer.Triplex(id!=40,id==47);
+            layout.Measured=measured;
             layout.Scale=measured[0];offsets=measured.Skip(1).Take(3).ToArray();layout.FrontPin=measured[4];layout.MiddlePin=measured[5];shorten=measured[6];
         }
         else
@@ -399,13 +411,26 @@ public static class FranklinRuntimeProbe
             }
             layout.Engines.Add(new Engine{Left=l,Right=r,Frame=frame,Origin=origin,Animators=new[]{l.GetComponent<Animator>(),r.GetComponent<Animator>()}});
         }
+        if(triplex)
+        {
+            Require(config["triplexSupportRest"] is JArray support&&support.Count==3,
+                "Triplex constraints require an explicit measured native Axle_F rest datum");
+            Require((string)config["triplexSupportSourceSHA256"]==(string)data["nativeSHA256"],
+                "Triplex Axle_F datum belongs to the exact native mechanism resource");
+            layout.SupportRest=V(config["triplexSupportRest"]);
+            layout.Constraints=configurer;
+            configurer.ConfigureTriplexConstraints(layout.Engines[0].Frame,layout.Engines[0].Origin,
+                layout.Engines[1].Frame,layout.Engines[1].Origin,layout.Engines[2].Frame,layout.SupportRest);
+        }
         go.SetActive(true);
         foreach(var engine in layout.Engines)
             foreach(var drive in new[]{engine.Left,engine.Right})
             {
                 if(triplex)Retarget(drive,-shorten,go.transform);
                 var franklin=drive.Find(id==32&&engine==layout.Engines[0]?"franklin_type_b_4444(Clone)":"franklin_type_b(Clone)");
-                ShapeCasing(franklin,drive,layout.Scale,id==32&&engine==layout.Engines[1]&&((bool?)config["applyNoseCorrection"]??true));
+                ShapeCasing(franklin,drive,layout.Scale,
+                    id==32&&engine==layout.Engines[1]&&((bool?)config["applyNoseCorrection"]??true),
+                    (id==38||id==47)&&engine==layout.Engines[1]&&((bool?)config["applyTriplexNoseCorrection"]??true));
             }
         for(int e=0;e<layout.Engines.Count;e++)
             foreach(bool left in new[]{true,false})
@@ -424,7 +449,165 @@ public static class FranklinRuntimeProbe
                     layout.Pairs.Add(new Pair{Label=e+(left?" L":" R")+" crank vs following crosshead",A=crank,B=Rendered(following.Find("s282_mech_push_rod"))});
                 }
             }
+        if((bool?)config["applyFranklinPins"]??true)BindFranklinPins(layout);
+        AddFranklinAttachmentAudit(layout,id);
         return layout;
+    }
+    static void BindFranklinPins(Layout layout)
+    {
+        var method=production.GetType("RearrangedS282.FranklinPinPresentation",true).GetMethod("Bind",Static);
+        Require(method!=null,"Compiled native Franklin pin presentation binding exists");
+        foreach(var engine in layout.Engines)foreach(var drive in new[]{engine.Left,engine.Right})
+        {
+            string objDirectory=(string)config["wheelObjDirectory"];
+            if(!string.IsNullOrEmpty(objDirectory))foreach(int number in new[]{1,2,3})
+            {
+                var filter=drive.Find("s282_wheels_driving_"+number).GetComponent<MeshFilter>();
+                var original=Geometry(filter.sharedMesh);var shadow=Object.Instantiate(original);
+                var unreadable=Object.Instantiate(original);unreadable.name=filter.sharedMesh.name;
+                readableGeometry[unreadable]=shadow;unreadable.UploadMeshData(true);filter.sharedMesh=unreadable;
+                layout.NativePinTestMeshes.Add(unreadable);layout.NativePinTestMeshes.Add(shadow);
+                Require(!unreadable.isReadable,"Native wheel fixture exercises unreadable production fallback: "+unreadable.name);
+            }
+            var filters=drive.GetComponentsInChildren<MeshFilter>(true).Where(f=>f.sharedMesh!=null)
+                .ToDictionary(f=>f,f=>f.sharedMesh);
+            var sourceVertices=filters.Values.Distinct().ToDictionary(m=>m,m=>Geometry(m).vertices.ToArray());
+            var groups=layout.Root.GetComponentsInChildren<LODGroup>(true);
+            if(groups.Length==0)
+            {
+                // Mechanism-only prefab has no body LOD owner. Exercise the
+                // lease API with explicit fixture memberships, not an empty pass.
+                var group=layout.Root.AddComponent<LODGroup>();
+                var wheels=layout.Root.GetComponentsInChildren<MeshRenderer>(true)
+                    .Where(r=>r.name.StartsWith("s282_wheels_driving_",StringComparison.Ordinal)).Cast<Renderer>().ToArray();
+                group.SetLODs(new[]{new LOD(.5f,wheels),new LOD(.1f,wheels)});
+                group.localReferencePoint=new Vector3(0,1,4);group.size=16;
+                groups=new[]{group};
+                Require(wheels.Length>0,"Synthetic body LOD policy has actual native wheel renderers");
+            }
+            var originalLods=groups.ToDictionary(g=>g,g=>g.GetLODs());
+            var bounds=groups.ToDictionary(g=>g,g=>(g.localReferencePoint,g.size));
+            var longDriver=drive.Find("s282_wheels_driving_3").GetComponent<MeshFilter>().sharedMesh;
+            foreach(int number in new[]{1,2})
+            {
+                var wheel=drive.Find("s282_wheels_driving_"+number);
+                var renderer=wheel.GetComponent<MeshRenderer>();
+                if(renderer.sharedMaterials.Length==0)
+                    renderer.sharedMaterials=new Material[wheel.GetComponent<MeshFilter>().sharedMesh.subMeshCount];
+            }
+            Func<Mesh,Mesh> readable=mesh=>
+            {
+                if(string.IsNullOrEmpty(objDirectory))return Object.Instantiate(Geometry(mesh));
+                string name=mesh.name.Replace(" Instance","").Replace("(Clone)","").Trim();
+                nativePinProviderCalls.TryGetValue(name,out int calls);nativePinProviderCalls[name]=calls+1;
+                if(!nativePinObjImports.TryGetValue(name,out var imported))
+                {
+                    imported=Obj(Path.Combine(objDirectory,name+".obj"));
+                    production.GetType("RearrangedS282.MeshFinder",true).GetMethod("NormalizeLinkageImport",Static).Invoke(null,new object[]{imported});
+                    ValidateNativePinObjImport(name,Geometry(mesh),imported);
+                    nativePinObjImports.Add(name,imported);
+                }
+                return Object.Instantiate(imported);
+            };
+            IDisposable BindPin()=> (IDisposable)method.Invoke(null,new object[]{drive,longDriver,layout.Root.transform,readable});
+            // Exercise the same reversible lease used when switching away and
+            // back. Native source meshes and existing retarget LODs must survive.
+            var coupling=drive.Find("s282_mech_wheels_connect");var couplingPosition=coupling.localPosition;
+            IDisposable first=null;
+            try
+            {
+                // Bind from a different previous-controller X pose. The pin's
+                // absolute native mesh X must not capture this animated value.
+                coupling.localPosition=couplingPosition+Vector3.right*.12345f;
+                first=BindPin();
+                foreach(var pin in drive.Cast<Transform>().Where(t=>t.name.StartsWith("[Rearranged native driver pin]",StringComparison.Ordinal)&&t.gameObject.activeSelf))
+                    Require(Mathf.Abs(pin.localPosition.x)<.00001f,"Native pin bind ignores the previous animated coupling X pose");
+                foreach(var group in groups)
+                {
+                    var levels=group.GetLODs();var baseline=originalLods[group];
+                    Require(levels.Length==baseline.Length,"Native pin presentation retains LOD level count");
+                    for(int level=0;level<baseline.Length;level++)foreach(int number in new[]{1,2})
+                    {
+                        var wheel=drive.Find("s282_wheels_driving_"+number);
+                        if(!wheel.gameObject.activeSelf)continue;
+                        var pin=drive.Cast<Transform>().Single(t=>t.name=="[Rearranged native driver pin] wheel "+number&&t.gameObject.activeSelf).GetComponent<MeshRenderer>();
+                        bool owned=baseline[level].renderers.Contains(wheel.GetComponent<MeshRenderer>());
+                        Require(levels[level].renderers.Count(r=>r==pin)==(owned?1:0),
+                            "Native pin LOD membership matches its original wheel exactly at level "+level);
+                    }
+                }
+            }
+            finally{first?.Dispose();coupling.localPosition=couplingPosition;}
+            foreach(var entry in filters)
+                Require(entry.Key.sharedMesh==entry.Value,"Native pin lease restores exact source mesh: "+Relative(drive,entry.Key.transform));
+            foreach(var entry in sourceVertices)
+                Require(Geometry(entry.Key).vertices.SequenceEqual(entry.Value),"Native pin lease leaves shared source vertices immutable: "+entry.Key.name);
+            foreach(var group in groups)
+            {
+                var levels=group.GetLODs();var baseline=originalLods[group];
+                Require(levels.Length==baseline.Length&&levels.Zip(baseline,(a,b)=>a.renderers.SequenceEqual(b.renderers)&&
+                    a.screenRelativeTransitionHeight==b.screenRelativeTransitionHeight&&a.fadeTransitionWidth==b.fadeTransitionWidth).All(x=>x),
+                    "Native pin lease restores exact existing LOD memberships and thresholds");
+                Require(group.localReferencePoint==bounds[group].localReferencePoint&&group.size==bounds[group].size,
+                    "Native pin lease restores existing LOD bounds");
+            }
+            Require(!drive.GetComponentsInChildren<MeshRenderer>(true).Any(r=>
+                r.name.StartsWith("[Rearranged native driver pin]",StringComparison.Ordinal)&&r.gameObject.activeInHierarchy),
+                "Disposed native pin presentation cannot remain active");
+            layout.FranklinPinLeases.Add(BindPin());
+        }
+    }
+    static void ValidateNativePinObjImport(string name,Mesh native,Mesh imported)
+    {
+        const float tolerance=.00001f;
+        Require(imported!=null&&imported.isReadable&&imported.subMeshCount==native.subMeshCount,
+            "Compiled normalized OBJ retains native wheel material sections: "+name);
+        var expected=native.vertices;var actual=imported.vertices;
+        var used=new List<Vector3>();
+        var grid=new Dictionary<(int,int,int),List<int>>();
+        (int,int,int) Cell(Vector3 v)=>(Mathf.FloorToInt(v.x/tolerance),Mathf.FloorToInt(v.y/tolerance),Mathf.FloorToInt(v.z/tolerance));
+        int Match(Vector3 v,out float distance)
+        {
+            var key=Cell(v);int best=-1;float error=tolerance*tolerance;
+            for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++)for(int z=-1;z<=1;z++)
+                if(grid.TryGetValue((key.Item1+x,key.Item2+y,key.Item3+z),out var candidates))foreach(int i in candidates)
+                {float d=(used[i]-v).sqrMagnitude;if(d<=error){error=d;best=i;}}
+            distance=Mathf.Sqrt(error);return best;
+        }
+        var nativeIds=new int[expected.Length];
+        foreach(int i in Enumerable.Range(0,native.subMeshCount).SelectMany(section=>native.GetTriangles(section)).Distinct())
+        {
+            int match=Match(expected[i],out _);
+            if(match<0)
+            {
+                match=used.Count;used.Add(expected[i]);var key=Cell(expected[i]);
+                if(!grid.TryGetValue(key,out var ids)){ids=new List<int>();grid.Add(key,ids);}ids.Add(match);
+            }
+            nativeIds[i]=match;
+        }
+        var importedIds=new int[actual.Length];float maxError=0;
+        bool matched=true;
+        foreach(int index in Enumerable.Range(0,imported.subMeshCount).SelectMany(section=>imported.GetTriangles(section)).Distinct())
+        {
+            importedIds[index]=Match(actual[index],out float error);
+            matched&=importedIds[index]>=0;
+            maxError=Mathf.Max(maxError,error);
+        }
+        Require(matched,"Every compiled normalized OBJ used vertex matches native wheel geometry within 10 micrometres: "+name);
+        (int,int,int) Face(int a,int b,int c)=>a<=b&&a<=c?(a,b,c):b<=a&&b<=c?(b,c,a):(c,a,b);
+        Dictionary<(int,int,int),int> Faces(int[] triangles,int[] ids)
+        {
+            var counts=new Dictionary<(int,int,int),int>();
+            for(int i=0;i<triangles.Length;i+=3){var face=Face(ids[triangles[i]],ids[triangles[i+1]],ids[triangles[i+2]]);counts.TryGetValue(face,out int n);counts[face]=n+1;}return counts;
+        }
+        for(int section=0;section<native.subMeshCount;section++)
+        {
+            var a=Faces(native.GetTriangles(section),nativeIds);var b=Faces(imported.GetTriangles(section),importedIds);
+            Require(a.Count==b.Count&&a.All(pair=>b.TryGetValue(pair.Key,out int count)&&count==pair.Value),
+                "Compiled normalized OBJ preserves every oriented native wheel triangle in section "+section+": "+name);
+        }
+        nativePinImportChecks.Add(new JObject{["mesh"]=name,["maximumUsedVertexErrorM"]=maxError,["toleranceM"]=tolerance,
+            ["nativeSections"]=native.subMeshCount,["importedSections"]=imported.subMeshCount,["orientedTrianglesMatch"]=true});
     }
     static void Bind(Engine engine,int index)
     {
@@ -450,9 +633,70 @@ public static class FranklinRuntimeProbe
     }
     static void Yaw(Layout layout,float degrees)
     {
-        bool triplex=layout.Engines.Count==3&&!layout.Wals;
+        if(layout.Constraints!=null)
+        {
+            // Synthetic support motion about the front hinge's straight-track
+            // position. This is an input stress, not an observed curve radius or
+            // an assigned engine angle. Native constraints determine both angles
+            // and translate the front hinge through the middle engine's frame.
+            var pin=new Vector3(layout.SupportRest.x,layout.SupportRest.y,layout.FrontPin);
+            layout.Constraints.Support.localPosition=pin+Quaternion.AngleAxis(degrees,Vector3.up)*(layout.SupportRest-pin);
+            return;
+        }
         for(int e=0;e<layout.Engines.Count;e++)
-            layout.Engines[e].Frame.localRotation=Quaternion.Euler(0,e==0?degrees:e==1&&triplex?degrees*.4f:0,0);
+            layout.Engines[e].Frame.localRotation=Quaternion.Euler(0,e==0?degrees:0,0);
+    }
+    static float BodyYaw(Layout layout,Transform frame)
+    {
+        var forward=layout.Root.transform.InverseTransformDirection(frame.forward);
+        return Mathf.Atan2(forward.x,forward.z)*Mathf.Rad2Deg;
+    }
+    static JObject CheckTriplexConstraints(Layout layout,float supportArcDegrees,int pattern)
+    {
+        var c=layout.Constraints;if(c==null)return null;
+        var body=layout.Root.transform;
+        var front=layout.Engines[0].Frame;var middle=layout.Engines[1].Frame;
+        Require(c.FrontHinge.parent==layout.Engines[1].Origin,
+            "Triplex front hinge is carried by the middle engine root");
+        Require(c.MiddleHinge.parent==body&&c.MiddleRestTarget.parent==body,
+            "Triplex middle hinge and rest target remain body-fixed");
+        Require(c.FrontPosition.constraintActive&&c.FrontAim.constraintActive&&
+            c.MiddlePosition.constraintActive&&c.MiddleAim.constraintActive,
+            "Both native triplex PositionConstraint and AimConstraint pairs are active");
+        Require(c.FrontPosition.sourceCount==1&&c.FrontPosition.GetSource(0).sourceTransform==c.FrontHinge&&
+            c.MiddlePosition.sourceCount==1&&c.MiddlePosition.GetSource(0).sourceTransform==c.MiddleHinge,
+            "Native triplex position sources retain their correct hinge owners");
+        Require(c.FrontAim.sourceCount==1&&c.FrontAim.GetSource(0).sourceTransform==c.Support&&
+            c.MiddleAim.sourceCount==2&&c.MiddleAim.GetSource(0).sourceTransform==c.Support&&
+            c.MiddleAim.GetSource(1).sourceTransform==c.MiddleRestTarget&&
+            Mathf.Abs(c.MiddleAim.GetSource(0).weight-c.MiddleSourceWeight)<.00001f&&
+            Mathf.Abs(c.MiddleAim.GetSource(1).weight-(1f-c.MiddleSourceWeight))<.00001f,
+            "Triplex aim uses native support/rest sources and extracted production weights");
+        float frontError=Vector3.Distance(front.position,c.FrontHinge.position);
+        float middleError=Vector3.Distance(middle.position,c.MiddleHinge.position);
+        float aimError=Vector3.Angle(front.forward,c.Support.position-front.position);
+        Require(frontError<.0001f&&middleError<.0001f&&aimError<.01f,
+            "Native triplex constraints settle before mechanism contact sampling");
+        var fixedPin=new Vector3(layout.SupportRest.x,layout.SupportRest.y,layout.FrontPin);
+        Require(Vector3.Distance(c.FrontHinge.position,layout.Engines[1].Origin.TransformPoint(fixedPin))<.0001f,
+            "Front hinge follows the middle root's actual transformed native datum");
+        var hinge=body.InverseTransformPoint(c.FrontHinge.position);
+        var delta=hinge-fixedPin;
+        bool oldFixedRejected=delta.magnitude>.001f;
+        if(Mathf.Abs(supportArcDegrees)>1f)
+            Require(oldFixedRejected,"Old fixed-front-hinge reconstruction fails the native moving-hinge condition");
+        var sources=new JArray();
+        for(int i=0;i<c.MiddleAim.sourceCount;i++)
+        {var source=c.MiddleAim.GetSource(i);sources.Add(new JObject{["path"]=Relative(body,source.sourceTransform),["weight"]=source.weight});}
+        return new JObject{
+            ["pattern"]=pattern,["syntheticSupportArcDegrees"]=supportArcDegrees,
+            ["supportRestBody"]=JV(layout.SupportRest),["supportBody"]=JV(body.InverseTransformPoint(c.Support.position)),
+            ["supportDisplacementBody"]=JV(body.InverseTransformPoint(c.Support.position)-layout.SupportRest),
+            ["frontYawDegrees"]=BodyYaw(layout,front),["middleYawDegrees"]=BodyYaw(layout,middle),
+            ["frontHingeRestBody"]=JV(fixedPin),["frontHingeBody"]=JV(hinge),["frontHingeTranslationBody"]=JV(delta),
+            ["frontHingeTranslationM"]=delta.magnitude,["oldFixedHingeNegativeControlRejected"]=oldFixedRejected,
+            ["frontPositionErrorM"]=frontError,["middlePositionErrorM"]=middleError,["frontAimErrorDegrees"]=aimError,
+            ["middleAimSources"]=sources,["motionBasis"]="Unity native PositionConstraint/AimConstraint with production setup and moving front hinge; synthetic support arc, not live track motion"};
     }
     static float Compare(Layout a,Layout b)
     {
@@ -673,6 +917,16 @@ public static class FranklinRuntimeProbe
                 foreach(float cutoff in cutoffs)foreach(float yaw in yaws)for(int pattern=0;pattern<patterns;pattern++)
                 {
                     Yaw(layout,yaw);Yaw(reference,yaw);
+                    if(layout.Constraints!=null)
+                    {
+                        // Let Unity resolve the dependency chain (middle aim ->
+                        // middle-carried pin -> front position/aim) in its normal
+                        // player loop; do not solve or assign frame angles here.
+                        yield return null;yield return new WaitForEndOfFrame();
+                        yield return null;yield return new WaitForEndOfFrame();
+                        layout.ConstraintCases.Add(CheckTriplexConstraints(layout,yaw,pattern));
+                        CheckTriplexConstraints(reference,yaw,pattern);
+                    }
                     if(wals)foreach(var engine in layout.Engines.Concat(reference.Engines))engine.Cutoff.Value=cutoff;
                     Vector3 initialCrosshead=Vector3.zero;Quaternion initialWheel=Quaternion.identity;
                     for(int i=0;i<steps;i++)
@@ -688,12 +942,14 @@ public static class FranklinRuntimeProbe
                             Require(Quaternion.Angle(initialWheel,drive.Find("s282_wheels_driving_2").localRotation)>20f,"ID "+id+" native driver rotates at yaw "+yaw+" pattern "+pattern);
                         }
                         Sample(layout,id,yaw,pattern,phase,cutoff);samples++;
+                        if(!wals||id==10)SampleFranklinAttachments(layout,phase,yaw,pattern);
                         if(pattern==0)CaptureIndependent(layout,i,steps);
                     }
                     if(pattern==0)CheckIndependent(layout,id,yaw,cutoff);
                     if(wals)Require(layout.Engines.All(e=>e.CutoffReaders.All(r=>r.enabled)&&e.Animators.All(a=>Mathf.Abs(a.GetFloat("Cutoff")-cutoff)<.0001f)),"Wals native cutoff parameter readers retained by phase binding at "+cutoff);
                 }
                 Require(maxDifference<.0001f,"ID "+id+" production phase binding matches original controller pose through normal evaluation");
+                if(!wals&&((bool?)config["applyFranklinPins"]??true))ValidateFranklinPinSeating(layout,samples);
                 long unexpected=layout.Pairs.Sum(p=>p.IndependentContacts+(p.Label.Contains("s282_mech_cylinder_rod vs own casing")&&p.Intersections==samples?0:p.Intersections));
                 var nativeEntries=layout.Pairs.Where(p=>p.Label.Contains("s282_mech_cylinder_rod vs own casing")).ToArray();
                 if(wals)Require(nativeEntries.Length==layout.Engines.Count*2&&nativeEntries.All(p=>p.Intersections==samples),"Native valve spindle entry remains present and matches ID10 control in every sampled pose");
@@ -705,18 +961,28 @@ public static class FranklinRuntimeProbe
                 var row=new JObject{["id"]=id,["samples"]=samples,["engines"]=layout.Engines.Count,["scale"]=layout.Scale,["maxPhaseAdapterPoseDifference"]=maxDifference,
                     ["mechanism"]=wals?"Walschaerts":"Franklin",["cutoffs"]=new JArray(cutoffs),
                     ["layoutDatums"]=layout.Measured!=null?new JArray(layout.Measured):null,["malletGap"]=wals&&id==37?(float.IsNaN(FixtureAssets.WalsMalletGap)?WalsConfiguration.ProductionGap:FixtureAssets.WalsMalletGap):0,["testMalletGapOverride"]=config["malletGap"],
+                    ["articulationMode"]=layout.Constraints!=null?"production native constraints with moving front hinge":"explicit fixed-pivot yaw stress (unchanged two-engine/Wals fixture)",
+                    ["triplexMiddleNoseCorrectionApplied"]=(id==38||id==47)&&((bool?)config["applyTriplexNoseCorrection"]??true),
+                    ["triplexConstraintCases"]=layout.ConstraintCases,["attachmentAudit"]=wals&&id!=10?null:FranklinAttachmentReport(layout),
                     ["unexpectedContacts"]=unexpected,["clearancePassed"]=unexpected==0,
                     ["pairs"]=new JArray(layout.Pairs.Select(p=>(object)new JObject{["pair"]=p.Label,["classification"]=p.Label.Contains("s282_mech_cylinder_rod vs own casing")&&p.Intersections==samples?"native valve spindle entering its own valve chest":"clearance candidate",["surfaceIntersectionSamples"]=p.Intersections,["aabbOverlapSamples"]=p.AabbSamples,["independentPhasePairs"]=p.IndependentPairs,["independentBoundsCandidates"]=p.IndependentBoundsPairs,["independentSurfaceContacts"]=p.IndependentContacts,["minimumFollowingZGapM"]=float.IsPositiveInfinity(p.MinimumFollowingZGap)?(JToken)JValue.CreateNull():new JValue(p.MinimumFollowingZGap),["minimumSurfaceDistanceLowerM"]=float.IsPositiveInfinity(p.MinimumSurfaceDistanceLowerM)?(JToken)JValue.CreateNull():new JValue(p.MinimumSurfaceDistanceLowerM),["contactsByYawCutoff"]=JObject.FromObject(p.ContactsByCondition),["first"]=p.First}))};
                 results.Add(row);File.WriteAllText(outputPath,new JObject{["complete"]=false,["checks"]=new JArray(checks),["layouts"]=results}.ToString());
                 Debug.Log("FRANKLIN_LAYOUT_COMPLETE "+id+" samples="+samples+" contacts="+layout.Pairs.Sum(p=>p.Intersections));
+                for(int i=layout.FranklinPinLeases.Count-1;i>=0;i--)layout.FranklinPinLeases[i].Dispose();
+                foreach(var mesh in layout.NativePinTestMeshes){readableGeometry.Remove(mesh);Object.Destroy(mesh);}
                 foreach(var e in layout.Engines)e.Binding.Dispose();
                 Object.Destroy(layout.Root);Object.Destroy(reference.Root);yield return null;
             }
             long unexpectedTotal=results.Sum(row=>(long)row["unexpectedContacts"]);
+            if(!string.IsNullOrEmpty((string)config["wheelObjDirectory"])&&ids.Any(id=>id==31||id==32||id==38||id==40||id==47)&&
+                ((bool?)config["applyFranklinPins"]??true))
+                Require(nativePinProviderCalls.Values.Sum()>0,"CPU-unreadable native wheels used the compiled normalized OBJ fallback provider");
             bool negative=(bool?)config["expectBaselineContacts"]??((bool?)config["applyNoseCorrection"]==false);
             File.WriteAllText(outputPath,new JObject{["complete"]=true,["clearancePassed"]=unexpectedTotal==0,["unexpectedContacts"]=unexpectedTotal,["expectedNegativeControlMatched"]=negative&&unexpectedTotal>0,["passed"]=negative?unexpectedTotal>0:unexpectedTotal==0,["checks"]=new JArray(checks),["nativeRootSource"]=DrivetrainSource!=null?"native serialized prefab clone":"complete serialized native drive hierarchy reconstructed from local game",
                 ["nativeSourceSHA256"]=data["nativeSHA256"],["bundleSHA256"]=data["bundleSHA256"],["walsStaticUnityValidated"]=walsData?["actualUnityLmsValidated"],["walsStaticReportSHA256"]=walsData?["actualUnityLmsReportSHA256"],["layouts"]=results,
-                ["limitations"]="Original Franklin prefab/controllers and full native Walschaerts controller/hierarchy with exact mesh triangles; exact extracted production mechanism configuration, production phase adapter and retarget LateUpdate, normal Unity Animator evaluation. Wals static cylinders are actual installed-LMS Unity output. NativeID10 is a measured mechanism control configured to four axles, not a complete stock TrainCar. Detached RSE supplies only native phase Port; no live TrainCar, wheel physics, multiplayer, camera/LOD selection, full locomotive static frame/guides, inter-car coupler clearance, coplanar or wholly enclosed volume tests. Curve poses are explicit yaw stress cases about production pin datums, not live track constraints. Independent phase grids replay captured evaluated poses; disjoint sampled swept bounds prove separation for those phase samples. Native valve spindle entry into its own chest is retained and reported separately, with every-pose matching counts required."}.ToString());
+                ["triplexSupportSourceSHA256"]=config["triplexSupportSourceSHA256"],
+                ["nativePinProviderCalls"]=JObject.FromObject(nativePinProviderCalls),["nativePinImportChecks"]=nativePinImportChecks,
+                ["limitations"]="Original Franklin prefab/controllers and full native Walschaerts controller/hierarchy with exact mesh triangles; exact extracted production mechanism configuration, production phase adapter and retarget LateUpdate, normal Unity Animator evaluation. Triplex uses production-extracted native PositionConstraint/AimConstraint and front hinge carried by the middle root; the measured Axle_F/body frames reduce to identity intermediates in this mechanism fixture. Input degrees describe a synthetic support arc around the straight-track front pin, not assigned engine angles or a live curve radius; resulting engine angles and hinge movement are reported. Two-engine/Wals fixed-pivot yaw stress branches remain unchanged. Full static frame splitting is omitted. Wals static cylinders are actual installed-LMS Unity output. NativeID10 is a measured mechanism control configured to four axles, not a complete stock TrainCar. Detached RSE supplies only native phase Port; no live TrainCar, wheel physics, multiplayer, camera/LOD selection, full locomotive static frame/guides, inter-car coupler clearance, coplanar or wholly enclosed volume tests. Independent phase grids replay captured evaluated poses; disjoint sampled swept bounds prove separation for those phase samples. Native valve spindle entry into its own chest is retained and reported separately, with every-pose matching counts required."}.ToString());
             Debug.Log("FRANKLIN_RUNTIME_COMPLETE");
         }
         finally{foreach(var root in roots)if(root!=null)Object.Destroy(root);}

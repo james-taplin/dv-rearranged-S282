@@ -165,6 +165,7 @@ namespace RearrangedS282
                         }
                     }
                     ApplyCylinderCasings(id);
+                    ApplyFranklinDriverPins(id);
                     foreach (var bogie in loco.Bogies)
                         bogie.axles = Enumerable.Range(0, bogie.transform.Find("bogie_car").childCount)
                             .Select(i => bogie.transform.Find("bogie_car").GetChild(i))
@@ -287,6 +288,7 @@ namespace RearrangedS282
 
         private void OnDestroy()
         {
+            SuspendFranklinDriverPins();
             MultiplayerSync.Forget(GetComponent<TrainCar>());
             ReleaseIndependentDrive();
             cylinderCalibration?.Restore();

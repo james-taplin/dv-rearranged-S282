@@ -30,6 +30,20 @@ namespace RearrangedS282
                 point.z - FranklinRearNoseShorteningM * Smooth(9.49f, 9.80f, point.z));
         }
 
+        internal const float FranklinTriplexNoseShorteningM = .20f;
+
+        // Only the middle 2-2-2-2-2 / 2-4-4-4-0 castings meet the front
+        // crank at the measured native-constraint stresses. Their forward cap
+        // needs 200 mm native shortening; the rear piston face and shaft mounts
+        // remain behind 9.49. A forward-widened transition keeps dZ'/dZ >= 1/6;
+        // the complete cap/bolts beyond 9.85 translate rigidly along the bore.
+        internal static Vector3 CompactFranklinTriplexNose(Vector3 point)
+        {
+            Finite(point.x); Finite(point.y); Finite(point.z);
+            return new Vector3(point.x, point.y,
+                point.z - FranklinTriplexNoseShorteningM * Smooth(9.49f, 9.85f, point.z));
+        }
+
         // First used for Prairie, now shared by Pacific/Hudson and rigid x-4-x.
         // The two bore axes stay where the native animation puts them.
         // Resize both barrels, their caps and the entire casting length; only

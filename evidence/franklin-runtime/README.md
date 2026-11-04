@@ -4,6 +4,37 @@ This is a private Unity 2019.4.40f1 player probe, not a shipped mod feature. It
 does not launch the game, change installed files, create a package or touch saves.
 Native geometry exports and compiled probes remain under ignored `build/`.
 
+## Superseding triplex findings — 4 November 2026
+
+The later authorised repair is documented in `FRANKLIN_REPAIR_2_0_9_4.md`.
+Its actual unreadable-wheel OBJ path, native pin constraints, restoration and
+seating gates pass alongside the corrected 720-phase clearance sweep. The
+0.20 m nose correction is limited to middle Franklin casings on IDs38/47;
+turning it off restores contacts. Production was built once, not installed.
+Pin flags: `applyFranklinPins`; nose flag: `applyTriplexNoseCorrection`;
+`wheelObjDirectory` supplies private actual exports for the fallback test.
+
+The triplex fixture now uses the production-extracted native Position/Aim
+constraints and the front hinge carried by the middle engine. The previous
+fixed hinge and assigned `middleYaw = frontYaw * .4` reconstruction did not
+match production. Earlier triplex articulation clearance claims are superseded.
+For triplex IDs 38/40/47, input `yaws` are now synthetic **support arcs**;
+actual engine angles and hinge displacement are reported separately. The builder
+obtains the support datum from the exact native hierarchy, with source hash and
+frame proof. Two-engine/Walschaerts stress branches retain their earlier scope.
+
+Before repair, the corrected sweep reproduced front crank/cylinder contact on IDs47/38 and
+main-rod/cylinder contact on ID47 at strong support stress (front yaw about 21°).
+New attachment measurements also show an approximately 33 mm missing axial span
+between the inspected Franklin short-pin wheel/coupling stack and the main rod.
+Renderer enablement never proved that pin seating was fixed.
+
+See `TRIPLEX_CONSTRAINT_AND_PIN_AUDIT_2026_11_04.md` for exact coverage, baselines,
+failure counts and limits. That initial pass built only the diagnostic fixture;
+production geometry was unchanged then, and DV was not launched. Do not
+read the historical pass counts below as acceptance of these newly covered
+connections or of the corrected triplex articulation.
+
 ## Findings on 31 October 2026
 
 The expanded Walschaerts sweep found a concrete defect in **ID 37, 2-6-6-2**:

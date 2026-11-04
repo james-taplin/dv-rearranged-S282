@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import struct
 from pathlib import Path
 import UnityPy
@@ -18,17 +19,58 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest().upper()
 
 
+def multiply(a, b):
+    return [[sum(a[r][k]*b[k][c] for k in range(4)) for c in range(4)] for r in range(4)]
+
+
+def inverse(a):
+    rows = [list(row)+[float(r == c) for c in range(4)] for r,row in enumerate(a)]
+    for c in range(4):
+        pivot = max(range(c,4), key=lambda r:abs(rows[r][c]))
+        if abs(rows[pivot][c]) < 1e-12:
+            raise ValueError('Singular native body/support transform')
+        rows[c],rows[pivot] = rows[pivot],rows[c]
+        factor = rows[c][c]
+        rows[c] = [value/factor for value in rows[c]]
+        for r in range(4):
+            if r != c:
+                factor = rows[r][c]
+                rows[r] = [value-factor*source for value,source in zip(rows[r],rows[c])]
+    return [row[4:] for row in rows]
+
+
+def local_matrix(t):
+    x,y,z,w = t.m_LocalRotation.x,t.m_LocalRotation.y,t.m_LocalRotation.z,t.m_LocalRotation.w
+    sx,sy,sz = t.m_LocalScale.x,t.m_LocalScale.y,t.m_LocalScale.z
+    p = t.m_LocalPosition
+    result = [[(1-2*y*y-2*z*z)*sx,(2*x*y-2*z*w)*sy,(2*x*z+2*y*w)*sz,p.x],
+              [(2*x*y+2*z*w)*sx,(1-2*x*x-2*z*z)*sy,(2*y*z-2*x*w)*sz,p.y],
+              [(2*x*z-2*y*w)*sx,(2*y*z+2*x*w)*sy,(1-2*x*x-2*y*y)*sz,p.z],
+              [0.,0.,0.,1.]]
+    if not all(math.isfinite(value) for row in result for value in row):
+        raise ValueError('Non-finite native transform')
+    return result
+
+
 def extract(game, bundle, output):
     native = game / 'DerailValley_Data/resources.assets'
     env = UnityPy.load(str(native))
     meshes = {}
     paths = {}
+    world_matrices = {}
     def path(t):
         key = t.object_reader.path_id
         if key not in paths:
             name = t.m_GameObject.deref().read().m_Name
             paths[key] = (path(t.m_Father.deref().read()) + '/' if t.m_Father.m_PathID else '') + name
         return paths[key]
+
+    def world_matrix(t):
+        key = t.object_reader.path_id
+        if key not in world_matrices:
+            local = local_matrix(t)
+            world_matrices[key] = multiply(world_matrix(t.m_Father.deref().read()),local) if t.m_Father.m_PathID else local
+        return world_matrices[key]
 
     def mesh_data(reader, bank):
         key = str(reader.path_id)
@@ -81,16 +123,38 @@ def extract(game, bundle, output):
         return item
 
     roots = {}
+    datum_transforms = {}
+    datum_paths = ('LocoS282A', 'LocoS282A/Axle_F', 'LocoS282A/LocoS282A_Body/MovingParts_LOD0')
     for obj in env.objects:
         if obj.type.name != 'Transform': continue
         t = obj.read()
         name = t.m_GameObject.deref().read().m_Name
+        if name in ('LocoS282A','Axle_F','MovingParts_LOD0'):
+            full = path(t)
+            if full in datum_paths:
+                if full in datum_transforms: raise ValueError('Ambiguous native support datum: ' + full)
+                datum_transforms[full] = t
         if name not in ('LocoS282A_Drivetrain L','LocoS282A_Drivetrain R'): continue
         full = path(t)
         if full.startswith('LocoS282A/'):
             if name in roots: raise ValueError('Ambiguous native drive ' + name)
             roots[name] = node(t)
     if len(roots) != 2: raise ValueError('Both exact native S282 drives were not found')
+    if set(datum_transforms) != set(datum_paths):
+        raise ValueError('Exact native S282 Axle_F/car/body transforms were not found')
+    car,support,body = (datum_transforms[p] for p in datum_paths)
+    body_from_world = inverse(world_matrix(body))
+    body_from_support = multiply(body_from_world,world_matrix(support))
+    body_from_car = multiply(body_from_world,world_matrix(car))
+    if any(abs(body_from_car[r][c]-float(r == c)) > 1e-6 for r in range(4) for c in range(4)):
+        raise ValueError('Native car/body frames no longer coincide; the mechanism constraint fixture must retain that transform')
+    native_hash = digest(native)
+    support_datum = dict(positionBody=[body_from_support[r][3] for r in range(3)],
+        bodyFromSupport=body_from_support, bodyFromCar=body_from_car,
+        supportPath=datum_paths[1],supportTransformPathID=support.object_reader.path_id,
+        bodyPath=datum_paths[2],bodyTransformPathID=body.object_reader.path_id,
+        nativeResourceSHA256=native_hash,
+        method='Exact serialized native hierarchy: inverse(bodyWorld) * supportWorld; car/body identity required')
     bundle_meshes = {}
     bundle_env = UnityPy.load(str(bundle))
     for obj in bundle_env.objects:
@@ -109,8 +173,9 @@ def extract(game, bundle, output):
         if obj.type.name != 'Transform': continue
         t=obj.read()
         if not t.m_Father.m_PathID: bundle_bindings(t)
-    result = dict(nativeSource=str(native), nativeSHA256=digest(native), bundle=str(bundle),
+    result = dict(nativeSource=str(native), nativeSHA256=native_hash, bundle=str(bundle),
         bundleSHA256=digest(bundle), drives=roots, nativeMeshes=meshes, bundleMeshes=bundle_meshes,bundleBindings=bindings,
+        triplexSupportDatum=support_datum,
         nativeDataOnly=True, limitations='Serialized native geometry; runtime scripts/materials are excluded. Original Franklin controllers/prefabs are loaded from the bundle by Unity.')
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(result,separators=(',',':')),encoding='utf-8')

@@ -6,12 +6,14 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <NuGetAudit>false</NuGetAudit>
     <ManagedPath Condition="'$(ManagedPath)' == ''">B:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed</ManagedPath>
+    <FixtureGeneratedPath Condition="'$(FixtureGeneratedPath)' == ''">$(MSBuildThisFileDirectory)..\..\build\franklin-runtime</FixtureGeneratedPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FranklinRuntimeProbe.cs" />
-    <Compile Include="../../build/franklin-runtime/ProductionConfiguration.cs" />
-    <Compile Include="../../build/franklin-runtime/ProductionWalsConfiguration.cs" />
-    <Compile Include="../../build/franklin-runtime/ProductionRodRecipes.cs" />
+    <Compile Include="FranklinAttachmentAudit.cs" />
+    <Compile Include="$(FixtureGeneratedPath)/ProductionConfiguration.cs" />
+    <Compile Include="$(FixtureGeneratedPath)/ProductionWalsConfiguration.cs" />
+    <Compile Include="$(FixtureGeneratedPath)/ProductionRodRecipes.cs" />
     <Compile Include="../../RearrangedS282/CylinderCasingShape.cs" />
     <Reference Include="$(ManagedPath)\*.dll" Private="false" />
   </ItemGroup>

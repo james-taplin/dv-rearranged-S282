@@ -1,3 +1,119 @@
+## Franklin pin and triplex repair for 2.0.9.4 — 4 November 2026
+
+James subsequently authorised the smallest native production repair, agents and
+offline verification. This supersedes the diagnostic-only restriction below.
+No DV launch, installation, package, push, publication or save mutation.
+Installed remains 2.0.9.3-beta; owned/demonstrator eligibility is unchanged.
+
+Franklin IDs31/32/38/40/47 now separate native pin triangles into owned meshes;
+main driver uses the stock long driver-3 pin. Built-in Y/Z PositionConstraint
+follows the native coupling animation; RotationConstraint retains wheel spin.
+X stays native and independent of prior phase. No custom clock/controller,
+dependency, wheel-transform, simulation or network change. Native unreadable
+wheels use the existing normalized exporter/OBJ cache. Lease cleanup restores
+wheel meshes, LODs and bounds before existing geometry/retarget restoration.
+
+Only middle Franklin casings on IDs38/47 use the existing nose-shaping method
+with 0.20 m native shortening, transition Z9.49–9.85. Rear piston face, mounts,
+bore axes, engine spacing and articulation remain fixed. Middle outlets follow
+the same scaled correction; existing steam socket seating reads the corrected
+mesh. ID32's older rear correction, Walschaerts and the 2-2-2 are unchanged.
+
+One integrated core build: version 2.0.9.4, zero warnings/errors. Native final
+720-phase sweeps passed 25,920 layout poses across native10/Franklin31/32/38/40/47,
+both sides, phase patterns and relevant stresses, zero unexpected contacts.
+Pin bore/axial engagement, actual unreadable OBJ path, source restoration and
+synthetic LOD membership gates passed. Main bearing full engagement, zero axial
+gap; worst coupling-eye centre error 0.423 mm, native short-pin engagement >=71.28%.
+Old-nose negative control restores 228 contacts. Headless empty material slots
+were a fixture omission, corrected without production changes; all six native
+renderers have one material slot matching their one submesh.
+
+See FRANKLIN_REPAIR_2_0_9_4.md for exact coverage and James's in-game checks.
+Evidence: build/franklin-repair-2094 and build/triplex-repair-20261104.
+Core SHA256 C4AF2E44428DCD74F29E20C80300F8CDDBB473A9A33A822C7C1F3E23482CB07E.
+Actual camera/LOD behaviour, whole-TrainCar switching, save/reload, host/guest and
+reporter acceptance still await James. No additional production rebuild is
+needed for documentation/fixture changes. Installation/packaging/push/publication
+require separate authorisation.
+All 38 installed package members still match the installation receipt.
+
+## Earlier triplex diagnostic correction — 4 November 2026
+
+James authorised fixture correction/investigation with agents only. Production
+geometry remains unchanged; no DV launch, installation, package, push or new
+commit. Source remains c9c5d88 / version 2.0.9.4; installed remains 2.0.9.3-beta.
+Do not call the pictured missing pin fixed: enabling the main/cutoff renderers
+did not prove driver-pin/bearing seating. Full referenced wheel/coupling extents
+in inspected Franklin ID31/47 stacks end at least 32.83 mm before the main eye's
+inner face; auxiliary parts do not bridge it. Native stock driver 3 has a longer
+pin that spans its bearing. Measured radial error also exceeds native control.
+Exact pictured eye/close-up ID remain uncertain. This is inherited geometry,
+not established as a new regression.
+
+Corrected triplex fixture uses exact extracted production native Position/Aim
+methods, 0.4 support / 0.6 rest middle sources and a front hinge carried by the
+middle root. Axle_F (0,0,8) was measured from the native prefab with matrices,
+path IDs and resource hash.
+Triplex yaws now mean synthetic support arcs, not assigned engine angles.
+Old triplex fixed-hinge articulation clearances are superseded; do not invalidate
+the separately scoped two-engine/Wals evidence or claim gameplay reproduction.
+
+Diagnostic-only build: 0 warnings/errors; reused the existing production DLL.
+The native 720-phase, two-pattern, -30/0/+30 support sweep completed 331
+assertions but clearance FAILED: 1,052 pair/pose contacts. ID47 crank 380 + main
+rod 296 against the following cylinder; ID38 crank 376. ID40 zero only in the
+original crank pairs (other parts unmeasured). ID47 actual front/middle yaw was
+21.5286/2.5940 degrees, front hinge travel 170.077 mm. All added ID47 following-
+casing shaft/UJ/transmission/mount/coupling pairs were clear. A 120-phase onset
+check was clear through 17.7199 degrees front yaw, with contact at 21.5286;
+the actual live curve envelope is unknown.
+Native ID10 / Franklin ID31/32 controls completed 720 phases without unexpected
+casing contacts; these passes do not override measured attachment deficiencies.
+
+See TRIPLEX_CONSTRAINT_AND_PIN_AUDIT_2026_11_04.md for exact scope, limits and
+James's in-game checks. Evidence: build/triplex-constraints-audit-20261104.
+All 38 installed package members still match the installation receipt.
+No production rebuild is needed for these fixture/docs changes. Driver-pin seating
+and following-cylinder clearance are separate measured repair targets. Prefer
+existing native long-pin/mesh facilities for a measured candidate; no custom
+motion system or speculative casing change. Current authorisation leaves
+production geometry untouched. Actual DV acceptance remains James's testing.
+
+## Demonstrator / owned S282 save audit — 4 November 2026
+
+James requested investigation of save stability if those locomotives are enabled
+in 2.0.9.4. Audited c9c5d88 with three focused agents, current installed native
+code/assets and LocoOwnership 1.7.0. No production changes or enabling, build,
+installation, packaging, push, game launch or save mutation. This audit is
+documented in OWNED_DEMONSTRATOR_SAVE_AUDIT_2026_11_04.md; evidence is private
+under build/owned-save-audit-20261104 and build/unique-save-audit.
+
+Confirmed demonstrator uses exactly the canonical LocoS282A livery/prefab, with
+native unique/restoration/paint state. LMS already supports that prefab; no new
+livery or geometry system is needed. Native save/garage cache retains original
+type, ID and GUID; restoration separately depends on loco/tender GUIDs. Existing
+shared scope guard also controls pre-init graph/oiling, save/load and cleanup,
+so do not lift only the radio/unique restriction. Proposed path: prepare native
+unique S282 before initialization, admit manual conversion after native service
+completion, retain stock/random policy separation and existing-owner save rights.
+
+Normal LocoOwnership purchase preserves unique flag, livery, GUID and simulation:
+canonical non-unique purchased S282s already pass current eligibility. However,
+LO clears historical owned cars' unique flag only after world loading. Actual
+production save hooks reproduced skipped arrangement 34 becoming stock 10 on
+the next fresh output after this late clear (managed lifecycle fixture). A
+read-only historical Oct17 career JSON snapshot contains one LO-owned S282 with
+unique=true; this is relevant input, not proof of past/current game data loss.
+
+Baselines: 65 spawn/ownership and 1,495 selection/save-policy checks pass; narrow
+late-flag reproduction passes 68 (65 plus three problem assertions). No whole-
+save corruption established; live stability remains unverified. Without mod,
+active arrangement siblings are lost at next native save; dormant unique cache
+can retain them. Native 24-to-six oil-array load skips mismatched state, so
+disabling is not an exact arrangement/oil round trip. See report for bounded
+implementation and James-run acceptance gates. Installed mod is still 2.0.9.3-beta.
+
 ## Hidden linkage repair committed as 2.0.9.4 — 4 November 2026
 
 James requested committing the completed repair as exactly 2.0.9.4, without a
