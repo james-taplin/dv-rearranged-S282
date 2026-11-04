@@ -54,6 +54,7 @@ namespace Dummiesman {
 		public void ReadUntilWhiteSpace() {
 			this.wordSize = 0;
 			while (this.currentChar != char.MinValue && char.IsWhiteSpace(this.currentChar) == false) {
+				if (this.wordSize >= this.word.Length) throw new InvalidDataException("OBJ token exceeds reader capacity.");
 				this.word[this.wordSize] = this.currentChar;
 				this.wordSize++;
 				this.MoveNext();
@@ -63,6 +64,7 @@ namespace Dummiesman {
 		public void ReadUntilNewLine() {
 			this.wordSize = 0;
 			while (this.currentChar != char.MinValue && this.currentChar != '\n' && this.currentChar != '\r') {
+				if (this.wordSize >= this.word.Length) throw new InvalidDataException("OBJ line exceeds reader capacity.");
 				this.word[this.wordSize] = this.currentChar;
 				this.wordSize++;
 				this.MoveNext();
@@ -84,7 +86,7 @@ namespace Dummiesman {
 			return true;
 		}
         public string GetString(int startIndex = 0) {
-            if (startIndex >= this.wordSize - 1) {
+            if (startIndex >= this.wordSize) {
                 return string.Empty;
             }
             return new string(this.word, startIndex, this.wordSize - startIndex);

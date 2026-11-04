@@ -244,9 +244,24 @@ namespace RearrangedS282
         {
             if (!ValidCar(car) || !WheelArrangement.IsSupportedId(id)) return;
             ObserveCarDeletion();
-            var profile = preparing.TryGetValue(car.CarGUID, out var candidate) ? candidate :
-                IsClient && profiles.TryGetValue(car.CarGUID, out var replica) ? replica :
-                lastApplied.TryGetValue(car, out var installed) && string.Equals(installed.Guid, car.CarGUID, StringComparison.Ordinal) ? installed.Settings : CloneSettings(Main.settings);
+            Settings profile;
+            if (preparing.TryGetValue(car.CarGUID, out var candidate)) profile = candidate;
+            else if (IsClient && profiles.TryGetValue(car.CarGUID, out var replica)) profile = replica;
+            else if (lastApplied.TryGetValue(car, out var installed) && string.Equals(installed.Guid, car.CarGUID, StringComparison.Ordinal)) profile = installed.Settings;
+            else
+            {
+                profile = CloneSettings(Main.settings);
+                if (IsHost && id == (int)WheelArrangementType.s282)
+                {
+                    // Stock can spawn through the native no-op path without an
+                    // installed profile. Current preferences may have changed
+                    // since then; publish the car's selected tender, not those
+                    // unapplied preferences. Do not mutate saved preferences.
+                    var tenderChoices = profile.poweredTenderArrangements.Where(value => value != id);
+                    bool selected = car.GetComponent<WheelRearranger>()?.PoweredTenderSelected ?? false;
+                    profile.poweredTenderArrangements = (selected ? tenderChoices.Concat(new[] { id }) : tenderChoices).ToArray();
+                }
+            }
             preparing.Remove(car.CarGUID);
             lastApplied[car] = new InstalledProfile { Guid = car.CarGUID, Settings = profile };
             if (!IsHost) return;
@@ -412,6 +427,15 @@ namespace RearrangedS282
             {
                 if (!states.TryGetValue(car.CarGUID, out var state) || state.Removed || failed.Contains(car.CarGUID)) continue;
                 if (applied.TryGetValue(car.CarGUID, out var previous) && ReferenceEquals(previous.Car, car) && previous.Revision == state.Revision) continue;
+                // An exploded car legitimately retains its host arrangement,
+                // but the native model/material swap must finish repair before
+                // rebuilding its running gear. Leave the newest revision queued
+                // and do not count wreck time toward initialization failure.
+                if (car.isExploded || car.GetComponent<ExplosionModelHandler>()?.usingExplodedModel == true)
+                {
+                    waitingSince.Remove(car.CarGUID);
+                    continue;
+                }
                 try
                 {
                     if (!ReadyForRemote(car, state.Arrangement))

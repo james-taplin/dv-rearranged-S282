@@ -13,6 +13,7 @@ namespace RearrangedS282
     {
         private readonly ExplosionModelHandler handler;
         private readonly HashSet<Renderer> originals;
+        private readonly HashSet<Renderer> retired = new HashSet<Renderer>();
         private readonly ExplosionModelHandler.MaterialSwapData added;
         internal int Count => added.affectedRenderers.Count;
 
@@ -46,18 +47,26 @@ namespace RearrangedS282
         {
             if (handler.usingExplodedModel)
                 throw new InvalidOperationException("Repair the locomotive before changing its running gear.");
+            // Unity destroys objects at frame end. Inactive retired parts can
+            // still be found by an include-inactive scan in the same frame.
+            retired.RemoveWhere(renderer => renderer == null);
             var registered = new HashSet<Renderer>(added.affectedRenderers.Select(p => p.renderer));
             foreach (var renderer in renderers)
             {
-                if (renderer == null || originals.Contains(renderer) || !registered.Add(renderer)) continue;
+                if (renderer == null || retired.Contains(renderer) || originals.Contains(renderer) || !registered.Add(renderer)) continue;
                 added.affectedRenderers.Add((renderer, renderer.sharedMaterial));
             }
         }
 
         internal void Forget(IEnumerable<Renderer> renderers)
         {
-            var removed = new HashSet<Renderer>(renderers);
-            added.affectedRenderers.RemoveAll(pair => pair.renderer == null || removed.Contains(pair.renderer));
+            var removed = new HashSet<Renderer>(renderers.Where(renderer => renderer != null));
+            retired.UnionWith(removed);
+            // The native body cache may have discovered these parts during an
+            // earlier explosion, independently of our added material swap.
+            if (handler != null && handler.materialSwaps != null)
+                foreach (var swap in handler.materialSwaps)
+                    swap?.affectedRenderers?.RemoveAll(pair => removed.Contains(pair.renderer) || ReferenceEquals(swap, added) && pair.renderer == null);
         }
     }
 }

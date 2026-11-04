@@ -43,7 +43,7 @@ public sealed class TrainCar:UnityEngine.Component
     public object logicCar=new(),adhesionController=new();
     public Entity entity=new();
     public Controller SimController=new();
-    public bool BogiesReady=true,Moving;
+    public bool BogiesReady=true,Moving,isExploded;
     public bool NormalLivery=true,uniqueCar;
     public bool AreBogiesFullyInitialized()=>BogiesReady;
     public sealed class Entity{public bool IsConverted=true;}
@@ -51,6 +51,7 @@ public sealed class TrainCar:UnityEngine.Component
     public sealed class Flow{public bool PortReady=true;public bool TryGetPort(string name,out object port){port=PortReady?new object():null;return PortReady;}}
     public sealed class PoweredWheels{public object poweredWheels=new();}
 }
+public sealed class ExplosionModelHandler:UnityEngine.Component { public bool usingExplodedModel; }
 public sealed class CarSpawner
 {
     private static CarSpawner current=new();
@@ -77,6 +78,7 @@ namespace RearrangedS282
         internal WheelArrangementType currentWA=WheelArrangementType.s282;
         internal int Attempts;
         internal bool AllowApply=true,SawRemote,SawBeforeSwitch,LastSwitchRestoredStock;
+        internal bool PoweredTenderSelected;
         internal Settings UsedSettings;
         internal string LastConventionalError;
         internal bool TrySwitchStage2(int id)
@@ -86,12 +88,13 @@ namespace RearrangedS282
             SawRemote=MultiplayerSync.ApplyingRemote;
             SawBeforeSwitch=MultiplayerSync.BeforeSwitch(car,id);
             UsedSettings=MultiplayerSync.SettingsFor(car);
-            if(!SawBeforeSwitch||!AllowApply||(car.Moving&&!SawRemote))
+            if(!SawBeforeSwitch||!AllowApply||(car.Moving&&!SawRemote)||car.isExploded||car.GetComponent<ExplosionModelHandler>()?.usingExplodedModel==true)
             {
                 LastConventionalError="fixture not safe";
                 MultiplayerSync.OnSwitchFailed(car);return false;
             }
             currentWA=(WheelArrangementType)id;
+            PoweredTenderSelected=UsedSettings.PoweredTenderEnabled(id);
             MultiplayerSync.OnApplied(car,id);return true;
         }
     }

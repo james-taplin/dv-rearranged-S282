@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using System;
+using System.Globalization;
 using Dummiesman;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -146,11 +147,9 @@ namespace Dummiesman
                     continue;
                 }
 				
-				if (Materials == null && buffer.Is("mtllib")) {
-					buffer.SkipWhitespaces();
-					buffer.ReadUntilNewLine();
-					string mtlLibPath = buffer.GetString();
-					LoadMaterialLibrary(mtlLibPath);
+				if (buffer.Is("mtllib")) {
+					// This loader returns a mesh only: materials are never returned.
+					buffer.SkipUntilNewLine();
 					continue;
 				}
 				
@@ -201,45 +200,27 @@ namespace Dummiesman
                     {
 						bool newLinePassed;
 						buffer.SkipWhitespaces(out newLinePassed);
-						if (newLinePassed == true) {
+						if (newLinePassed || buffer.endReached) {
 							break;
 						}
+						if (buffer.currentChar == '#') { buffer.SkipUntilNewLine(); break; }
 
                         int vertexIndex = int.MinValue;
                         int normalIndex = int.MinValue;
                         int uvIndex = int.MinValue;
 
-						vertexIndex = buffer.ReadInt();
-						if (buffer.currentChar == '/') {
-							buffer.MoveNext();
-							if (buffer.currentChar != '/') {
-								uvIndex = buffer.ReadInt();
-							}
-							if (buffer.currentChar == '/') {
-								buffer.MoveNext();
-								normalIndex = buffer.ReadInt();
-							}
-						}
-
-                        //"postprocess" indices
-                        if (vertexIndex > int.MinValue)
-                        {
-                            if (vertexIndex < 0)
-                                vertexIndex = Vertices.Count - vertexIndex;
-                            vertexIndex--;
-                        }
-                        if (normalIndex > int.MinValue)
-                        {
-                            if (normalIndex < 0)
-                                normalIndex = Normals.Count - normalIndex;
-                            normalIndex--;
-                        }
-                        if (uvIndex > int.MinValue)
-                        {
-                            if (uvIndex < 0)
-                                uvIndex = UVs.Count - uvIndex;
-                            uvIndex--;
-                        }
+						buffer.ReadUntilWhiteSpace();
+                        string token = buffer.GetString();
+                        string[] parts = token.Split('/');
+                        if (parts.Length > 3 || parts.Length == 0 || parts[0].Length == 0 ||
+                            parts.Length == 2 && parts[1].Length == 0 ||
+                            parts.Length == 3 && parts[2].Length == 0)
+                            throw new FormatException("Malformed OBJ face index: " + token);
+                        vertexIndex = ResolveIndex(parts[0], Vertices.Count, token);
+                        if (parts.Length > 1 && parts[1].Length != 0)
+                            uvIndex = ResolveIndex(parts[1], UVs.Count, token);
+                        if (parts.Length > 2)
+                            normalIndex = ResolveIndex(parts[2], Normals.Count, token);
 
                         //set array values
                         vertexIndices.Add(vertexIndex);
@@ -247,6 +228,8 @@ namespace Dummiesman
                         uvIndices.Add(uvIndex);
                     }
 
+                    if (vertexIndices.Count < 3)
+                        throw new FormatException("OBJ face has fewer than three vertices.");
                     //push to builder
                     currentBuilder.PushFace(currentMaterial, vertexIndices, normalIndices, uvIndices);
 
@@ -262,9 +245,6 @@ namespace Dummiesman
             }
 
             //finally, put it all together
-            GameObject obj = new GameObject(_objInfo != null ? Path.GetFileNameWithoutExtension(_objInfo.Name) : "WavefrontObject");
-            obj.transform.localScale = new Vector3(1f, 1f, 1f);
-
             foreach (var builder in builderDict)
             {
                 //empty object
@@ -282,6 +262,16 @@ namespace Dummiesman
             return null;
         }
 
+        private static int ResolveIndex(string part, int count, string token)
+        {
+            if (!int.TryParse(part, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out int index) || index == 0)
+                throw new FormatException("Invalid OBJ face index: " + token);
+            long resolved = index > 0 ? (long)index - 1 : (long)count + index;
+            if (resolved < 0 || resolved >= count)
+                throw new FormatException("OBJ face index is out of range: " + token);
+            return (int)resolved;
+        }
+
         /// <summary>
         /// Load an OBJ and MTL file from a stream.
         /// </summary>
@@ -290,9 +280,6 @@ namespace Dummiesman
         /// <returns>Returns a GameObject represeting the OBJ file, with each imported object as a child.</returns>
         public Mesh Load(Stream input, Stream mtlInput)
         {
-            var mtlLoader = new MTLLoader();
-            Materials = mtlLoader.Load(mtlInput);
-
             return Load(input);
         }
 
@@ -305,22 +292,9 @@ namespace Dummiesman
         public Mesh Load(string path, string mtlPath)
         {
             _objInfo = new FileInfo(path);
-            if (!string.IsNullOrEmpty(mtlPath) && File.Exists(mtlPath))
+            using (var fs = new FileStream(path, FileMode.Open))
             {
-                var mtlLoader = new MTLLoader();
-                Materials = mtlLoader.Load(mtlPath);
-
-                using (var fs = new FileStream(path, FileMode.Open))
-                {
-                    return Load(fs);
-                }
-            }
-            else
-            {
-                using (var fs = new FileStream(path, FileMode.Open))
-                {
-                    return Load(fs);
-                }
+                return Load(fs);
             }
         }
 

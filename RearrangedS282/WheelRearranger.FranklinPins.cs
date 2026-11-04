@@ -17,7 +17,7 @@ namespace RearrangedS282
             try
             {
                 foreach(var drive in drives)
-                    if(drive!=null)franklinPinLeases.Add(FranklinPinPresentation.Bind(drive,blindDriverBigWeight,transform,MeshFinder.Instance.ReadableRetargetMesh));
+                    if(drive!=null)franklinPinLeases.Add(FranklinPinPresentation.BindWithRetirement(drive,blindDriverBigWeight,transform,MeshFinder.Instance.ReadableRetargetMesh,renderers=>explosionMaterials?.Forget(renderers)));
             }
             catch{SuspendFranklinDriverPins();throw;}
         }

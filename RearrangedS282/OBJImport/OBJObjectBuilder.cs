@@ -64,36 +64,7 @@ public class OBJObjectBuilder {
 	}
 
 	public Mesh Build() {
-		var go = new GameObject(_name);
-		go.SetActive(false);
-
-		//add meshrenderer
-		var mr = go.AddComponent<MeshRenderer>();
 		int submesh = 0;
-
-
-		//locate the material for each submesh
-		Material[] materialArray = new Material[_materialIndices.Count];
-		foreach (var kvp in _materialIndices) {
-			Material material = null;
-			if (_loader.Materials == null) {
-				material = OBJLoaderHelper.CreateNullMaterial();
-				material.name = kvp.Key;
-			} else {
-				if (!_loader.Materials.TryGetValue(kvp.Key, out material)) {
-					material = OBJLoaderHelper.CreateNullMaterial();
-					material.name = kvp.Key;
-					_loader.Materials[kvp.Key] = material;
-				}
-			}
-			materialArray[submesh] = material;
-			submesh++;
-		}
-		mr.sharedMaterials = materialArray;
-
-		//add meshfilter
-		var mf = go.AddComponent<MeshFilter>();
-		submesh = 0;
 
 		var msh = new Mesh() {
 			name = _name, 
@@ -117,8 +88,6 @@ public class OBJObjectBuilder {
 			msh.RecalculateNormals();
 		msh.RecalculateTangents();
 		msh.RecalculateBounds();
-
-		mf.sharedMesh = msh;
 
 		//
 		return msh;

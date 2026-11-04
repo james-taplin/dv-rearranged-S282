@@ -87,6 +87,50 @@ static class Program
         Reset();car=Car();Core.settings.poweredTenderArrangements=new[]{10};Wheels(car).AllowApply=false;Wheels(car).LastSwitchRestoredStock=true;MultiplayerSync.RequestChange(car,19,out _);Core.settings.bigEndOiling=false;MultiplayerSync.BeginHost();Tick();state=CarStates().Single();
         Check(state.Arrangement==10&&!JsonConvert.DeserializeObject<Settings>(state.SettingsJson).PoweredTenderEnabled(10),"Offline failed native conversion records ordinary stock profile for later host snapshot");
     }
+    static void NativeStockDiscovery()
+    {
+        cases++;Reset();var car=Car();Core.settings.poweredTenderArrangements=new[]{10,43};
+        MultiplayerSync.BeginHost();Tick();var stock=CarStates().Single();var initial=JsonConvert.DeserializeObject<Settings>(stock.SettingsJson);
+        Check(Wheels(car).Attempts==0&&!initial.PoweredTenderEnabled(10)&&initial.PoweredTenderEnabled(43),"Untouched stock discovery publishes actual unpowered tender while preserving other choices");
+        Check(Core.settings.PoweredTenderEnabled(10),"Correcting the discovered car's profile never changes the host's preferences");
+        Check(MultiplayerSync.TryHostRequest(car.CarGUID,10,stock.Revision,out _)&&Wheels(car).PoweredTenderSelected,"Explicit stock reapply still uses the selected host powered-tender preference");
+        var powered=CarStates().Single();Check(JsonConvert.DeserializeObject<Settings>(powered.SettingsJson).PoweredTenderEnabled(10),"Explicit powered-tender reapply publishes enabled stock state");
+        string guid=car.CarGUID;string first=JsonConvert.SerializeObject(stock);string second=JsonConvert.SerializeObject(powered);
+        MultiplayerSync.BeginClient();MultiplayerSync.AcceptClient(true,"ready");CarSpawner.Instance.AllCars.Clear();var guest=Car(guid);
+        MultiplayerSync.ReceiveState(first);Tick();Check(Wheels(guest).Attempts==1&&!Wheels(guest).PoweredTenderSelected,"Guest receives ordinary tender on first discovery");
+        MultiplayerSync.ReceiveState(second);Tick();Check(Wheels(guest).Attempts==2&&Wheels(guest).PoweredTenderSelected,"Guest receives powered tender after explicit host reapply");
+        Reset();car=Car();Wheels(car).PoweredTenderSelected=true;Core.settings.poweredTenderArrangements=Array.Empty<int>();MultiplayerSync.BeginHost();Tick();
+        Check(JsonConvert.DeserializeObject<Settings>(CarStates().Single().SettingsJson).PoweredTenderEnabled(10),"Discovery mirrors actually selected powered tender when the current preference is off");
+        Check(Core.settings.poweredTenderArrangements.Length==0,"Enabled actual tender inference also leaves personal preferences unchanged");
+        Reset();var bare=new GameObject().AddComponent<TrainCar>();bare.CarGUID=Guid.NewGuid().ToString();bare.ID="bare-stock";CarSpawner.Instance.AllCars.Add(bare);
+        Core.settings.poweredTenderArrangements=new[]{10,43};MultiplayerSync.BeginHost();Tick();
+        Check(bare.GetComponent<WheelRearranger>()==null&&!JsonConvert.DeserializeObject<Settings>(CarStates().Single().SettingsJson).PoweredTenderEnabled(10),"Native stock with no rearranger component also advertises its ordinary tender");
+    }
+    static void ExplodedLateJoin()
+    {
+        cases++;Reset();var wreck=Car();var healthy=Car();wreck.entity.IsConverted=false;
+        var explosion=wreck.gameObject.AddComponent<ExplosionModelHandler>();
+        MultiplayerSync.BeginClient();MultiplayerSync.AcceptClient(true,"ready");int reports=0;MultiplayerSync.ReportFailure=_=>reports++;
+        MultiplayerSync.ReceiveState(Json(wreck.CarGUID,37,1));MultiplayerSync.ReceiveState(Json(healthy.CarGUID,19,1));Tick();
+        Time.unscaledTime+=80;wreck.isExploded=true;explosion.usingExplodedModel=true;Tick();
+        MultiplayerSync.ReceiveState(Json(wreck.CarGUID,45,2));MultiplayerSync.ReceiveState(Json(healthy.CarGUID,20,2));
+        Time.unscaledTime+=200;Tick();
+        Check(reports==0&&Wheels(wreck).Attempts==0,"Exploded pending car waits without conversion or a readiness-timeout failure");
+        Check(Wheels(healthy).Attempts==2&&Wheels(healthy).currentWA==(WheelArrangementType)20,"Other cars continue to synchronize while one car is exploded");
+        wreck.isExploded=false;Tick();Check(Wheels(wreck).Attempts==0&&reports==0,"Replica still waits while the native exploded model remains active");
+        explosion.usingExplodedModel=false;Tick();Time.unscaledTime+=118;Tick();
+        Check(reports==0&&Wheels(wreck).Attempts==0,"Repair starts a fresh readiness timeout instead of counting time spent exploded");
+        wreck.entity.IsConverted=true;Tick();
+        Check(reports==0&&Wheels(wreck).Attempts==1&&Wheels(wreck).currentWA==(WheelArrangementType)45,"After repair, latest pending arrangement applies exactly once");
+    }
+    static void ReadyExplodedLateJoin()
+    {
+        cases++;Reset();var wreck=Car();var healthy=Car();wreck.isExploded=true;
+        wreck.gameObject.AddComponent<ExplosionModelHandler>().usingExplodedModel=true;
+        MultiplayerSync.BeginClient();MultiplayerSync.AcceptClient(true,"ready");int reports=0;MultiplayerSync.ReportFailure=_=>reports++;
+        MultiplayerSync.ReceiveState(Json(wreck.CarGUID,37,1));MultiplayerSync.ReceiveState(Json(healthy.CarGUID,19,1));Tick();
+        Check(reports==0&&Wheels(wreck).Attempts==0&&Wheels(healthy).Attempts==1,"Ready-but-exploded car is deferred while other cars synchronize");
+    }
     static void ClientRevisionsAndSettings()
     {
         cases++;Reset();var car=Car();var other=Car();Core.settings.bigEndOiling=true;Core.settings.poweredTenderArrangements=Array.Empty<int>();
@@ -246,7 +290,8 @@ static class Program
     }
     static int Main(string[] args)
     {
-        AbsentAndDisabledFallback();OfflineAndHandshake();HostPolicyAndProfiles();ExistingOfflineProfile();HostStockRollback();ClientRevisionsAndSettings();LateSpawnAndFailures();InvalidStates();NewCatalogueAndFuturePreferences();OptionalFailureRecoveryAndTargets();EpochCompactionAndReordering();ReadinessTimeout();RuntimeAssetIdentity();NativeDeletionLifecycle();
+        if(args.Length>1){if(args[1]=="stock")NativeStockDiscovery();else if(args[1]=="wreck-timeout")ExplodedLateJoin();else if(args[1]=="wreck-ready")ReadyExplodedLateJoin();else throw new ArgumentException("Unknown isolated case");return 0;}
+        AbsentAndDisabledFallback();OfflineAndHandshake();HostPolicyAndProfiles();ExistingOfflineProfile();HostStockRollback();NativeStockDiscovery();ExplodedLateJoin();ReadyExplodedLateJoin();ClientRevisionsAndSettings();LateSpawnAndFailures();InvalidStates();NewCatalogueAndFuturePreferences();OptionalFailureRecoveryAndTargets();EpochCompactionAndReordering();ReadinessTimeout();RuntimeAssetIdentity();NativeDeletionLifecycle();
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"MultiplayerSync.cs","Settings.cs","WheelArrangement.cs","PoweredTenderPolicy.cs"},limitations="Actual core, settings and catalogue compiled against managed Unity/game/UMM boundaries. Native conversion and guard hooks are adapter doubles; this proves policy/revision/settings/queue behaviour, not live transport, game authority, driving physics or visual acceptance."};
         File.WriteAllText(args[0],System.Text.Json.JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine($"Core multiplayer validation passed {checks} checks across {cases} cases.");return 0;
     }

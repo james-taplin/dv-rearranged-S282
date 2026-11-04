@@ -29,10 +29,14 @@ namespace RearrangedS282
             internal readonly List<Mesh> Meshes=new List<Mesh>();
             internal readonly List<GameObject> Objects=new List<GameObject>();
             internal readonly List<(LODGroup group,LOD[] lods,Vector3 reference,float size)> Lods=new List<(LODGroup,LOD[],Vector3,float)>();
+            internal Action<IEnumerable<Renderer>> Retire;
             private bool disposed;
             public void Dispose()
             {
                 if(disposed)return;disposed=true;
+                // Forget while the actual renderers are still alive. Destroy is
+                // deferred, so a same-frame hierarchy scan can still find them.
+                Retire?.Invoke(Objects.Where(item=>item!=null).SelectMany(item=>item.GetComponentsInChildren<Renderer>(true)).ToArray());
                 foreach(var item in Lods)if(item.group!=null){item.group.SetLODs(item.lods);item.group.localReferencePoint=item.reference;item.group.size=item.size;}
                 foreach(var item in Filters)if(item.filter!=null)item.filter.sharedMesh=item.original;
                 foreach(var item in Objects)if(item!=null){item.SetActive(false);Object.Destroy(item);}
@@ -42,11 +46,14 @@ namespace RearrangedS282
         }
 
         internal static IDisposable Bind(Transform drive,Mesh nativeLongDriver,Transform lodRoot,Func<Mesh,Mesh> readableSource)
+            => BindWithRetirement(drive,nativeLongDriver,lodRoot,readableSource,null);
+
+        internal static IDisposable BindWithRetirement(Transform drive,Mesh nativeLongDriver,Transform lodRoot,Func<Mesh,Mesh> readableSource,Action<IEnumerable<Renderer>> retire)
         {
             if(drive==null||nativeLongDriver==null)throw new ArgumentNullException();
             var coupling=drive.Find("s282_mech_wheels_connect");
             if(coupling==null)throw new InvalidOperationException("Franklin native coupling bone is missing.");
-            var lease=new Lease();var replacements=new Dictionary<Renderer,List<Renderer>>();
+            var lease=new Lease{Retire=retire};var replacements=new Dictionary<Renderer,List<Renderer>>();
             Mesh longReadable=null;float boundsExtension=.02f;
             try
             {
