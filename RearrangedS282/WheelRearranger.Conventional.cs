@@ -127,6 +127,7 @@ namespace RearrangedS282
                     {
                         articulatedSimulation = ArticulatedSimulation.Ensure(loco);
                         if (id == (int)WheelArrangementType.s2662) ApplyMalletGeometry();
+                        else if (id == (int)WheelArrangementType.s4664LittleBoy) ApplyLittleBoyGeometry();
                         else if (id == (int)WheelArrangementType.s22222) ApplyTriplexGeometry(true);
                         else if (id == (int)WheelArrangementType.s02220) ApplyTriplexGeometry(false);
                         else if (id == (int)WheelArrangementType.s24440) ApplyTriplexGeometry(true, true);
@@ -139,6 +140,7 @@ namespace RearrangedS282
                         else
                         {
                             ApplyLegacyGeometry(id);
+                            if (id == (int)WheelArrangementType.s462Scotch) ApplyScotchGliderGeometry();
                             ApplyLargeDriverClearance(id, sim.drivingForce.wheelRadius);
                             if (id == (int)WheelArrangementType.s262) ApplyPrairieForwardSpacing(false);
                             ApplyDriverLayout(id);
@@ -152,7 +154,7 @@ namespace RearrangedS282
                             }
                             else if (UsesReservoirClearance(id))
                                 ApplyPacificHudsonValveGear(ArrangementSettings.show282BigValveGear);
-                            else if (id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464)
+                            else if (id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s462Scotch)
                                 ApplyPacificHudsonValveGear(ArrangementSettings.polishedPacificHudsonValveGear);
                             else if (id == (int)WheelArrangementType.s440 || id == (int)WheelArrangementType.s442 ||
                                 id == (int)WheelArrangementType.s444 || id == (int)WheelArrangementType.s240)

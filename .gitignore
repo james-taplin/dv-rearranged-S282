@@ -712,3 +712,16 @@ evidence/renderer-lifetime-tests/*
 !evidence/obj-mesh-tests/
 evidence/obj-mesh-tests/*
 !evidence/obj-mesh-tests/Program.cs
+
+!evidence/little-boy-tests/
+evidence/little-boy-tests/*
+!evidence/little-boy-tests/Program.cs
+!evidence/little-boy-tests/extract_native.py
+!evidence/little-boy-tests/prepare_linkage_replay.py
+
+!evidence/scotch-glider-tests/
+evidence/scotch-glider-tests/*
+!evidence/scotch-glider-tests/Owner.cs
+!evidence/scotch-glider-tests/Program.cs
+!evidence/scotch-glider-tests/RodMain.cs
+!evidence/scotch-glider-tests/geometry.py

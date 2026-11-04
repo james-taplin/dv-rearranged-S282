@@ -1,5 +1,6 @@
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\RandomLifecycle'))
 $ErrorActionPreference = 'Stop'
-$output = Join-Path $PSScriptRoot 'build\random-lifecycle-validation'
+$output = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $harness = @'
 using System;
@@ -38,8 +39,8 @@ namespace RearrangedS282 {
    Check(typeof(Settings).GetFields().All(f=>!(Attribute.GetCustomAttribute(f,typeof(UnityModManagerNet.DrawAttribute)) is UnityModManagerNet.DrawAttribute d && d.Type==UnityModManagerNet.DrawType.Slider)),"No temporary resize sliders remain exposed");
    Check(settings.polishedPacificHudsonValveGear && !settings.show6CoupledValveGear,"Pacific/Hudson polish default must not change saved global six-coupled default");
    Check((int)WheelArrangementType.s24440==47 && WheelArrangement.IsArticulatedId(47) && string.Join("-",WheelArrangement.LocomotiveWheels(47))=="2-4-4-4-0", "New six-axle locomotive triplex appends save ID47");
-   Check(settings.PoweredTenderEnabled(43) && Enumerable.Range(0,49).Where(i=>i!=43).All(i=>!settings.PoweredTenderEnabled(i)), "Only Erie keeps powered tender by default");
-   for(int id=-1;id<=49;id++)Check(PoweredTenderPolicy.Supports(id)==(id>=0&&id<49&&!new[]{33,36,38,40,47}.Contains(id)), "Tender compatibility is explicit for ID"+id);
+   Check(settings.PoweredTenderEnabled(43) && Enumerable.Range(0,51).Where(i=>i!=43).All(i=>!settings.PoweredTenderEnabled(i)), "Only Erie keeps powered tender by default");
+   for(int id=-1;id<=51;id++)Check(PoweredTenderPolicy.Supports(id)==(id>=0&&id<51&&!new[]{33,36,38,40,47,50}.Contains(id)), "Tender compatibility is explicit for ID"+id);
    settings.poweredTenderArrangements=new[]{0,10,37,43,47};
    Check(settings.PoweredTenderEnabled(0)&&settings.PoweredTenderEnabled(10)&&settings.PoweredTenderEnabled(37)&&!settings.PoweredTenderEnabled(47),"Rigid and duplex hosts opt in without stealing a third locomotive engine");
    var tenderSerializer=new XmlSerializer(typeof(Settings));var tenderWriter=new StringWriter();tenderSerializer.Serialize(tenderWriter,settings);
@@ -58,7 +59,7 @@ namespace RearrangedS282 {
    for(int id=0;id<oldNames.Length;id++)Check((int)Enum.Parse(typeof(WheelArrangementType),oldNames[id])==id,"Legacy save ID moved: "+oldNames[id]);
    Check((int)WheelArrangementType.s260==34 && (int)WheelArrangementType.s240==35 && (int)WheelArrangementType.s222==36,"New conventional IDs must append at34/35/36");
    Check((int)WheelArrangementType.s2662==37 && (int)WheelArrangementType.s22222==38 && (int)WheelArrangementType.s4144==39 && (int)WheelArrangementType.s02220==40 && (int)WheelArrangementType.s08880==41 && (int)WheelArrangementType.s2680==42 && (int)WheelArrangementType.s28882==43 && (int)WheelArrangementType.s262==44 && (int)WheelArrangementType.s2660==45 && (int)WheelArrangementType.s210102==46,"Mallet, triplex, 4-14-4, 0-2-2-2-0, 0-8-8-0, 2-6-8-0, 2-8-8-8-2, 2-6-2, 2-6-6-0 and 2-10-10-2 must append at37..46");
-   Check(WheelArrangement.SupportedCount==49 && WheelArrangement.WheelArrangementNames.Length==49 && WheelArrangement.NumOfNondrivenWheels.Length==49,"Catalogue metadata must contain all49 IDs");
+   Check(WheelArrangement.SupportedCount==51 && WheelArrangement.WheelArrangementNames.Length==51 && WheelArrangement.NumOfNondrivenWheels.Length==51,"Catalogue metadata must contain all 51 IDs");
    Check(WheelArrangement.IsConventionalId(44) && !WheelArrangement.IsArticulatedId(44) && WheelArrangement.IsArticulatedId(45) && WheelArrangement.IsArticulatedId(46) && string.Join("-",WheelArrangement.LocomotiveWheels(46))=="2-10-10-2","Prairie conventional; 2-6-6-0 and 2-10-10-2 articulated");
    Check(WheelArrangement.WheelArrangementNames[43]=="2-8-8-8-2 Erie Triplex" && WheelArrangement.IsArticulatedId(43) && string.Join("-",WheelArrangement.LocomotiveWheels(43))=="2-8-8-0" && string.Join("-",WheelArrangement.LocomotiveWheels(10))=="2-8-2","Erie triplex keeps its tender engine off the locomotive axle count");
    Check(WheelArrangement.WheelArrangementNames[41]=="0-8-8-0 Angus" && WheelArrangement.NumOfNondrivenWheels[41]==0 && WheelArrangement.IsArticulatedId(41) && WheelArrangement.WheelArrangementNames[42]=="2-6-8-0 Gt. Northern" && WheelArrangement.NumOfNondrivenWheels[42]==2 && WheelArrangement.IsArticulatedId(42),"0-8-8-0 and 2-6-8-0 are parseable articulated entries");
@@ -68,20 +69,27 @@ namespace RearrangedS282 {
    Check(WheelArrangement.WheelArrangementNames[37]=="2-6-6-2 Articulated Mallet" && WheelArrangement.NumOfNondrivenWheels[37]==4,"Mallet name must keep a parseable Whyte prefix and4 non-driven wheels");
    Check(WheelArrangement.WheelArrangementNames[34]=="2-6-0 Mogul" && WheelArrangement.WheelArrangementNames[35]=="2-4-0" && WheelArrangement.WheelArrangementNames[36]=="2-2-2 Giant-driver clearance prototype","New names must retain parseable Whyte prefixes");
    Check(WheelArrangement.NumOfNondrivenWheels[34]==2 && WheelArrangement.NumOfNondrivenWheels[35]==2 && WheelArrangement.NumOfNondrivenWheels[36]==4,"New non-driven wheel counts are2/2/4");
-   for(int id=0;id<49;id++)Check(WheelArrangement.IsStandardId(id)==(id<=30),"Historical IsStandardId semantics changed");
+   for(int id=0;id<51;id++)Check(WheelArrangement.IsStandardId(id)==(id<=30),"Historical IsStandardId semantics changed");
    Check(WheelArrangement.IsConventionalId(34) && WheelArrangement.IsConventionalId(35) && WheelArrangement.IsConventionalId(36) && !WheelArrangement.IsConventionalId(31) && !WheelArrangement.IsConventionalId(32) && !WheelArrangement.IsConventionalId(33) && !WheelArrangement.IsConventionalId(37) && !WheelArrangement.IsConventionalId(38),"New conventional helper must keep articulated/novelty classification separate");
    Check(WheelArrangement.IsArticulatedId(31) && WheelArrangement.IsArticulatedId(32) && WheelArrangement.IsArticulatedId(37) && WheelArrangement.IsArticulatedId(38) && !WheelArrangement.IsArticulatedId(36),"Mallet and triplex must be classified articulated");
    var fields=typeof(Settings).GetFields().Where(f=>f.FieldType==typeof(bool) && f.Name.StartsWith("spawn") && f.Name!="spawnRandomWA").ToArray();
-   Check(fields.Length==49,"Every supported arrangement needs one pool toggle");
+   Check(fields.Length==51,"Every supported arrangement needs one pool toggle");
    Check(!settings.spawn2442 && !settings.spawn4444 && !settings.spawn2662 && !settings.spawn22222 && !settings.spawn02220 && !settings.spawn08880 && !settings.spawn2680 && !settings.spawn28882 && !settings.spawn2660 && !settings.spawn210102 && !settings.spawn4144 && !settings.spawn404,"Articulated and novelty random choices must be opt-in");
    for(int id=0;id<WheelArrangement.SupportedCount;id++){
     Check(WheelArrangement.IsRuntimeId(id),"Radio catalogue excludes supported arrangement");
     int next=WheelArrangement.NextRuntimeId(id,1);
     Check(WheelArrangement.NextRuntimeId(next,-1)==id,"Radio forward/reverse traversal lost an ID");
    }
-   Check(WheelArrangement.IsRuntimeId(48) && !WheelArrangement.IsRuntimeId(49),"New ID48 selectable; unknown ID49 rejected");
+   Check(WheelArrangement.IsRuntimeId(48) && WheelArrangement.IsRuntimeId(49) && WheelArrangement.IsRuntimeId(50) && !WheelArrangement.IsRuntimeId(51),"IDs 48–50 selectable; unknown ID51 rejected");
    Check((int)WheelArrangementType.s482Big==48 && WheelArrangement.WheelArrangementNames[48]=="4-8-2 Express" && WheelArrangement.IsConventionalId(48) && !WheelArrangement.IsArticulatedId(48) && WheelArrangement.NumOfNondrivenWheels[48]==6,"Express appends ID48 without replacing Mountain");
    var expressSettings=new Settings{spawn482Big=true};expressSettings.OnChange();Check(expressSettings.RandomWAs.Contains(WheelArrangementType.s482Big) && !new Settings().spawn482Big,"Express pool is opt-in");
+   var added=new Settings();added.OnChange();
+   Check(!added.spawn462Scotch && !added.spawn4664LittleBoy && !added.RandomWAs.Contains(WheelArrangementType.s462Scotch) && !added.RandomWAs.Contains(WheelArrangementType.s4664LittleBoy),"Both new random-spawn options default off and stay outside the default pool");
+   added.spawn462Scotch=true;added.spawn4664LittleBoy=true;added.OnChange();
+   Check(added.RandomWAs.Contains(WheelArrangementType.s462Scotch) && added.RandomWAs.Contains(WheelArrangementType.s4664LittleBoy),"Both new random-spawn options can be opted in");
+   var addedXml=new StringWriter();new XmlSerializer(typeof(Settings)).Serialize(addedXml,added);
+   var addedReload=(Settings)new XmlSerializer(typeof(Settings)).Deserialize(new StringReader(addedXml.ToString()));addedReload.OnChange();
+   Check(addedReload.spawn462Scotch && addedReload.spawn4664LittleBoy && addedReload.RandomWAs.Contains(WheelArrangementType.s462Scotch) && addedReload.RandomWAs.Contains(WheelArrangementType.s4664LittleBoy),"Both new opt-ins persist through settings XML");
    var expressSave=new ConventionalArrangementState();expressSave.BeginIdentity("Express");expressSave.RecordApplied(48);var expressReload=new ConventionalArrangementState();expressReload.BeginIdentity("Express");Check(expressReload.LoadPayload(expressSave.SavePayload()) && expressReload.PendingId==48,"Express arrangement save round trip");
    foreach(var field in fields){
     foreach(var other in fields)other.SetValue(settings,false);
@@ -113,7 +121,7 @@ namespace RearrangedS282 {
     Check(roundtrip.LoadPayload(value) && roundtrip.PendingId==id,"Supported save ID rejected: "+id);
     roundtrip.RecordApplied(id);Check(JToken.DeepEquals(value,roundtrip.SavePayload()),"Saved ID did not round-trip: "+id);
    }
-   foreach(var invalid in new JToken[]{new JObject{["version"]=2,["arrangement"]=30,["future"]=true},new JObject{["version"]=1,["arrangement"]=49},new JObject{["version"]=1,["arrangement"]=-1},new JObject{["version"]=1,["arrangement"]="30"},JToken.Parse("[1,2,3]"),JToken.Parse("{\"version\":1,\"arrangement\":9999999999999999999999999999999}")}){
+   foreach(var invalid in new JToken[]{new JObject{["version"]=2,["arrangement"]=30,["future"]=true},new JObject{["version"]=1,["arrangement"]=51},new JObject{["version"]=1,["arrangement"]=-1},new JObject{["version"]=1,["arrangement"]="30"},JToken.Parse("[1,2,3]"),JToken.Parse("{\"version\":1,\"arrangement\":9999999999999999999999999999999}")}){
     var value=new ConventionalArrangementState();value.BeginIdentity("invalid");
     Check(!value.LoadPayload(invalid) && value.PendingId==null,"Invalid/future metadata was applied");value.SelectInitial(settings,random);
     Check(JToken.DeepEquals(invalid,value.SavePayload()),"Unknown metadata must survive unchanged");

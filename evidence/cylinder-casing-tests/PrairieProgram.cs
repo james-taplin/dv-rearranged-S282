@@ -180,8 +180,9 @@ internal static partial class PrairieProgram
             // Keep the expected rigid-layout policy independent of the tested method.
             // ID 48 is the large-driver 4-8-2; ID 47 is an articulated triplex.
             var targets=new[]{0,1,2,3,4,5,12,13,14,27,28,29,30,34,35,44};
-            foreach(int id in Enumerable.Range(0,49))Check(a.w.FullCasingFor(id)==(targets.Contains(id)||id==48),"Only selected resized rigid layouts use full normalization");
+            foreach(int id in Enumerable.Range(0,51))Check(a.w.FullCasingFor(id)==(targets.Contains(id)||id==48||id==49),"Only selected resized rigid layouts use full normalization");
             Check(a.w.FullCasingFor(48),"Large-driver 4-8-2 selects full-casing normalization; dedicated ID 48 geometry is not exercised by this rig");
+            Check(a.w.FullCasingFor(49),"Scotch Pacific selects full-casing normalization; dedicated ID 49 geometry is not exercised by this rig");
             foreach(int id in targets)
             {
                 a.Restore();a.Legacy(four:id==0||id==1||id==2||id==35);

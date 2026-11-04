@@ -136,7 +136,7 @@ namespace RearrangedS282
         private static bool UsesFullCylinderCasings(int id) => id == (int)WheelArrangementType.s262 ||
             id == (int)WheelArrangementType.s280Big || id == (int)WheelArrangementType.s282Big || id == (int)WheelArrangementType.s284Big ||
             id == (int)WheelArrangementType.s482Big ||
-            id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 ||
+            id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s462Scotch ||
             id == (int)WheelArrangementType.s440 || id == (int)WheelArrangementType.s442 ||
             id == (int)WheelArrangementType.s444 || id == (int)WheelArrangementType.s240 ||
             id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s260 ||

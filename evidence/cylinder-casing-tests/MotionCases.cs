@@ -158,7 +158,7 @@ internal static partial class PrairieProgram
             }
             // The 4-8-2 express uses the same eight large-driver mechanism as
             // the three older express variants; the rig does not model its bogies.
-            foreach(int id in Enumerable.Range(0,49))Check(WheelRearranger.UsesReservoirClearance(id)==new[]{12,13,14,44,48}.Contains(id),"Clearance scope is the four large-driver variants and Prairie");
+            foreach(int id in Enumerable.Range(0,51))Check(WheelRearranger.UsesReservoirClearance(id)==new[]{12,13,14,44,48}.Contains(id),"Clearance scope is the four large-driver variants and Prairie; Scotch uses its own geometry");
             foreach(int id in new[]{12,13,14,44,48})
             {
                 rig.Restore();rig.w.currentWA=(WheelArrangementType)id;

@@ -38,8 +38,8 @@ namespace RearrangedS282
             {
                 case 0: case 1: case 2: case 3: case 4: case 5:
                 case 12: case 13: case 14: case 27: case 28: case 29: case 30:
-                case 34: case 35: case 39: case 44: case 48:
-                case 37: case 41: case 42: case 43: case 45: case 46:
+                case 34: case 35: case 39: case 44: case 48: case 49:
+                case 37: case 41: case 42: case 43: case 45: case 46: case 50:
                     return true;
                 default: return false; // stock, 2-2-2 and replaced Franklin gear
             }

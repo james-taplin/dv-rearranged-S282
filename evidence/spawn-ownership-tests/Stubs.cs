@@ -64,8 +64,6 @@ namespace HarmonyLib {
     }
 }
 namespace RearrangedS282 {
-    internal enum WheelArrangementType { s282=10 }
-    internal static class WheelArrangement { internal static bool IsSupportedId(int id)=>id>=0&&id<49; internal static readonly string[] WheelArrangementNames=new string[49]; }
     internal sealed class Settings { internal bool spawnRandomWA; internal int Choice=34; internal int PickRandomArrangement(Random random)=>Choice; internal bool PoweredTenderEnabled(int id)=>false; }
     internal static class Main { internal static Settings settings=new(); internal static Logger Logger=new(); }
     internal static class MultiplayerSync {

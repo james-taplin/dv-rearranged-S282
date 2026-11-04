@@ -1041,6 +1041,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s444:
 				case WheelArrangementType.s460:
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s462Scotch:
 				case WheelArrangementType.s464:
 				case WheelArrangementType.s480:
 				case WheelArrangementType.s482:
@@ -1064,6 +1065,7 @@ namespace RearrangedS282
 					break;
 				case WheelArrangementType.s460:
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s462Scotch:
 				case WheelArrangementType.s464:
 					Show6Drivers();
 					break;
@@ -1341,6 +1343,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s444:
 				case WheelArrangementType.s460:
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s462Scotch:
 				case WheelArrangementType.s464:
 				case WheelArrangementType.s480:
 				case WheelArrangementType.s482:
@@ -1373,6 +1376,7 @@ namespace RearrangedS282
 				case WheelArrangementType.s262:
 				case WheelArrangementType.s460:
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s462Scotch:
 				case WheelArrangementType.s464:
 					Show6Drivers();
 					break;
@@ -1443,6 +1447,7 @@ namespace RearrangedS282
 					}
 					break;
 				case WheelArrangementType.s462:
+				case WheelArrangementType.s462Scotch:
 				case WheelArrangementType.s262:
 					switch (ArrangementSettings.x62Options)
 					{

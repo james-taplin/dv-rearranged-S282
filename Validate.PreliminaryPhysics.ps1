@@ -1,13 +1,38 @@
+# Supply the validation.json from each passing offline geometry fixture:
+# .\Validate.PreliminaryPhysics.ps1 -ScotchGeometryReceipt <path> -LittleBoyGeometryReceipt <path>
 param(
  [string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\PreliminaryPhysics'),
  [string]$RuntimeCapture='B:\SteamLibrary\steamapps\common\Derail Valley\Mods\RearrangedS282\stage2-runtime-checks.json',
- [string]$NativeDefinition=(Join-Path $PSScriptRoot 'build\b99-power-inspection\ReciprocatingSteamEngineDefinition.json')
+ [string]$NativeDefinition=(Join-Path $PSScriptRoot 'build\b99-power-inspection\ReciprocatingSteamEngineDefinition.json'),
+ [string]$ScotchGeometryReceipt,
+ [string]$LittleBoyGeometryReceipt
 )
 $ErrorActionPreference='Stop'
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
 $RuntimeCapture=(Resolve-Path -LiteralPath $RuntimeCapture).Path
 $NativeDefinition=(Resolve-Path -LiteralPath $NativeDefinition).Path
+if([string]::IsNullOrWhiteSpace($ScotchGeometryReceipt) -or [string]::IsNullOrWhiteSpace($LittleBoyGeometryReceipt)) {
+ throw 'Pass -ScotchGeometryReceipt and -LittleBoyGeometryReceipt from the two passing offline geometry fixtures; historical game capture does not cover IDs 49/50.'
+}
+$ScotchGeometryReceipt=(Resolve-Path -LiteralPath $ScotchGeometryReceipt).Path
+$LittleBoyGeometryReceipt=(Resolve-Path -LiteralPath $LittleBoyGeometryReceipt).Path
+function Assert-ReceiptSource([string]$receiptPath,[string]$label,[string]$recorded,[string]$sourceName) {
+ $path=Join-Path $PSScriptRoot "RearrangedS282\$sourceName"
+ if([string]::IsNullOrWhiteSpace($recorded)) { throw "$label receipt '$receiptPath' is missing the recorded SHA-256 for $sourceName; rerun its offline geometry fixture." }
+ $current=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+ if($recorded -ine $current) { throw "$label receipt '$receiptPath' is stale: $sourceName no longer matches its recorded SHA-256. Rerun its offline geometry fixture." }
+}
+$scotchGeometry=Get-Content -LiteralPath $ScotchGeometryReceipt -Raw | ConvertFrom-Json
+$littleBoyGeometry=Get-Content -LiteralPath $LittleBoyGeometryReceipt -Raw | ConvertFrom-Json
+Assert-ReceiptSource $ScotchGeometryReceipt 'Scotch Glider' $scotchGeometry.managedSourceSHA256 'WheelRearranger.ScotchGlider.cs'
+$littleBoySources=[ordered]@{
+ littleBoy='WheelRearranger.LittleBoy.cs'; mallet='WheelRearranger.Mallet.cs';
+ wheelRearranger='WheelRearranger.cs'; dispatcher='WheelRearranger.Conventional.cs'; catalogue='WheelArrangement.cs'
+}
+foreach($key in $littleBoySources.Keys) {
+ Assert-ReceiptSource $LittleBoyGeometryReceipt 'Little Boy' $littleBoyGeometry.provenance.sourceSHA256.$key $littleBoySources[$key]
+}
 $definitionHash=(Get-FileHash -LiteralPath $NativeDefinition -Algorithm SHA256).Hash
 if($definitionHash -ne 'B38CAAA94EF4C45B8B81248E4DE1260B2DD4B23FD305CBD3669FEB56A04A7207') {
  throw 'Native engine input differs from the previously captured S282 definition; verify its provenance before changing the fixture baseline.'
@@ -35,15 +60,19 @@ $project=@"
 $path=Join-Path $OutputDirectory 'PreliminaryPhysics.csproj'
 Set-Content $path $project -Encoding utf8
 $report=Join-Path $OutputDirectory 'validation.json'
-& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $NativeDefinition $RuntimeCapture $report
+& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $NativeDefinition $RuntimeCapture $report $ScotchGeometryReceipt $LittleBoyGeometryReceipt
 if($LASTEXITCODE -ne 0){throw 'Preliminary physics native-engine validation failed'}
 $result=Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
 $result | Add-Member -NotePropertyName captureProvenance -NotePropertyValue ([ordered]@{
  version=$capture.version; build=$capture.build; path=$RuntimeCapture
  sha256=(Get-FileHash -LiteralPath $RuntimeCapture -Algorithm SHA256).Hash
  nativeDefinitionPath=$NativeDefinition; nativeDefinitionSHA256=$definitionHash
- note='Historical captured radii; obtain an updated capture when layout geometry or the catalogue changes. Hashes do not establish current radii. No gameplay performed by this fixture.'
+ note='Historical 0–48 captured radii only; hashes do not establish current radii. No gameplay performed by this fixture.'
 })
+$result | Add-Member -NotePropertyName offlineGeometryProvenance -NotePropertyValue @(
+ [ordered]@{ arrangementId=49; path=$ScotchGeometryReceipt; sha256=(Get-FileHash -LiteralPath $ScotchGeometryReceipt -Algorithm SHA256).Hash },
+ [ordered]@{ arrangementId=50; path=$LittleBoyGeometryReceipt; sha256=(Get-FileHash -LiteralPath $LittleBoyGeometryReceipt -Algorithm SHA256).Hash }
+)
 $sourceHashes=[ordered]@{}
 foreach($name in @('WheelArrangement.cs','B99PhysicsState.cs','WheelRearranger.cs','WheelRearranger.Conventional.cs','WheelRearranger.Additional.cs','WheelRearranger.BigMallet.cs','WheelRearranger.FourteenCoupled.cs','WheelRearranger.Mallet.cs','WheelRearranger.LargeDriverClearance.cs','WheelRearranger.Triplex.cs','CylinderCalibration.cs','ConventionalPhysics.cs','TractiveEffortModel.cs')) {
  $sourceHashes[$name]=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot "RearrangedS282\$name") -Algorithm SHA256).Hash

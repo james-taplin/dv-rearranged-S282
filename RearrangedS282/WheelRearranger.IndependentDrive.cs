@@ -44,7 +44,7 @@ namespace RearrangedS282
             {
                 Transform left,right;
                 if(IsBigMallet(id) || id==ArticulatedSimulation.TenderTriplexId) {left=CurrentBigMalletRearDrive(true);right=CurrentBigMalletRearDrive(false);}
-                else if(id==(int)WheelArrangementType.s2662) {left=malletRearL;right=malletRearR;}
+                else if(id==(int)WheelArrangementType.s2662 || id==(int)WheelArrangementType.s4664LittleBoy) {left=malletRearL;right=malletRearR;}
                 else {left=articulatedRearL;right=articulatedRearR;}
                 Add("rear",articulatedRearRoot,left,right,articulatedSimulation.RearEngine);
             }

@@ -94,7 +94,7 @@ namespace RearrangedS282
             // Native wheel transforms remain animation sources for respaced
             // layouts; physical axle anchors follow their displayed centres.
             Transform Presented(Transform wheel) => ResolvePresentedWheel(wheel);
-            if (id == (int)WheelArrangementType.s260 || id == (int)WheelArrangementType.s262)
+            if (id == (int)WheelArrangementType.s260 || id == (int)WheelArrangementType.s262 || id == (int)WheelArrangementType.s462Scotch)
             {
                 AlignAdditionalAxle(driveAxle2, Presented(secondRightDriveWheel));
                 AlignAdditionalAxle(driveAxle3, Presented(thirdRightDriveWheel));

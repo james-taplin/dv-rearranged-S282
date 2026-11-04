@@ -202,6 +202,35 @@ static class Program
         var guid=car.CarGUID;MultiplayerSync.BeginClient();MultiplayerSync.AcceptClient(true,"ready");CarSpawner.Instance.AllCars.Clear();car=Car(guid);int failures=0;MultiplayerSync.ReportFailure=_=>failures++;
         MultiplayerSync.ReceiveState(json);Tick();Check(Wheels(car).currentWA==(WheelArrangementType)19&&MultiplayerSync.RevisionFor(guid)==1&&failures==0,"Guest applies host state containing supported Express settings instead of silently remaining stock");
     }
+    static void AppendedArrangementReplication()
+    {
+        foreach(int id in new[]{49,50})
+        {
+            cases++;Reset();var host=Car();var guid=host.CarGUID;
+            Core.settings.poweredTenderArrangements=new[]{49,50};MultiplayerSync.BeginHost();
+            var broadcasts=new List<string>();MultiplayerSync.BroadcastState=broadcasts.Add;
+            Check(MultiplayerSync.TryHostRequest(guid,id,0,out _),"Host accepts appended arrangement "+id);
+            var chosen=JsonConvert.DeserializeObject<NetworkArrangement>(broadcasts.Single());
+            var profile=JsonConvert.DeserializeObject<Settings>(chosen.SettingsJson);
+            Check(chosen.Arrangement==id&&chosen.Revision==1,"Host broadcasts appended arrangement and revision "+id);
+            Check(profile.PoweredTenderEnabled(49)&&!profile.PoweredTenderEnabled(50),"Profile retains eligible Pacific tender and filters Little Boy tender");
+            Check(MultiplayerSync.TryHostRequest(guid,10,1,out _),"Host can switch appended arrangement back to stock "+id);
+            var stock=JsonConvert.DeserializeObject<NetworkArrangement>(broadcasts.Last());
+            Check(stock.Arrangement==10&&stock.Revision==2,"Stock transition broadcasts next revision for "+id);
+            MultiplayerSync.BeginClient();MultiplayerSync.AcceptClient(false,"locked");CarSpawner.Instance.AllCars.Clear();
+            MultiplayerSync.ReceiveState(JsonConvert.SerializeObject(chosen));Tick();
+            var guest=Car(guid,false);Tick();Check(Wheels(guest).Attempts==0,"Late-join arrangement waits for mesh readiness "+id);
+            guest.gameObject.AddComponent<S282AMeshLoader>();guest.transform.MeshReady=true;Tick();
+            Check(Wheels(guest).Attempts==1&&(int)Wheels(guest).currentWA==id&&Wheels(guest).SawRemote,"Locked guest receives host arrangement after late spawn "+id);
+            int sends=0;MultiplayerSync.SendRequest=(g,a,r)=>sends++;
+            Check(!MultiplayerSync.RequestChange(guest,id,out _)&&sends==0,"Locked guest cannot request appended arrangement "+id);
+            MultiplayerSync.AcceptClient(true,"allowed");int requested=-1;long revision=-1;
+            MultiplayerSync.SendRequest=(g,a,r)=>{sends++;requested=a;revision=r;};
+            Check(MultiplayerSync.RequestChange(guest,id,out _)&&requested==id&&revision==1&&Wheels(guest).Attempts==1,"Allowed guest sends appended request without local mutation "+id);
+            MultiplayerSync.ReceiveState(JsonConvert.SerializeObject(stock));Tick();
+            Check((int)Wheels(guest).currentWA==10&&Wheels(guest).Attempts==2&&MultiplayerSync.RevisionFor(guid)==2,"Guest applies authoritative stock transition "+id);
+        }
+    }
     static void OptionalFailureRecoveryAndTargets()
     {
         cases++;Reset();string path=Core.ModPath;Core.ModPath=Path.Combine(Path.GetTempPath(),"s282-no-adapter-"+Guid.NewGuid().ToString("N"));
@@ -291,7 +320,7 @@ static class Program
     static int Main(string[] args)
     {
         if(args.Length>1){if(args[1]=="stock")NativeStockDiscovery();else if(args[1]=="wreck-timeout")ExplodedLateJoin();else if(args[1]=="wreck-ready")ReadyExplodedLateJoin();else throw new ArgumentException("Unknown isolated case");return 0;}
-        AbsentAndDisabledFallback();OfflineAndHandshake();HostPolicyAndProfiles();ExistingOfflineProfile();HostStockRollback();NativeStockDiscovery();ExplodedLateJoin();ReadyExplodedLateJoin();ClientRevisionsAndSettings();LateSpawnAndFailures();InvalidStates();NewCatalogueAndFuturePreferences();OptionalFailureRecoveryAndTargets();EpochCompactionAndReordering();ReadinessTimeout();RuntimeAssetIdentity();NativeDeletionLifecycle();
+        AbsentAndDisabledFallback();OfflineAndHandshake();HostPolicyAndProfiles();ExistingOfflineProfile();HostStockRollback();NativeStockDiscovery();ExplodedLateJoin();ReadyExplodedLateJoin();ClientRevisionsAndSettings();LateSpawnAndFailures();InvalidStates();NewCatalogueAndFuturePreferences();AppendedArrangementReplication();OptionalFailureRecoveryAndTargets();EpochCompactionAndReordering();ReadinessTimeout();RuntimeAssetIdentity();NativeDeletionLifecycle();
         var report=new{passed=true,checks,cases,compiledProduction=new[]{"MultiplayerSync.cs","Settings.cs","WheelArrangement.cs","PoweredTenderPolicy.cs"},limitations="Actual core, settings and catalogue compiled against managed Unity/game/UMM boundaries. Native conversion and guard hooks are adapter doubles; this proves policy/revision/settings/queue behaviour, not live transport, game authority, driving physics or visual acceptance."};
         File.WriteAllText(args[0],System.Text.Json.JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine($"Core multiplayer validation passed {checks} checks across {cases} cases.");return 0;
     }

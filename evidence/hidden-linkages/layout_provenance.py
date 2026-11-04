@@ -4,6 +4,7 @@ Reads current setters rather than copying another arrangement's coordinates.
 Only the root/oiler projection is evaluated; full source member receipts expose
 the exact implementation this narrower projection represents.
 """
+import argparse
 import hashlib
 import json
 import re
@@ -51,7 +52,7 @@ def main():
         'WheelRearranger.cs', 'WheelArrangement.cs', 'WheelRearranger.Conventional.cs',
         'WheelRearranger.LargeDriverClearance.cs', 'WheelRearranger.PrairieSpacing.cs',
         'WheelRearranger.ConnectingRodSpacing.cs', 'WheelRearranger.FourteenCoupled.cs',
-        'WheelRearranger.Mallet.cs', 'WheelRearranger.Triplex.cs']}
+        'WheelRearranger.Mallet.cs', 'WheelRearranger.Triplex.cs', 'WheelRearranger.ScotchGlider.cs']}
     src = files['WheelRearranger.cs']
     # Derive enum values from current source, including explicitly assigned IDs.
     enum = member(files['WheelArrangement.cs'], 'public enum WheelArrangementType')
@@ -90,6 +91,11 @@ def main():
         'WheelRearranger.PrairieSpacing.cs': ['drive.localPosition += Vector3.forward * PrairieDriverForward;'],
         'WheelRearranger.ConnectingRodSpacing.cs': [
             'var delta = -transform.TransformDirection(Vector3.forward).normalized * amount;', 'drive.position += delta;'],
+        'WheelRearranger.ScotchGlider.cs': [
+            'float driverDatumZ = secondRightDriveWheel.localPosition.z;',
+            'float shiftZ = (oldScale - ScotchDriverScale) * driverDatumZ;',
+            'drive.localPosition += Vector3.forward * shiftZ;',
+            'drive.localScale = new Vector3(drive.localScale.x, ScotchDriverScale, ScotchDriverScale);'],
         'WheelRearranger.FourteenCoupled.cs': [
             'layout.DriverZ[6] = native[5] - layout.Pitch;',
             'float s = (cylinderFront - trailingLimit - FourteenTruckSpacing - MalletTrailingRadius - MalletEngineGap)',
@@ -99,7 +105,7 @@ def main():
         for fragment in fragments:
             assert fragment in files[file], 'Projection needs review: ' + file + ': ' + fragment
     chain = files['WheelRearranger.Conventional.cs']
-    assert chain.index('ApplyLegacyGeometry(id);') < chain.index('ApplyLargeDriverClearance(id,') < chain.index('ApplyPrairieForwardSpacing(false);') < chain.index('ApplyConnectingRodSpacing(id,')
+    assert chain.index('ApplyLegacyGeometry(id);') < chain.index('ApplyScotchGliderGeometry();') < chain.index('ApplyLargeDriverClearance(id,') < chain.index('ApplyPrairieForwardSpacing(false);') < chain.index('ApplyConnectingRodSpacing(id,')
     scale_limit = constant(clearance, 'ReservoirClearDriverScale')
     clearance_ids = [ids[n] for n in re.findall(r'id == \(int\)WheelArrangementType\.(\w+)', clearance.split('private void ApplyLargeDriverClearance')[0])]
     rearward_source = member(files['WheelRearranger.ConnectingRodSpacing.cs'], 'internal static float RequestedDriverRearwardM(int id)')
@@ -111,6 +117,11 @@ def main():
     for method, data in methods.items():
         for id_ in data['ids']:
             z = data['position'][2]; scale = data['scale']; steps = [method]
+            if id_ == ids['s462Scotch']:
+                glider_scale = constant(files['WheelRearranger.ScotchGlider.cs'], 'ScotchDriverScale')
+                z += (scale-glider_scale) * second_z
+                scale = glider_scale
+                steps.append('ApplyScotchGliderGeometry')
             if id_ in clearance_ids:
                 z += (scale-scale_limit) * (second_z if id_ == ids['s262'] else first_z)
                 scale = scale_limit
@@ -138,7 +149,8 @@ def main():
     scale = (front-trailing-constant(fourteen,'FourteenTruckSpacing')-constant(mallet,'MalletTrailingRadius')-constant(mallet,'MalletEngineGap'))/(front-seventh+radius)
     rows.append(dict(id=ids['s4144'], scale=scale, driveOffset=front*(1-scale)-constant(fourteen,'FourteenDriverShift'),
                      oilerOffset=[0,0,0], methods=['Measure4144','Apply4144Geometry']))
-    assert len(rows) == 18 and len({r['id'] for r in rows}) == 18 and ids['s222'] not in [r['id'] for r in rows]
+    expected = {0,1,2,3,4,5,12,13,14,27,28,29,30,34,35,39,44,48,ids['s462Scotch']}
+    assert len(rows) == len(expected) and {r['id'] for r in rows} == expected
     report = dict(layouts=sorted(rows,key=lambda r:r['id']), projection='Drive-root affine frame and oiler translation only; native clips supply child poses.',
                   sourceFiles={n:sha((ROOT/'RearrangedS282'/n).read_bytes()) for n in files}, projectedMembers=receipts,
                   checkedAffineSourceFragments=required,
@@ -151,4 +163,7 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output', type=Path, default=OUT)
+    OUT = parser.parse_args().output
     main()

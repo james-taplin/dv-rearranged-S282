@@ -45,8 +45,21 @@ static class Program
     {
         var entry=new UMM.ModEntry();var loaded=(bool)typeof(Main).GetMethod("Load",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{entry});
         Check(loaded&&entry.OnGUI!=null,"actual Main.Load installs GUI callback");
-        Check(WheelArrangement.SupportedCount==49&&WheelArrangement.WheelArrangementNames.Length==49&&
-            WheelArrangement.WheelArrangementNames[48]=="4-8-2 Express","Latest 49-choice catalogue retains Express at saved ID 48");
+        Check(WheelArrangement.SupportedCount==51&&WheelArrangement.WheelArrangementNames.Length==51&&
+            WheelArrangement.WheelArrangementNames[48]=="4-8-2 Express"&&
+            WheelArrangement.WheelArrangementNames[49].StartsWith("4-6-2")&&WheelArrangement.WheelArrangementNames[50].StartsWith("4-6-6-4"),
+            "51-choice catalogue preserves 48 and appends the requested Pacific and articulated IDs");
+        for(int id=0;id<51;id++) {
+            Check(WheelArrangement.IsSupportedId(id),"Saved catalogue ID remains supported: "+id);
+            Check(WheelArrangement.NextRuntimeId(id,1)==(id+1)%51&&WheelArrangement.NextRuntimeId(id,-1)==(id+50)%51,"Radio cycle follows fixed saved-ID sequence: "+id);
+        }
+        Check(!WheelArrangement.IsSupportedId(-1)&&!WheelArrangement.IsSupportedId(51),"Out-of-range saved IDs remain unsupported");
+        Check(WheelArrangement.LocomotiveWheels(49).SequenceEqual(new[]{4,6,2})&&WheelArrangement.LocomotiveWheels(50).SequenceEqual(new[]{4,6,6,4}),"New catalogue wheel groups are 4-6-2 and 4-6-6-4");
+        foreach(var expected in new[]{(id:49,total:6,powered:3),(id:50,total:10,powered:6)}) {
+            var wheels=WheelArrangement.LocomotiveWheels(expected.id);
+            Check(wheels.Sum()/2==expected.total&&wheels.Skip(1).Take(wheels.Length-2).Sum()/2==expected.powered,"Physical and powered locomotive axle groups match requested wheel layout "+expected.id);
+        }
+        Check(WheelArrangement.IsConventionalId(49)&&!WheelArrangement.IsArticulatedId(49)&&WheelArrangement.IsArticulatedId(50)&&!WheelArrangement.IsConventionalId(50),"New IDs select their intended conventional/articulated family");
         {
             cases++;var first=new Rig();var second=new Rig();
             Check(first.radio.display!=second.radio.display&&first.radio.signalOrigin!=second.radio.signalOrigin,"Two radio modes copy each owner's display and signal origin");
@@ -77,6 +90,12 @@ static class Program
             int records=ConventionalSpawn.Records.Count,chosen=Selected(r.radio);r.radio.OnUse();
             Check(r.wa.Calls.SequenceEqual(new[]{chosen})&&r.wb.Calls.Count==0,"closed confirm converts selected car only");
             Check(ConventionalSpawn.Records.Count==records+1&&ConventionalSpawn.Records.Last()==(r.a,chosen),"closed confirm records success only");ResetCheck(r,"closed confirm");
+        }
+        foreach(int id in new[]{49,50}) {
+            cases++;var r=new Rig();r.SelectA();Set(r.radio,"selectedWheelArrangement",id-1);
+            Check(r.radio.ButtonBCustomAction()&&Selected(r.radio)==id,"Radio reaches appended arrangement "+id);
+            int records=ConventionalSpawn.Records.Count;r.radio.OnUse();
+            Check(r.wa.Calls.SequenceEqual(new[]{id})&&ConventionalSpawn.Records.Count==records+1&&ConventionalSpawn.Records.Last()==(r.a,id),"Radio confirms and records appended arrangement "+id);
         }
         {
             cases++;var r=new Rig();r.SelectA();Physics.Hit=null;r.radio.OnUpdate();r.radio.OnUse();Check(r.wa.Calls.Count==0,"turn-away cancel has no conversion");ResetCheck(r,"cancel");
@@ -137,6 +156,7 @@ static class Program
             for(int id=0;id<WheelArrangement.SupportedCount;id++)
                 Check(Core.settings.PoweredTenderEnabled(id)==PoweredTenderPolicy.Supports(id),"Host powered-tender options follow supported policy for catalogue ID "+id);
             Check(Core.settings.PoweredTenderEnabled(48),"Retained Express supports the optional powered tender");
+            Check(Core.settings.PoweredTenderEnabled(49)&&!Core.settings.PoweredTenderEnabled(50),"Express Pacific permits an optional powered tender; Little Boy uses its normal unpowered tender");
         }
         {
             cases++;var r=new Rig();MultiplayerSync.IsClient=MultiplayerSync.InSession=true;MultiplayerSync.AllowClientRequest=false;int records=ConventionalSpawn.Records.Count;

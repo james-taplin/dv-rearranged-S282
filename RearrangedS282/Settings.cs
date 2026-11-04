@@ -127,6 +127,8 @@ namespace RearrangedS282
 		[Draw("Randomly spawn articulated 2-4-4-4-0 Triplex:", Height = HEIGHT)] public bool spawn24440 = false;
 		[Draw("Randomly spawn 4-14-4:", Height = HEIGHT)] public bool spawn4144 = false;
 		[Draw("Randomly spawn 4-8-2 Express:", Height = HEIGHT)] public bool spawn482Big = false;
+		[Draw("Randomly spawn 4-6-2 Scotch Glider:", Height = HEIGHT)] public bool spawn462Scotch = false;
+		[Draw("Randomly spawn 4-6-6-4 Little Boy:", Height = HEIGHT)] public bool spawn4664LittleBoy = false;
 
 		// Derived from the toggles, not a second authoritative saved pool.
 		[System.Xml.Serialization.XmlIgnore]
@@ -266,6 +268,8 @@ namespace RearrangedS282
 			if (spawn4144)
 				RandomWAs.Add(WheelArrangementType.s4144);
 			if (spawn482Big) RandomWAs.Add(WheelArrangementType.s482Big);
+			if (spawn462Scotch) RandomWAs.Add(WheelArrangementType.s462Scotch);
+			if (spawn4664LittleBoy) RandomWAs.Add(WheelArrangementType.s4664LittleBoy);
 
 		}
 

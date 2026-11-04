@@ -54,7 +54,7 @@ namespace RearrangedS282 {
  internal static class Program {
  static int checks;static void Check(bool ok,string why){checks++;if(!ok)throw new Exception(why);}
  static void Main(string[] args){
-  Check((int)WheelArrangementType.s482Big==48 && WheelArrangement.SupportedCount==49,"Appended catalogue identity");
+  Check((int)WheelArrangementType.s482Big==48 && WheelArrangement.SupportedCount==51,"Retained Express identity in the 51-layout catalogue");
   Check(WheelArrangement.WheelArrangementNames[16]=="4-8-2 Mountain" && WheelArrangement.WheelArrangementNames[48]=="4-8-2 Express","Retained Mountain and distinct Express");
   Check(string.Join("-",WheelArrangement.LocomotiveWheels(48))=="4-8-2" && WheelArrangement.NumOfNondrivenWheels[48]==6,"Four drivers and three carrying axles");
   Check(PoweredTenderPolicy.Supports(48),"Powered tender is available");

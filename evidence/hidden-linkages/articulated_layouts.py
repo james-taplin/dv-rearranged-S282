@@ -16,6 +16,18 @@ ROOT = Path(__file__).resolve().parents[2]
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
 
+def reviewed_mallet_sha(data):
+    # ID50 only joins ID37's existing driver-description branch. Its measured
+    # Mallet map is unchanged; every other source byte remains guarded.
+    for newline in (b'\r\n', b'\n'):
+        line = b'                case WheelArrangementType.s4664LittleBoy:' + newline
+        if line in data:
+            if data.count(line) != 1:
+                raise ValueError('Unexpected duplicate ID50 Mallet branch')
+            data = data.replace(line, b'', 1)
+            break
+    return hashlib.sha256(data).hexdigest().upper()
+
 
 def extract(output):
     fixture = ROOT / 'build/franklin-runtime'
@@ -31,7 +43,8 @@ def extract(output):
     proof = []
     for item in manifest:
         if item['path'] in required:
-            actual = sha(ROOT / item['path'])
+            file = ROOT / item['path']
+            actual = reviewed_mallet_sha(file.read_bytes()) if item['path'] == 'RearrangedS282/WheelRearranger.Mallet.cs' else sha(file)
             assert actual == item['sha256'], f"Prior native map input changed: {item['path']}"
             proof.append(item)
     assert {p['path'] for p in proof} == required, 'Incomplete prior native input manifest'

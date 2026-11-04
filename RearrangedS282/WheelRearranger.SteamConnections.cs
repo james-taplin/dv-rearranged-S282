@@ -124,7 +124,7 @@ namespace RearrangedS282
             foreach (var cylinder in cylinders)
             {
                 cylinder.ForwardBranch = id == (int)WheelArrangementType.s262;
-                cylinder.CompactCollar = id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s462 ||
+                cylinder.CompactCollar = id == (int)WheelArrangementType.s460 || id == (int)WheelArrangementType.s462 || id == (int)WheelArrangementType.s462Scotch ||
                     id == (int)WheelArrangementType.s464 || id == (int)WheelArrangementType.s260;
             }
             var wheels = WheelArrangement.LocomotiveWheels(id);

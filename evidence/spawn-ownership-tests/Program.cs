@@ -46,6 +46,12 @@ static class Program {
         ConventionalSpawn.RecordApplied(guest,48);var guestOwner=guest.GetComponent<ConventionalSpawn>();
         Check(State(guestOwner).AppliedId==48&&State(guestOwner).PendingId==null&&guestOwner.Started.Count==0,"Guest records an authoritative Express choice without starting local conversion");
         Check((int)Save(guest)[ConventionalArrangementState.SaveKey]["arrangement"]==48,"Guest accepted arrangement is recorded instead of stale local saved choice");
+        foreach(int id in new[]{49,50}) {
+            var replica=Car();Hook("LoadingCarState","Postfix",replica,Data());
+            Check(replica.GetComponent<ConventionalSpawn>()==null,"Guest local save does not apply arrangement before host state "+id);
+            ConventionalSpawn.RecordApplied(replica,id);var accepted=replica.GetComponent<ConventionalSpawn>();
+            Check(State(accepted).AppliedId==id&&accepted.Started.Count==0&&(int)Save(replica)[ConventionalArrangementState.SaveKey]["arrangement"]==id,"Guest saves host-selected arrangement without local conversion "+id);
+        }
         var guestGear=guest.gameObject.AddComponent<WheelRearranger>();
         Check((bool)Hook("ReturningToPool","Prefix",guest)&&guestGear.Reset==1&&!State(guestOwner).HasSelection&&MultiplayerSync.Forgotten.Contains(guest),"Guest pool return restores gear, clears saved ownership and forgets its network identity");
         MultiplayerSync.Guest=false;
@@ -59,6 +65,14 @@ static class Program {
         Check(State(reloaded).PendingId==35,"Normal arrangement restored as pending");
         var queued=reloaded.Started.Single().Routine; queued.MoveNext(); queued.MoveNext();
         Check(reload.GetComponent<WheelRearranger>().Applied==1&&State(reloaded).PendingId==null,"Normal saved arrangement applied through real coroutine");
+        foreach(int id in new[]{49,50}) {
+            var car=Car(); ConventionalSpawn.RecordApplied(car,id);var saved=Save(car);
+            Check((int)saved[ConventionalArrangementState.SaveKey]["arrangement"]==id,"New arrangement saved without renumbering: "+id);
+            var fresh=Car();Hook("LoadingCarState","Postfix",fresh,saved);var pending=fresh.GetComponent<ConventionalSpawn>();
+            Check(State(pending).PendingId==id,"New arrangement restored as pending: "+id);
+            var coroutine=pending.Started.Single().Routine;coroutine.MoveNext();coroutine.MoveNext();
+            Check(fresh.GetComponent<WheelRearranger>().Applied==1&&(int)fresh.GetComponent<WheelRearranger>().currentWA==id&&State(pending).PendingId==null,"New saved arrangement applied on reload: "+id);
+        }
         var future=new JObject{["version"]=999,["arrangement"]=999,["extra"]="keep"};
         Hook("LoadingCarState","Postfix",normal,new JObject{[ConventionalArrangementState.SaveKey]=future});
         Check(JToken.DeepEquals(Save(normal)[ConventionalArrangementState.SaveKey],future),"Normal future payload preserved verbatim");

@@ -10,7 +10,7 @@ $json='B:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources><NoWarn>CS0649</NoWarn></PropertyGroup>
-<ItemGroup><Compile Include="$SourcePath"/><Compile Include="$PSScriptRoot\RearrangedS282\S282Target.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\S282SpawnScope.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\ConventionalArrangementState.cs"/><Compile Include="$fixture\*.cs"/><Reference Include="Newtonsoft.Json"><HintPath>$json</HintPath></Reference></ItemGroup>
+<ItemGroup><Compile Include="$SourcePath"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelArrangement.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\S282Target.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\S282SpawnScope.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\ConventionalArrangementState.cs"/><Compile Include="$fixture\*.cs"/><Reference Include="Newtonsoft.Json"><HintPath>$json</HintPath></Reference></ItemGroup>
 </Project>
 "@
 $path=Join-Path $OutputDirectory 'SpawnOwnership.csproj'
