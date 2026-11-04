@@ -1,4 +1,4 @@
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\fourteen-spacing-validation'))
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\FourteenSpacing'))
 $ErrorActionPreference='Stop'
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
@@ -17,8 +17,12 @@ function Extract([string]$text,[string]$marker) {
  return $text.Substring($start,$end-$start)
 }
 $source=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.FourteenCoupled.cs') -Raw
-$baseline=(& git -c "safe.directory=$($PSScriptRoot.Replace('\','/'))" show 'HEAD:RearrangedS282/WheelRearranger.FourteenCoupled.cs') -join "`n"
-if($LASTEXITCODE -ne 0){throw 'Could not read unchanged pre-adjustment Git source'}
+# This 1.8.1 commit specifies the original 0.25 m shift. The later layout
+# added a further 0.25 m; do not replace this with the changing HEAD source.
+$baselineRevision='f31e01f59bfdd8eab179a00c03111269eb59e04f'
+$baseline=(& git -c "safe.directory=$($PSScriptRoot.Replace('\','/'))" show "${baselineRevision}:RearrangedS282/WheelRearranger.FourteenCoupled.cs" 2>$null) -join "`n"
+if($LASTEXITCODE -ne 0 -or -not $baseline){throw "Missing historical 4-14-4 reference commit $baselineRevision; fetch the repository history before running this fixture."}
+if($baseline -notmatch 'FourteenDriverShift\s*=\s*\.25f\s*;'){throw "Historical 4-14-4 reference $baselineRevision does not have the expected original 0.25 m shift."}
 $mapSource=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.Mallet.cs') -Raw
 $map=[regex]::Match($mapSource,'private static Matrix4x4 EngineMap\(.*?;', [Text.RegularExpressions.RegexOptions]::Singleline).Value
 if(-not $map){throw 'Missing actual EngineMap helper'}
@@ -63,5 +67,6 @@ if($LASTEXITCODE -ne 0){throw '4-14-4 spacing/native-pose validation failed'}
 $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
 $result|Add-Member sourceSHA256 (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.FourteenCoupled.cs')).Hash
 $result|Add-Member retargetSHA256 (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'RearrangedS282\DriveRetarget.cs')).Hash
+$result|Add-Member baselineRevision $baselineRevision
 $result|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $report -Encoding UTF8
 Get-Content -LiteralPath $report -Raw

@@ -219,11 +219,13 @@ internal static class Program
             if(Three(id))Near(layout.DriverOffsetM(4),-.15f,"Descriptor rear axle moves back");
         }
     }
-    private static void LayoutCase(JsonElement rodData,JsonElement anim,JsonElement wheelData,int id,bool rotated,bool sharedLod,float pitch)
+    // Independently stated fixed values in metres: Mogul, 2-4-0, Prairie and American.
+    private static float ExpectedPitch(int id)=>id switch {34=>.18f,35=>.20f,44=>.22f,0=>0f,_=>throw new ArgumentOutOfRangeException(nameof(id))};
+    private static float ExpectedRearward(int id)=>id switch {34=>.12f,35=>.14f,44=>.12f,0=>0f,_=>throw new ArgumentOutOfRangeException(nameof(id))};
+    private static void LayoutCase(JsonElement rodData,JsonElement anim,JsonElement wheelData,int id,bool rotated,bool sharedLod)
     {
         var rig=new Rig(rodData,anim,wheelData,rotated,sharedLod);rig.Legacy(id);
-        ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=pitch;
-        var selected=DriverLayout.Create(id,pitch);var active=selected.Drivers.ToArray();
+        var selected=DriverLayout.Create(id,ExpectedPitch(id));var active=selected.Drivers.ToArray();
         var originalMeshes=rig.nativeMeshes.ToDictionary(m=>m,m=>(positions:m.vertices.ToArray(),triangles:m.triangles.ToArray(),uv:m.uv.ToArray(),bounds:m.bounds));
         var lodStates=rig.groups.Select(g=>(group:g,lods:g.GetLODs(),point:g.localReferencePoint,size:g.size)).ToArray();
         var fittingBase=rig.fittings.ToDictionary(f=>f.t,f=>(position:f.t.position,local:f.t.localPosition,active:f.t.gameObject.activeSelf));
@@ -383,18 +385,16 @@ internal static class Program
             rig.owner.SuspendPitch();lifecycleCycles++;
         }
         rig.Legacy(id);rig.owner.ApplyPitch(id);
-        ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=pitch==.20f?.10f:.20f;
-        rig.owner.SuspendPitch();rig.Legacy(id);rig.owner.ApplyPitch(id);Check(corrected.All(m=>m.destroyed),"Changing pitch did not dispose superseded corrected mesh");
+        rig.owner.SuspendPitch();rig.Legacy(id);rig.owner.ApplyPitch(id);Check(corrected.All(m=>!m.destroyed),"Fixed-pitch reapply destroyed cached corrected mesh");
         var ownedMeshes=renderedRods.Select(r=>r.GetComponent<MeshFilter>().sharedMesh).Distinct().ToArray();rig.owner.SuspendPitch();
         rig.owner.DisposePitch();Check(presentations.All(t=>t.gameObject.destroyed),"Disposal leaked presentation GameObjects");Check(ownedMeshes.All(m=>m.destroyed),"Disposal leaked corrected mesh");
         foreach(var mesh in rig.nativeMeshes)Check(!mesh.destroyed,"Disposal destroyed native mesh asset");
     }
     private static void PhaseReapplyCases(JsonElement rodData,JsonElement anim,JsonElement wheelData)
     {
-        foreach(int id in new[]{34,35,44,0})foreach(float pitch in new[]{.15f,.20f})
+        foreach(int id in new[]{34,35,44,0})
         {
             var rig=new Rig(rodData,anim,wheelData,false);rig.Legacy(id);
-            ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=pitch;
             rig.owner.ApplyPitch(id);
             var rods=Three(id)?new[]{rig.owner.lfThreeAxleSideRod,rig.owner.lrThreeAxleSideRod,rig.owner.rfThreeAxleSideRod,rig.owner.rrThreeAxleSideRod}:new[]{rig.owner.leftTwoAxleSideRod,rig.owner.rightTwoAxleSideRod};
             var copies=rods.ToDictionary(r=>r,r=>r.GetComponent<MeshFilter>().sharedMesh);
@@ -421,7 +421,7 @@ internal static class Program
         var isolation=isolated.owner.GetComponentsInChildren<MeshFilter>(true).ToDictionary(f=>f,f=>f.sharedMesh);
         foreach(int id in new[]{34,35,44,0,34,35,44,0})
         {
-            rig.Legacy(id);ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=.15f;
+            rig.Legacy(id);
             rig.owner.ApplyPitch(id);switchCases++;
             Check(rig.owner.CachedPitchMeshCount<=6,"Arrangement switching leaves more than six cached rod variants");
             var meshes=rig.owner.GetComponentsInChildren<MeshFilter>(true).ToDictionary(f=>f,f=>f.sharedMesh);
@@ -468,14 +468,13 @@ internal static class Program
     }
     private static void PhasedInitialCacheCases(JsonElement rodData,JsonElement anim,JsonElement wheelData)
     {
-        foreach(int id in new[]{34,35,44,0})foreach(float pitch in new[]{.15f,.20f})foreach(bool rotated in new[]{false,true})
+        foreach(int id in new[]{34,35,44,0})foreach(bool rotated in new[]{false,true})
         {
             var rig=new Rig(rodData,anim,wheelData,rotated,false,true);
             var canonical=rig.owner.loco.carLivery.prefab.GetComponentsInChildren<Transform>(true).ToDictionary(t=>t,t=>t.localPosition);
             var left=rig.owner.driveL.Find("s282_mech_wheels_connect/s282_mech_push_rod_to_connect");
             var right=rig.owner.driveR.Find("s282_mech_wheels_connect/s282_mech_push_rod_to_connect");
             Check(Math.Abs(left.localPosition.z-right.localPosition.z)>.00025f,"Initial cache phases do not expose actual native main-pin drift");
-            ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=pitch;
             rig.Legacy(id);
             // Keep different native rotation phases on the two coupling rods;
             // all must remain compatible with the shared geometry cache.
@@ -508,15 +507,15 @@ internal static class Program
         PhasedInitialCacheCases(r.RootElement,a.RootElement,w.RootElement);
         if(args.Length==4)
         {
-            foreach(int id in new[]{34,35,44,0})foreach(bool rotated in new[]{false,true})foreach(bool sharedLod in new[]{false,true})foreach(float pitch in id==44?new[]{0f,.15f,.20f,.22f}:new[]{0f,.15f,.20f})
-                LayoutCase(r.RootElement,a.RootElement,w.RootElement,id,rotated,sharedLod,pitch);
+            foreach(int id in new[]{34,35,44,0})foreach(bool rotated in new[]{false,true})foreach(bool sharedLod in new[]{false,true})
+                LayoutCase(r.RootElement,a.RootElement,w.RootElement,id,rotated,sharedLod);
             PhaseReapplyCases(r.RootElement,a.RootElement,w.RootElement);
             ScopeAndRollbackCases(r.RootElement,a.RootElement,w.RootElement);
         }
         var report=new{passed=true,targetedCacheOnly=args.Length==5,checks,layoutCases,nativePoseScenarios=poses,lifecycleCycles,phaseReapplyCases,switchCases,rollbackCases,phasedInitialCacheCases,maximumAddedBossShapeErrorM=maximumPinAddedError,
             maximumSeatedPinErrorZM=maximumSeatedPinErrorZ,maximumSeatedPinErrorYZM=maximumSeatedPinErrorYZ,maximumLegacyPinErrorYZM=maximumLegacyPinErrorYZ,seatedByLayout,legacyByLayout,
             maximumAddedVerticalPinErrorM=maximumAddedVerticalPinError,maximumDerivedNativeRockingBoundM=maximumDerivedVerticalBound,
-            scope=args.Length==5?"Targeted live-cache-phase regression: actual native L/R main-pin min/max phases at initial cache, separate unanimated prefab datum, differing L/R coupling-rod rotations, both layouts/orientations,0.15/0.20m pitch, repeated later native phases, immutable cache reuse. Other integration checks intentionally skipped in this targeted mode.":"Actual production descriptor, owner, pure remesher, wheel quaternion copier and Additional physical axle resolver executed with managed transform/mesh/LOD stand-ins; native wheel meshes, native animation clips and exact generated rod recipes. Four layouts, both car orientations, shared/separate LOD ownership,0/.15/.20m pitches plus Prairie .22m, constants pose reset, main anchors, fittings/sparks/brakes, source/channel immutability, bounds/LOD restoration, cache replacement/disposal; independent canonical prefab and L/R live phase mismatch at initial cache.",
+            scope=args.Length==5?"Targeted live-cache-phase regression: actual native L/R main-pin min/max phases at initial cache, separate unanimated prefab datum, differing L/R coupling-rod rotations, four layouts and both orientations at their fixed pitches, repeated later native phases, immutable cache reuse. Other integration checks intentionally skipped in this targeted mode.":"Actual production descriptor, owner, pure remesher, wheel quaternion copier and Additional physical axle resolver executed with managed transform/mesh/LOD stand-ins; native wheel meshes, native animation clips and exact generated rod recipes. Four layouts at their fixed pitches, both car orientations, shared/separate LOD ownership, constants pose reset, main anchors, fittings/sparks/brakes, source/channel immutability, bounds/LOD restoration, cache reuse/disposal; independent canonical prefab and L/R live phase mismatch at initial cache.",
             limitations="Stand-ins do not reproduce Unity's renderer culling or Animator evaluation scheduling, live mesh upload, physical wheel registration, game collision clearance, oil interaction or the integrated stock/prepared GeometryState caller. Native geometry remains ignored local and is never packaged."};
         File.WriteAllText(args[3],JsonSerializer.Serialize(report,new JsonSerializerOptions{WriteIndented=true}));Console.WriteLine(JsonSerializer.Serialize(report));
     }

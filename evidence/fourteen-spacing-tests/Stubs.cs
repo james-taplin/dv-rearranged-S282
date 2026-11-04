@@ -63,6 +63,7 @@ namespace UnityEngine
         public Vector3 TransformVector(float x,float y,float z) => TransformVector(new Vector3(x,y,z));
         public Vector3 InverseTransformVector(Vector3 p) => worldToLocalMatrix.MultiplyVector(p);
         public void SetParent(Transform t, bool worldPositionStays) { if (worldPositionStays) throw new NotSupportedException(); parent?.children.Remove(this); parent = t; t?.children.Add(this); }
+        public bool IsChildOf(Transform t) { for(var p=this;p!=null;p=p.parent) if(ReferenceEquals(p,t)) return true; return false; }
         public Transform Find(string path) { var t = this; foreach (string part in path.Split('/')) { t = t.children.FirstOrDefault(c => c.name == part); if (t == null) return null; } return t; }
         public Transform Add(string name){var t=new GameObject(name).transform;t.SetParent(this,false);return t;}
         public IEnumerator<Transform> GetEnumerator() => children.GetEnumerator();
@@ -76,6 +77,8 @@ namespace UnityEngine
         public static Vector3 forward => new(0,0,1); public static Vector3 up => new(0,1,0);public static Vector3 right=>new(1,0,0);
         public Vector3 normalized=>this/magnitude;
         public static float Dot(Vector3 a,Vector3 b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+        public static Vector3 Min(Vector3 a,Vector3 b)=>new(Math.Min(a.x,b.x),Math.Min(a.y,b.y),Math.Min(a.z,b.z));
+        public static Vector3 Max(Vector3 a,Vector3 b)=>new(Math.Max(a.x,b.x),Math.Max(a.y,b.y),Math.Max(a.z,b.z));
         public static Vector3 Cross(Vector3 a,Vector3 b)=>new(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
         public float magnitude => (float)Math.Sqrt(x*x+y*y+z*z);
         public N.Vector3 Native => new(x,y,z);
@@ -92,6 +95,9 @@ namespace UnityEngine
         public static Quaternion identity => new(0,0,0,1);
         public N.Quaternion Native => new(x,y,z,w);
         public static Quaternion From(N.Quaternion q) => new(q.X,q.Y,q.Z,q.W);
+        public static Quaternion Inverse(Quaternion q) => From(N.Quaternion.Inverse(q.Native));
+        public static Quaternion operator *(Quaternion a,Quaternion b) => From(a.Native*b.Native);
+        public static Vector3 operator *(Quaternion q,Vector3 v) => Vector3.From(N.Vector3.Transform(v.Native,q.Native));
         public static Quaternion AngleAxis(float degrees,Vector3 axis) => From(N.Quaternion.CreateFromAxisAngle(N.Vector3.Normalize(axis.Native),degrees*(float)Math.PI/180));
         public static Quaternion FromToRotation(Vector3 from,Vector3 to)
         {

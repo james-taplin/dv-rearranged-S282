@@ -114,7 +114,6 @@ internal static class Program
         var rig=new Rig(data);int nativeCount=All(rig.w.transform).Count();var originals=rig.pipes.Select(f=>f.sharedMesh).ToArray();var originalVertices=originals.Select(m=>m.vertices.ToArray()).ToArray();
         foreach(var clip in data.GetProperty("clips").EnumerateArray())
         foreach(var frame in clip.GetProperty("frames").EnumerateArray())
-        foreach(int layout in new[]{4,5})
         {
             rig.Restore();NativePose(rig,clip,frame);rig.Legacy();
             // The locomotive has moved and rotated since setup. A cached world
@@ -135,7 +134,7 @@ internal static class Program
             Check(All(rig.w.transform).Count()==nativeCount,"No hierarchy or ownership changes");
             poseScenarios++;
         }
-        scenarios.Add("96 native High/Med/Low sampled poses across Pacific/Hudson, with moving/rotated car, unchanged native animated phase and absolute support mapping");
+        scenarios.Add("48 native High/Med/Low sampled poses through the shared Pacific/Hudson gear method, with moving/rotated car, unchanged native animated phase and absolute support mapping; arrangement ID dispatch is not exercised");
         for(int i=0;i<rig.pipes.Count;i++)
         {
             var copy=rig.pipes[i].sharedMesh;var original=originals[i];

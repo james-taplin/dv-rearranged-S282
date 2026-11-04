@@ -18,15 +18,15 @@ the production completed-pose rotation copier runs. Presentation centres/scales
 must survive those source resets. Source wheels deliberately carry collider and
 rigidbody components; presentations must not copy them.
 
-Coverage includes both first-trial IDs 34/35, zero/default/maximum additional
-pitch, translated/rotated cars, separate/shared native LOD owners, stationary main
+Coverage includes IDs 34/35/44/0 at their current fixed respective pitch of
+0.18/0.20/0.22/0 m, translated/rotated cars, separate/shared native LOD owners, stationary main
 axles, dense spark/shoe assignment, detail/coarse fittings and flanged wheel meshes,
 physical axle resolver mapping, native mesh/channel immutability, corrected bounds,
-exact LOD array/order/fade/culling-bounds restoration, cache replacement/disposal,
-switching between both layouts, second-car isolation, scoped no-op behaviour and
+exact LOD array/order/fade/culling-bounds restoration, cache reuse/disposal,
+switching among the four layouts, second-car isolation, scoped no-op behaviour and
 rollback after native-data/LOD ownership failures. Ninety-six reapplications at
 different native phases verify immutable mesh reuse within the existing 1 µm
-cache comparison, including the maximum 0.20 m pitch.
+cache comparison, across all four fixed pitches.
 
 The fixture also evaluates **different left/right native phases before the first
 cache operation**, spanning the actual native main-pin local-Z variation. Native
@@ -55,9 +55,7 @@ culling and actual collision/visual clearance still need their dedicated checks
 or in-game testing. Managed LOD bounds are a geometric stand-in, not Unity's
 renderer implementation.
 
-Status, 4 November 2026: the shared native rod extractor and scoped recipe
-check now run on the current source. This fixture compiles but stops at the
-obsolete adjustable-pitch assertion (0.18 versus 0); later checks have not
-run. Production now uses fixed per-family pitch/rearward values. Update the
-fixture expectations and rerun before relying on its layout, native pin/rod,
-LOD and restoration checks. See CURRENT_HANDOVER.md for observed results.
+Status, 4 November 2026: fixed-pitch expectations replace the obsolete adjustable
+settings. The complete fixture passed 26,181 assertions and 16 layout cases.
+An ignored source-copy negative control changing the Mogul pitch to 0.19 m failed
+the independent 0.18 m assertion. See CURRENT_HANDOVER.md for current results.

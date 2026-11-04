@@ -174,10 +174,14 @@ internal static partial class PrairieProgram
                 a.Legacy();a.w.transform.localPosition=new(12,-1,7);a.w.transform.localRotation=Quaternion.AngleAxis(37,new(0,1,0));a.w.transform.localScale=new(1.15f,1.15f,1.15f);
                 a.w.ApplyCasingFor(44);Inspect(a);
             }
-            a.Restore();MainSettings(false);a.Legacy();a.w.ApplyCasingFor(44);Check(a.w.CylinderCasingMeshCount==0,"Setting off retains previous geometry");MainSettings(true);
+            // The former nearVanillaCylinderCasings toggle is no longer read by
+            // production; stock bypass and restoration remain checked below.
             a.Restore();a.w.ApplyCasingFor(10);Check(a.w.CylinderCasingMeshCount==0,"Stock bypass exact");
+            // Keep the expected rigid-layout policy independent of the tested method.
+            // ID 48 is the large-driver 4-8-2; ID 47 is an articulated triplex.
             var targets=new[]{0,1,2,3,4,5,12,13,14,27,28,29,30,34,35,44};
-            foreach(int id in Enumerable.Range(0,47))Check(a.w.FullCasingFor(id)==targets.Contains(id),"Only selected resized rigid layouts use full normalization");
+            foreach(int id in Enumerable.Range(0,49))Check(a.w.FullCasingFor(id)==(targets.Contains(id)||id==48),"Only selected resized rigid layouts use full normalization");
+            Check(a.w.FullCasingFor(48),"Large-driver 4-8-2 selects full-casing normalization; dedicated ID 48 geometry is not exercised by this rig");
             foreach(int id in targets)
             {
                 a.Restore();a.Legacy(four:id==0||id==1||id==2||id==35);
@@ -217,5 +221,4 @@ internal static partial class PrairieProgram
         }
         catch(Exception ex){File.WriteAllText(args[2],JsonSerializer.Serialize(new{passed=false,checks,error=ex.ToString()}));Console.Error.WriteLine(ex);return 1;}
     }
-    static void MainSettings(bool value)=>RearrangedS282.Main.settings.nearVanillaCylinderCasings=value;
 }

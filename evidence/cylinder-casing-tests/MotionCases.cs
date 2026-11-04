@@ -156,8 +156,10 @@ internal static partial class PrairieProgram
                 Check(rig.w.MaximumOilGuideGap()<.035f,"Retargeted cylinder-side guides retain a seated fixed cup");
                 foreach(var d in new[]{rig.w.driveL,rig.w.driveR})DriveRetarget.Unbind(d);rig.Restore();
             }
-            foreach(int id in Enumerable.Range(0,47))Check(WheelRearranger.UsesReservoirClearance(id)==new[]{12,13,14,44}.Contains(id),"Clearance scope is exactly three high-speed variants and Prairie");
-            foreach(int id in new[]{12,13,14,44})
+            // The 4-8-2 express uses the same eight large-driver mechanism as
+            // the three older express variants; the rig does not model its bogies.
+            foreach(int id in Enumerable.Range(0,49))Check(WheelRearranger.UsesReservoirClearance(id)==new[]{12,13,14,44,48}.Contains(id),"Clearance scope is the four large-driver variants and Prairie");
+            foreach(int id in new[]{12,13,14,44,48})
             {
                 rig.Restore();rig.w.currentWA=(WheelArrangementType)id;
                 bool prairie=id==44;float oldScale=prairie?1.2879f:1.198f,oldRadius=prairie?.9144f:.8509f;
@@ -189,8 +191,8 @@ internal static partial class PrairieProgram
             }
             rig.w.DisposeCasings();rig.w.Dispose();
             File.WriteAllText(args[2],JsonSerializer.Serialize(new{passed=true,checks,nativePoseScenarios=scenarios,oilPoseSamples=oilSamples,
-                driverForwardM=.8,cylinderRearDatumForwardM=-.1,completePrairieShiftFrom1135M=-.7,clearanceScale=1.11,clearanceArrangements=new[]{12,13,14,44},
-                limitations="Actual production spacing, retarget, casing/support and oil-mount code with managed Unity stand-ins; native clip and rod/casing mesh data. No game rendering, oil-can interaction or native controller lifecycle run."},new JsonSerializerOptions{WriteIndented=true}));
+                driverForwardM=.8,cylinderRearDatumForwardM=-.1,completePrairieShiftFrom1135M=-.7,clearanceScale=1.11,clearanceArrangements=new[]{12,13,14,44,48},
+                limitations="Actual production spacing, retarget, casing/support and oil-mount code with managed Unity stand-ins; native clip and rod/casing mesh data. ID 48 shares the eight-large-driver mechanism rig; its bogies and full layout are not modeled. The fixture does not model articulated assembly. No game rendering, oil-can interaction or native controller lifecycle run."},new JsonSerializerOptions{WriteIndented=true}));
             Console.WriteLine($"Prairie motion: {checks} checks; {scenarios} native poses; {oilSamples} cup samples passed.");return 0;
         }
         catch(Exception ex){File.WriteAllText(args[2],JsonSerializer.Serialize(new{passed=false,checks,error=ex.ToString()}));Console.Error.WriteLine(ex);return 1;}

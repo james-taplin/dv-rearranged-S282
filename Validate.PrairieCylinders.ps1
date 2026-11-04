@@ -1,4 +1,4 @@
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\prairie-casing-integration'))
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\PrairieCylinders'))
 $ErrorActionPreference='Stop'
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $fixture=Join-Path $PSScriptRoot 'evidence\cylinder-casing-tests'
@@ -15,7 +15,7 @@ if(-not(Test-Path -LiteralPath $emitters)) {
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup>
-<ItemGroup><Compile Include="$PSScriptRoot\RearrangedS282\CylinderCasingShape.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.CylinderCasings.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.Walschaerts.cs"/><Compile Include="$PSScriptRoot\evidence\pacific-hudson-valve-gear\Stubs.cs"/><Compile Include="$fixture\PrairieProgram.cs"/></ItemGroup>
+<ItemGroup><Compile Include="$PSScriptRoot\RearrangedS282\CylinderCasingShape.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.CylinderCasings.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.Walschaerts.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.PrairieSpacing.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.LargeDriverClearance.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\WheelRearranger.OilCupMounts.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\DriveRetarget.cs"/><Compile Include="$PSScriptRoot\RearrangedS282\RodRemesher.cs"/><Compile Include="$PSScriptRoot\evidence\fourteen-spacing-tests\Stubs.cs"/><Compile Include="$fixture\MotionOwner.cs"/><Compile Include="$fixture\PrairieProgram.cs"/></ItemGroup>
 </Project>
 "@
 $projectPath=Join-Path $OutputDirectory 'Prairie.Validation.csproj'

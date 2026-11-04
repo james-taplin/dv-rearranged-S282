@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\driver-layout-validation'),
+    [string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\driver-layouts'),
     [string]$OwnerSourcePath=(Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.DriverLayouts.cs'),
     [switch]$TargetedCacheOnly
 )

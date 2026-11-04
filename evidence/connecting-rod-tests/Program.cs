@@ -134,11 +134,10 @@ internal static partial class Program
         bool reject=false;try{RodRemesher.RemeshInto(source,before,after,source);}catch(ArgumentException){reject=true;}
         Check(reject,"Aliased source/output buffer accepted");
     }
-    private static void ConnectingCase(JsonElement rods,JsonElement animation,JsonElement wheelData,JsonElement motion,JsonElement guides,int id,float rearward,bool rotated,bool sharedLod,string output,float pitch=.15f)
+    private static void ConnectingCase(JsonElement rods,JsonElement animation,JsonElement wheelData,JsonElement motion,JsonElement guides,int id,bool rotated,bool sharedLod,string output)
     {
+        float rearward=ExpectedRearward(id);
         var f=new ConnectingRig(rods,animation,wheelData,motion,guides,rotated,sharedLod,output);var r=f.rig;r.Legacy(id);float cylinderShift=id==44?r.owner.PreparePrairieFixture():0f;float retargetShift=rearward+cylinderShift;f.NativeLodMetadata(motion);
-        ModMain.settings.prairieExtraCoupledPitchMetres=ModMain.settings.americanExtraCoupledPitchMetres=ModMain.settings.mogulExtraCoupledPitchMetres=ModMain.settings.twoFortyExtraCoupledPitchMetres=pitch;
-        ModMain.settings.prairieDriverRearwardMetres=ModMain.settings.americanDriverRearwardMetres=ModMain.settings.mogulDriverRearwardMetres=ModMain.settings.twoFortyDriverRearwardMetres=rearward;
         r.owner.ApplyPitch(id);
         if(sharedLod)r.body.Find("Static_LOD1").gameObject.SetActive(false);
         if(sharedLod)r.sparks[0][0].gameObject.SetActive(false); // Selected spark can be presentation-hidden.
@@ -277,7 +276,7 @@ internal static partial class Program
         foreach(int failAt in new[]{1,2})
         {
             var f=new ConnectingRig(rods,anim,wheels,motion,guides,false,true,output);var r=f.rig;r.Legacy(34);f.NativeLodMetadata(motion);r.owner.ApplyPitch(34);
-            ModMain.settings.mogulDriverRearwardMetres=.15f;var before=r.sides.ToDictionary(t=>t,t=>t.position);
+            var before=r.sides.ToDictionary(t=>t,t=>t.position);
             var lods=r.groups.ToDictionary(g=>g,g=>(levels:g.GetLODs(),point:g.localReferencePoint,size:g.size));
             MeshFinder.FailAtRequest=MeshFinder.Requests.Count+failAt;bool rejected=false;
             try{r.owner.ApplyConnectingFixture(34);}catch(InvalidOperationException){rejected=true;}finally{MeshFinder.FailAtRequest=-1;}
@@ -297,15 +296,10 @@ internal static partial class Program
     {
         if(args.Length!=7)throw new ArgumentException("Expected rod/animation/wheel/motion/report/output/guide fixture paths");
         using var rods=JsonDocument.Parse(File.ReadAllText(args[0]));using var animation=JsonDocument.Parse(File.ReadAllText(args[1]));using var wheels=JsonDocument.Parse(File.ReadAllText(args[2]));using var motion=JsonDocument.Parse(File.ReadAllText(args[3]));using var guides=JsonDocument.Parse(File.ReadAllText(args[6]));
-        Check(ModMain.settings.prairieExtraCoupledPitchMetres==0f&&ModMain.settings.americanExtraCoupledPitchMetres==0f&&ModMain.settings.prairieDriverRearwardMetres==0f&&ModMain.settings.americanDriverRearwardMetres==0f,"New layout controls do not start at zero");
-        ModMain.settings.mogulExtraCoupledPitchMetres=.01f;ModMain.settings.twoFortyExtraCoupledPitchMetres=.02f;ModMain.settings.prairieExtraCoupledPitchMetres=.03f;ModMain.settings.americanExtraCoupledPitchMetres=.04f;
-        ModMain.settings.mogulDriverRearwardMetres=.05f;ModMain.settings.twoFortyDriverRearwardMetres=.06f;ModMain.settings.prairieDriverRearwardMetres=.07f;ModMain.settings.americanDriverRearwardMetres=.08f;
-        foreach(var binding in new[]{(34,.01f,.05f),(35,.02f,.06f),(44,.03f,.07f),(0,.04f,.08f)}){Near(WheelRearranger.RequestedDriverPitchM(binding.Item1),binding.Item2,"Pitch setting isolated to named layout");Near(WheelRearranger.RequestedDriverRearwardM(binding.Item1),binding.Item3,"Rearward setting isolated to named layout");}
+        foreach(int id in new[]{34,35,44,0}){Near(WheelRearranger.RequestedDriverPitchM(id),ExpectedPitch(id),"Fixed pitch for named layout");Near(WheelRearranger.RequestedDriverRearwardM(id),ExpectedRearward(id),"Fixed rearward distance for named layout");}
         IntoBufferCases(motion.RootElement);
-        foreach(int id in new[]{34,35,44,0})foreach(float offset in new[]{0f,.15f,.25f})foreach(bool turned in new[]{false,true})
-            ConnectingCase(rods.RootElement,animation.RootElement,wheels.RootElement,motion.RootElement,guides.RootElement,id,offset,turned,turned,args[5]);
-        foreach(var tune in new[]{(34,.18f,.12f),(35,.20f,.14f),(44,.22f,.12f)})foreach(bool turned in new[]{false,true})
-            ConnectingCase(rods.RootElement,animation.RootElement,wheels.RootElement,motion.RootElement,guides.RootElement,tune.Item1,tune.Item3,turned,turned,args[5],tune.Item2);
+        foreach(int id in new[]{34,35,44,0})foreach(bool turned in new[]{false,true})foreach(bool sharedLod in new[]{false,true})
+            ConnectingCase(rods.RootElement,animation.RootElement,wheels.RootElement,motion.RootElement,guides.RootElement,id,turned,sharedLod,args[5]);
         ConnectingRollback(rods.RootElement,animation.RootElement,wheels.RootElement,motion.RootElement,guides.RootElement,args[5]);
         Check(Dummiesman.OBJLoader.Requests.Contains("s282_mech_push_rod_to_connect"),"Unreadable native main did not use existing readable export");
         Check(MeshFinder.Requests.Contains("s282_mech_cutoff_to_cylinder_rod"),"Unreadable radius did not request runtime readable provider");

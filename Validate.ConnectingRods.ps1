@@ -1,4 +1,4 @@
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\connecting-rod-validation'))
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\connecting-rods'))
 $ErrorActionPreference='Stop'
 $OutputDirectory=[IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $OutputDirectory -Force|Out-Null

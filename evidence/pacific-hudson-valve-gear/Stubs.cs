@@ -111,6 +111,7 @@ namespace UnityEngine
 namespace RearrangedS282
 {
     using UnityEngine;
+    internal sealed class DriveRetarget { internal float Shift; }
     internal partial class WheelRearranger
     {
         internal Transform transform,driveL,driveR,lCrosshead,rCrosshead,lLiftingArmSupport,rLiftingArmSupport,reachRodSupport;

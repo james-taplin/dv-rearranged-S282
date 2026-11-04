@@ -1,4 +1,4 @@
-param([string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\additional-arrangements-validation'))
+param([string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\offline-validation\AdditionalArrangements'))
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null

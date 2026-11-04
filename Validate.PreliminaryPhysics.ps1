@@ -1,7 +1,21 @@
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\runtime-trial-1.19.0\physics-validation'))
+param(
+ [string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\PreliminaryPhysics'),
+ [string]$RuntimeCapture='B:\SteamLibrary\steamapps\common\Derail Valley\Mods\RearrangedS282\stage2-runtime-checks.json',
+ [string]$NativeDefinition=(Join-Path $PSScriptRoot 'build\b99-power-inspection\ReciprocatingSteamEngineDefinition.json')
+)
 $ErrorActionPreference='Stop'
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $OutputDirectory=(Resolve-Path -LiteralPath $OutputDirectory).Path
+$RuntimeCapture=(Resolve-Path -LiteralPath $RuntimeCapture).Path
+$NativeDefinition=(Resolve-Path -LiteralPath $NativeDefinition).Path
+$definitionHash=(Get-FileHash -LiteralPath $NativeDefinition -Algorithm SHA256).Hash
+if($definitionHash -ne 'B38CAAA94EF4C45B8B81248E4DE1260B2DD4B23FD305CBD3669FEB56A04A7207') {
+ throw 'Native engine input differs from the previously captured S282 definition; verify its provenance before changing the fixture baseline.'
+}
+$capture=Get-Content -LiteralPath $RuntimeCapture -Raw | ConvertFrom-Json
+if(-not $capture.passed -or -not $capture.started -or $capture.arrangements.Count -ne $capture.expectedCases) {
+ throw 'Runtime capture is incomplete or did not pass; supply a complete structural capture.'
+}
 $managed='B:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed'
 $publicized=Get-ChildItem (Join-Path $PSScriptRoot 'RearrangedS282\obj\Release\net48\PublicizedAssemblies') -Recurse -File -Filter DV.Simulation.dll | Select-Object -First 1 -ExpandProperty FullName
 $probe=Get-Content (Join-Path $PSScriptRoot 'evidence\articulated-simulation-tests\NativeProbe.cs') -Raw
@@ -20,5 +34,19 @@ $project=@"
 "@
 $path=Join-Path $OutputDirectory 'PreliminaryPhysics.csproj'
 Set-Content $path $project -Encoding utf8
-& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- (Join-Path $PSScriptRoot 'build\b99-power-inspection\ReciprocatingSteamEngineDefinition.json') 'B:\SteamLibrary\steamapps\common\Derail Valley\Mods\RearrangedS282\stage2-runtime-checks.json' (Join-Path $OutputDirectory 'validation.json')
+$report=Join-Path $OutputDirectory 'validation.json'
+& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $NativeDefinition $RuntimeCapture $report
 if($LASTEXITCODE -ne 0){throw 'Preliminary physics native-engine validation failed'}
+$result=Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+$result | Add-Member -NotePropertyName captureProvenance -NotePropertyValue ([ordered]@{
+ version=$capture.version; build=$capture.build; path=$RuntimeCapture
+ sha256=(Get-FileHash -LiteralPath $RuntimeCapture -Algorithm SHA256).Hash
+ nativeDefinitionPath=$NativeDefinition; nativeDefinitionSHA256=$definitionHash
+ note='Historical captured radii; obtain an updated capture when layout geometry or the catalogue changes. Hashes do not establish current radii. No gameplay performed by this fixture.'
+})
+$sourceHashes=[ordered]@{}
+foreach($name in @('WheelArrangement.cs','B99PhysicsState.cs','WheelRearranger.cs','WheelRearranger.Conventional.cs','WheelRearranger.Additional.cs','WheelRearranger.BigMallet.cs','WheelRearranger.FourteenCoupled.cs','WheelRearranger.Mallet.cs','WheelRearranger.LargeDriverClearance.cs','WheelRearranger.Triplex.cs','CylinderCalibration.cs','ConventionalPhysics.cs','TractiveEffortModel.cs')) {
+ $sourceHashes[$name]=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot "RearrangedS282\$name") -Algorithm SHA256).Hash
+}
+$result | Add-Member -NotePropertyName sourceSHA256 -NotePropertyValue $sourceHashes
+$result | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $report -Encoding utf8

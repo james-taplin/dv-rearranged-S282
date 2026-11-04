@@ -4,7 +4,12 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using LocoSim.Implementations;
 using RearrangedS282;
-namespace RearrangedS282 { internal static class ArticulatedSimulation {internal const string MainEngineId="steamEngine";} }
+namespace RearrangedS282 {
+    internal static class ArticulatedSimulation {internal const string MainEngineId="steamEngine";}
+    // This fixture exercises native calibration as host/offline; the separate
+    // ArticulatedSimulation fixture exercises both authority states of the gate.
+    internal static class MultiplayerSync { internal static bool IsSimulationAuthority = true; }
+}
 internal static partial class Program
 {
     static double Force(ReciprocatingSteamEngine e,double radius)=>TractiveEffortModel.MeanForceN(e.numCylinders,PrivateFloat(e,"pistonArea"),e.pistonStroke,radius,15,.75,300).Value;
@@ -13,6 +18,12 @@ internal static partial class Program
     {
         var definition=JObject.Parse(File.ReadAllText(args[0]));
         var capture=JObject.Parse(File.ReadAllText(args[1]));
+        var capturedIds=((JArray)capture["arrangements"]).Select(r=>(int)r["id"]).Distinct().OrderBy(id=>id).ToArray();
+        Check((int)capture["supportedArrangements"]==WheelArrangement.SupportedCount &&
+            capturedIds.SequenceEqual(Enumerable.Range(0,WheelArrangement.SupportedCount)),
+            "Captured arrangement IDs do not cover the current catalogue");
+        Check(((JArray)capture["arrangements"]).All(r=>(bool?)r["passed"]==true),
+            "Captured arrangement contains a failed or incomplete case");
         var original=Definition(definition);original.ID="steamEngine";
         float ratio=2f*.55f*.55f*.97f*.97f*.97f*.711f/(original.cylinderBore*original.cylinderBore*original.pistonStroke)-1f;
         var rd=Definition(definition,ratio);rd.ID="rear";var md=Definition(definition,ratio);md.ID="middle";

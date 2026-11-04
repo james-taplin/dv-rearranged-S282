@@ -102,12 +102,12 @@ internal static class Program {
     static void GiantCases() {
         foreach(bool turned in new[]{false,true})foreach(var diameter in new[]{2.1f,2.8f,3.6f}) {
             var f=new Fixture(turned);ModMain.settings.giant222DriverDiameterMetres=diameter;f.Mod.ApplyPrototype();f.Mod.Align(36);
-            var owned=f.Mod.OwnedWheels;float r=diameter/2;
+            var owned=f.Mod.OwnedWheels;float r=2.8f/2;
             Check(owned.Length==2&&owned.All(w=>w!=null&&w.gameObject.activeInHierarchy),"two visible owned drivers");
             Check(f.Mod.GetComponentsInChildren<PoweredWheel>(true).Length==6,"no additional physical wheel registrations");
             Check(f.Mod.GiantSingleDriverColliderCount==0,"structural collider count observes collider-free owned drivers");
             Check(f.Axles.Where(a=>a.gameObject.activeInHierarchy).SequenceEqual(new[]{f.Mod.driveAxle3}),"only native third physical axle active");
-            Check(Near(f.Mod.AppliedRadius,r)&&Near(f.Mod.GiantSingleDriverDiameter,diameter),"native selected tread radius recorded");
+            Check(Near(f.Mod.AppliedRadius,r)&&Near(f.Mod.GiantSingleDriverDiameter,2.8f),"fixed native tread radius recorded despite retired diameter setting");
             Check(Near(f.Mod.driveR.localScale,Vector3.one)&&Near(f.Mod.driveL.localScale,new Vector3(-1,1,1)),"inherited small-driver scale normalized");
             Check(Near(f.Mod.driveL.localPosition,Vector3.zero)&&Near(f.Mod.driveR.localPosition,Vector3.zero),"inherited drive offsets normalized");
             Check(f.OriginalRenderers.All(o=>!o.enabled),"all original gear/wheel renderers hidden");
@@ -143,9 +143,9 @@ internal static class Program {
         cases.Add("six giant configurations: native geometry ownership, transformed bogie alignment, oil providers, animation copying, dense sparks, repeated restoration/disposal");
     }
     static void AlignmentCases() {
-        foreach(int id in new[]{12,13,14,34,35,44}) {
+        foreach(int id in new[]{0,12,13,14,34,35,44,48}) {
             var f=new Fixture(true);var before=f.Axles.Select(a=>a.position).ToArray();
-            f.Mod.Align(id);var expected=id==35?new[]{1,2}:id==34||id==44?new[]{1,2,3}:new[]{0,1,2,3};
+            f.Mod.Align(id);var expected=id==0||id==35?new[]{1,2}:id==34||id==44?new[]{1,2,3}:new[]{0,1,2,3};
             var visual=new[]{f.Mod.firstRightDriveWheel,f.Mod.secondRightDriveWheel,f.Mod.thirdRightDriveWheel,f.Mod.fourthRightDriveWheel};
             for(int i=0;i<6;i++) {
                 if(expected.Contains(i)){Check(Near(f.Axles[i].position,visual[i].position),"new conventional axle matches current visual world centre");Check(ReferenceEquals(f.Axles[i].GetComponent<PoweredWheel>().wheelTransform,visual[i]),"new conventional powered wheel targets visual");}
@@ -155,7 +155,7 @@ internal static class Program {
         }
         var broken=new Fixture();Object.Destroy(broken.Mod.driveAxle2.GetComponent<PoweredWheel>());
         try{broken.Mod.Align(35);Check(false,"missing native axle must fail");}catch(InvalidOperationException e){Check(e.Message.Contains("native powered axle"),"missing native axle fails actionably");}
-        cases.Add("High-speed/Prairie/2-6-0/2-4-0 alignment across rotated bogies, unaffected axles, missing-native-wheel failure");
+        cases.Add("4-4-0/High-speed/Express/Prairie/2-6-0/2-4-0 alignment across rotated bogies, unaffected axles, missing-native-wheel failure");
     }
     static void IsolationCase() {
         var a=new Fixture();var b=new Fixture(true);var before=b.OriginalTransforms.Select(t=>t.position).ToArray();
@@ -170,15 +170,15 @@ internal static class Program {
         var f=new Fixture();ModMain.settings.giant222DriverDiameterMetres=2.1f;f.Mod.ApplyPrototype();var owned=f.Mod.OwnedWheels;
         foreach(var diameter in new[]{3.6f,2.8f,2.1f}) {
             ModMain.settings.giant222DriverDiameterMetres=diameter;f.Mod.ApplyPrototype();f.Mod.Align(36);
-            Check(f.Mod.OwnedWheels.SequenceEqual(owned),"diameter change reuses existing presentation objects");
-            Check(owned.All(w=>Near(w.localScale.y,diameter/2/.712f))&&Near(f.Mod.AppliedRadius,diameter/2),"reused renderer scale and native radius update together");
-            Check(Near(f.Mod.driveAxle3.position,owned[1].position),"reused physical anchor follows changed wheel radius");
+            Check(f.Mod.OwnedWheels.SequenceEqual(owned),"repeated apply reuses existing presentation objects");
+            Check(owned.All(w=>Near(w.localScale.y,1.4f/.712f))&&Near(f.Mod.AppliedRadius,1.4f),"retired setting cannot change fixed renderer scale or native radius");
+            Check(Near(f.Mod.driveAxle3.position,owned[1].position),"reused physical anchor follows presented wheel");
         }
         var colliderProbe=Child(owned[0],"test collision probe").gameObject.AddComponent<Collider>();
         Check(f.Mod.GiantSingleDriverColliderCount==1,"structural collider count detects an injected descendant collider");
         Object.Destroy(colliderProbe.gameObject);Check(f.Mod.GiantSingleDriverColliderCount==0,"structural collider count returns to zero after probe cleanup");
         f.Mod.Suspend();f.RestoreNativeSnapshot();f.Mod.Dispose();
-        cases.Add("reused presentation objects follow diameter changes; structural collider observer detects injected descendants");
+        cases.Add("fixed-diameter presentation survives stale setting changes; structural collider observer detects injected descendants");
     }
     public static int Main(string[] args) {
         try {

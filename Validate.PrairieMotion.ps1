@@ -1,4 +1,4 @@
-param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\prairie-rearward-1.13.6\motion'))
+param([string]$OutputDirectory=(Join-Path $PSScriptRoot 'build\offline-validation\PrairieMotion'))
 $ErrorActionPreference='Stop'
 New-Item -ItemType Directory -Path $OutputDirectory -Force|Out-Null
 $fixture=Join-Path $PSScriptRoot 'evidence\cylinder-casing-tests'

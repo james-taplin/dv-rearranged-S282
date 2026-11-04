@@ -1,5 +1,10 @@
 # Family fixture classification, 2026-11-04
 
+Historical classification from the initial tooling tidy. The fixtures were
+subsequently repaired; see the latest results and limitations at the top of
+`CURRENT_HANDOVER.md`. The failures and repair notes below are retained as the
+original baseline, not the current status.
+
 All six scripts were run once against post-fix HEAD `46a9a72`. Each failed to compile; detailed fresh logs are in the named sibling directories under this directory. These failures are fixture drift, not an established production defect. Retain all six: no passing replacement was found to cover a fixture's complete behavior. Commands below are relative to the repository root and are intended to run after the described fixture repairs. Do not interpret the historical passing checks as gameplay acceptance.
 
 | Fixture and intended command | Behavior protected; passing replacement and observed result | Repair note and when to run |

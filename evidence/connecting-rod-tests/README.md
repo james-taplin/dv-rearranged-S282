@@ -20,7 +20,8 @@ provider returns owned readable copies of the actual extracted geometry, standin
 in for AssetStudio/OBJ, and failure is injected on both the first and second side.
 The real exporter executable/provider still needs its separate validation.
 
-Coverage includes 2-6-0, 2-4-0, 4-4-0 and 2-6-2, 0/0.15/0.25 m translation, separate/shared
+Coverage includes 2-6-0, 2-4-0, 4-4-0 and 2-6-2 at their fixed respective
+0.12/0.14/0/0.12 m rearward translations, separate/shared
 LOD groups, translated/rotated cars, hidden coarse-parent calipers and selected
 hidden sparks. Tests check whole-group axle/fitting/shoe movement, retained coupled
 pitch, static guides/cylinders, actual cylinder-frame cancellation, true main-pin
@@ -51,9 +52,7 @@ Unity renderer culling, mesh upload cost, Animator scheduling, physical wheel-ma
 registration, live oil interaction, suspension motion, frame clearance or save/pool
 acceptance. Those remain separate checks or in-game testing.
 
-Status, 4 November 2026: the shared native rod extractor and scoped recipe
-check now run on the current source. This fixture compiles but stops at the
-obsolete adjustable-pitch assertion (0.18 versus 0.01); later checks have not
-run. Production now uses fixed per-family pitch/rearward values. Update the
-fixture expectations and rerun before relying on these rod-motion, isolation,
-LOD and restoration checks. See CURRENT_HANDOVER.md for observed results.
+Status, 4 November 2026: fixed-pitch and rearward expectations replace the
+obsolete adjustable settings. The complete fixture passed 905,299 assertions
+across 16 layout/orientation/LOD cases, including two injected rollback cases.
+See CURRENT_HANDOVER.md for current results.

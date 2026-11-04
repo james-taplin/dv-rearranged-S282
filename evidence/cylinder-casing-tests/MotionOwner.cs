@@ -9,6 +9,7 @@ namespace RearrangedS282
         internal Transform transform,driveL,driveR,lCrosshead,rCrosshead,lLiftingArmSupport,rLiftingArmSupport,
             reachRodSupport,lfCrossheadBracket,rfCrossheadBracket,firstRightDriveWheel,secondRightDriveWheel;
         internal Transform spark1L,spark1R,spark2L,spark2R,spark3L,spark3R,spark4L,spark4R;
+        internal Transform articulatedRearL,articulatedRearR,triplexMiddleL,triplexMiddleR;
         private Transform tenderEngineRoot=null;
         internal WheelArrangementType currentWA=WheelArrangementType.s262;
         internal void PreparePrairie(){CacheOilCupMounts();CacheCylinderCasings();SetupPacificHudsonValveGear();}
@@ -29,11 +30,12 @@ namespace RearrangedS282
         private void ShowValveGear(){reachRodSupport.gameObject.SetActive(true);}
         private void HideReachRod(){foreach(var d in new[]{driveL,driveR})d.Find("s282_mech_cutoff_rod").gameObject.SetActive(false);}
     }
-    internal enum WheelArrangementType{s440=0,s442=1,s444=2,s460=3,s462=4,s464=5,s282=10,s280Big=12,s282Big=13,s284Big=14,s0120=27,s4122=30,s404=33,s260=34,s240=35,s222=36,s262=44}
+    internal enum WheelArrangementType{s440=0,s442=1,s444=2,s460=3,s462=4,s464=5,s282=10,s280Big=12,s282Big=13,s284Big=14,s0120=27,s4122=30,s4444=32,s404=33,s260=34,s240=35,s222=36,s22222=38,s262=44,s24440=47,s482Big=48}
     internal static class WheelArrangement
     {
+        // This rigid-layout harness does not model articulated assembly setup.
         internal static bool IsArticulatedId(int id)=>false;
-        internal static string[] WheelArrangementNames=Enumerable.Range(0,47).Select(i=>"fixture "+i).ToArray();
+        internal static string[] WheelArrangementNames=Enumerable.Range(0,49).Select(i=>"fixture "+i).ToArray();
     }
     internal static class AssetBundleLoader{internal static GameObject FranklinBValveGear=null,FranklinBValveGear4444=null;}
 }
