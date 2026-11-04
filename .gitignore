@@ -706,6 +706,7 @@ evidence/hidden-linkages/*
 !evidence/hidden-linkages/*.md
 
 !evidence/renderer-lifetime-tests/
+evidence/renderer-lifetime-tests/*
 !evidence/renderer-lifetime-tests/*.cs
 
 !evidence/obj-mesh-tests/
