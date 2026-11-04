@@ -32,10 +32,10 @@ namespace RearrangedS282
         internal void SeedCurveCache()=>curveGroups=new object();
         internal int CachedPitchMeshCount=>pitchRodMeshes.Count;
     }
-    internal enum WheelArrangementType{s440=0,s280Big=12,s282Big=13,s284Big=14,s260=34,s240=35,s222=36,s262=44}
+    internal enum WheelArrangementType{s440=0,s280Big=12,s282Big=13,s284Big=14,s260=34,s240=35,s222=36,s262=44,s482Big=48}
     internal static class WheelArrangement
     {
-        internal static string[] WheelArrangementNames=Enumerable.Range(0,47).Select(i=>"fixture "+i).ToArray();
+        internal static string[] WheelArrangementNames=Enumerable.Range(0,49).Select(i=>"fixture "+i).ToArray();
     }
     internal sealed class B99PhysicsState{internal float DriverRadius=.712f;}
 }

@@ -50,3 +50,10 @@ These are managed transform/mesh/LOD tests with native data. They do not reprodu
 Unity renderer culling, mesh upload cost, Animator scheduling, physical wheel-manager
 registration, live oil interaction, suspension motion, frame clearance or save/pool
 acceptance. Those remain separate checks or in-game testing.
+
+Status, 4 November 2026: the shared native rod extractor and scoped recipe
+check now run on the current source. This fixture compiles but stops at the
+obsolete adjustable-pitch assertion (0.18 versus 0.01); later checks have not
+run. Production now uses fixed per-family pitch/rearward values. Update the
+fixture expectations and rerun before relying on these rod-motion, isolation,
+LOD and restoration checks. See CURRENT_HANDOVER.md for observed results.

@@ -52,6 +52,14 @@ internal static class NativeProbe {
         return f;
     }
     private static JArray Snapshot(ManualOilingPoints p) => new JArray(p.oilingPoints.Select(x=>new JArray(x.pointDoorExtIn.Value,x.oilLevelReadOut.Value,x.oilLevelNormalizedReadOut.Value,x.refillExtIn.Value,x.refillingFlowNormalizedReadOut.Value)));
+    private static void CheckPreserved(ManualOilingPoints points,JArray expected,string stage) {
+        var observed=Snapshot(points);
+        for(int i=0;i<points.oilingPoints.Length;i++) {
+            Check(JToken.DeepEquals(observed[i][1],expected[i][1])&&JToken.DeepEquals(observed[i][2],expected[i][2]),stage+": oil levels preserved for cup "+i);
+            Check(JToken.DeepEquals(observed[i][0],expected[i][0]),stage+": lid position preserved for cup "+i);
+            Check(JToken.DeepEquals(observed[i][3],expected[i][3])&&JToken.DeepEquals(observed[i][4],expected[i][4]),stage+": refill input and flow preserved for cup "+i);
+        }
+    }
     private static JObject Save(string id,int count) => new JObject { [id]=new JObject { ["oilingPoints"]=new JArray(Enumerable.Range(0,count).Select(i=>new JObject { ["open"]=i%2==1,["oilLevel"]=(i%7)*.1f,["custom"]="keep"+i })),["unknown"]="preserve" },["other"]=new JObject { ["value"]=123 } };
     // Model native flow dispatch to each component's loader. The production
     // prefix clones only that component's argument; the source document is intact.
@@ -164,11 +172,33 @@ internal static class NativeProbe {
         }
         Check(!RearrangedS282.Main.settings.automaticCupOiling,"Oiling assistance defaults off");
         RearrangedS282.Main.settings.automaticCupOiling=true;
-        var replica=Owned("replica");var replicaBefore=Snapshot(replica);
-        MultiplayerSync.IsSimulationAuthority=false;
-        Call("HoldUnusedFull",replica);
-        Check(JToken.DeepEquals(replicaBefore,Snapshot(replica)),"Guest never fills or closes owned cups, even with assistance enabled");
-        MultiplayerSync.IsSimulationAuthority=true;
+        foreach(bool assistance in new[]{false,true}) {
+            RearrangedS282.Main.settings.automaticCupOiling=assistance;
+            var replica=Owned("replica-"+assistance);var replicaFlow=Flow(replica);var replicaBefore=Snapshot(replica);
+            var replicaMask=Enumerable.Range(0,TotalPoints).Select(i=>i<7).ToArray();
+            MultiplayerSync.IsSimulationAuthority=false;
+            try {
+                for(int i=0;i<100;i++)Call("HoldUnusedFull",replica);
+                CheckPreserved(replica,replicaBefore,"Guest before mask, assistance "+assistance);
+                BigEndOiling.SetActive(replicaFlow,replicaMask);
+                CheckPreserved(replica,replicaBefore,"Guest immediately after SetActive, assistance "+assistance);
+                for(int i=0;i<100;i++)Call("HoldUnusedFull",replica);
+                CheckPreserved(replica,replicaBefore,"Guest after masked ticks, assistance "+assistance);
+            } finally { MultiplayerSync.IsSimulationAuthority=true; }
+            Call("HoldUnusedFull",replica);
+            var hostAfter=Snapshot(replica);
+            for(int i=0;i<TotalPoints;i++) {
+                bool held=assistance||!replicaMask[i];
+                Check(held ? replica.oilingPoints[i].oilLevelReadOut.Value==replica.capacity &&
+                    replica.oilingPoints[i].oilLevelNormalizedReadOut.Value==1f &&
+                    replica.oilingPoints[i].pointDoorExtIn.Value==0f &&
+                    replica.oilingPoints[i].refillingFlowNormalizedReadOut.Value==0f &&
+                    JToken.DeepEquals(hostAfter[i][3],replicaBefore[i][3])
+                    : JToken.DeepEquals(hostAfter[i],replicaBefore[i]),
+                    "Host correctly preserves active or fills/closes inactive cup "+i+", assistance "+assistance);
+            }
+        }
+        RearrangedS282.Main.settings.automaticCupOiling=true;
         var assisted=Owned("assisted");var assistedFlow=Flow(assisted);BigEndOiling.SetActive(assistedFlow,Enumerable.Repeat(true,TotalPoints).ToArray());
         Check(assisted.oilingPoints.All(x=>x.oilLevelReadOut.Value==assisted.capacity&&x.oilLevelNormalizedReadOut.Value==1&&x.pointDoorExtIn.Value==0),"Assistance fills and closes every owned active cup");
         for(int tick=0;tick<20;tick++) {

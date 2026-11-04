@@ -5,8 +5,12 @@ production helper with a minimal `Vector3` stand-in. No game is launched or edit
 
 The extractor loads local installed native OBJ files in exactly the first-use
 vertex order used by `OBJObjectBuilder`, then replays the existing two-, half
-three-, and five/six-axle recipes. A SHA guard requires a deliberate fixture review
-if `MeshFinder.cs` changes. Native geometry is generated **only under ignored
+three-, and five/six-axle recipes. A scoped, token-normalized SHA guard covers the
+rod recipe, range definitions and OBJ reader/builder dependencies: unrelated
+`MeshFinder.cs` work or comments do not invalidate it. Any guarded change requires
+comparing the actual code and this replay before updating the expected fingerprint.
+Run `python evidence/rod-remesh-tests/extract_native.py --check-guard` to check
+that recipe, range and importer mutations are detected. Native geometry is generated **only under ignored
 `build/`**, and is never redistributable as test or release content.
 
 Protected axial boss half-width is 0.14 m: measured native shoulders extend up to

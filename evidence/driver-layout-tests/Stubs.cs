@@ -81,6 +81,8 @@ namespace UnityEngine
         public static Vector3 forward => new(0,0,1); public static Vector3 up => new(0,1,0);public static Vector3 right=>new(1,0,0);
         public Vector3 normalized=>this/magnitude;
         public static float Dot(Vector3 a,Vector3 b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+        public static Vector3 Min(Vector3 a,Vector3 b)=>new(Math.Min(a.x,b.x),Math.Min(a.y,b.y),Math.Min(a.z,b.z));
+        public static Vector3 Max(Vector3 a,Vector3 b)=>new(Math.Max(a.x,b.x),Math.Max(a.y,b.y),Math.Max(a.z,b.z));
         public static Vector3 Cross(Vector3 a,Vector3 b)=>new(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
         public float magnitude => (float)Math.Sqrt(x*x+y*y+z*z);
         public N.Vector3 Native => new(x,y,z);

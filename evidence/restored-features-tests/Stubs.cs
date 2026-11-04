@@ -202,3 +202,4 @@ public sealed class TrainCar:UnityEngine.MonoBehaviour
         return car;
     }
 }
+namespace RearrangedS282 { internal static class MultiplayerSync { internal static bool IsClient, ApplyingRemote; } }

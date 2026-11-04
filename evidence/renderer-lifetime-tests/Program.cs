@@ -21,9 +21,13 @@ internal static class Program {
   int retireCalls=0;bool activeAtRetirement=false;
   Action<System.Collections.Generic.IEnumerable<Renderer>> retire=renderers=>{retireCalls++;activeAtRetirement=pin.gameObject.activeSelf;owner.Forget(renderers);};
   leaseType.GetField("Retire",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(lease,retire);
-  lease.Dispose();lease.Dispose();
+  var route=new RouteFixture(car,lease);
+  if(args.Length>0&&args[0]=="pool")Check(route.PoolReturn(),"Production pool-return restoration succeeds");
+  else route.SwitchToStock();
+  Check(route.Stock,"Production stock restoration reaches the stock arrangement");
+  lease.Dispose();
   Check(retireCalls==1&&activeAtRetirement&&!pin.gameObject.activeSelf,"Actual Franklin lease unregisters once before deferred destruction");
-  if(args.Length>0&&args[0]=="native")Check(!stock.affectedRenderers.Any(p=>ReferenceEquals(p.renderer,pin)),"Retired pin removed from the native body cache");
+  if(args.Length>0&&(args[0]=="native"||args[0]=="pool"))Check(!stock.affectedRenderers.Any(p=>ReferenceEquals(p.renderer,pin)),"Retired pin removed from the native body cache");
   if(args.Length>0&&args[0]=="sameframe")stock.affectedRenderers.RemoveAll(p=>ReferenceEquals(p.renderer,pin));
   owner.Refresh(carGo.GetComponentsInChildren<MeshRenderer>(true));
   Check(!handler.materialSwaps.Any(s=>s.affectedRenderers.Any(p=>ReferenceEquals(p.renderer,pin))),"Retired pin absent from all native lists after same-frame inactive refresh");

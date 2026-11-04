@@ -54,3 +54,10 @@ registration, oil interaction, Unity Animator scheduling, mesh upload, renderer
 culling and actual collision/visual clearance still need their dedicated checks
 or in-game testing. Managed LOD bounds are a geometric stand-in, not Unity's
 renderer implementation.
+
+Status, 4 November 2026: the shared native rod extractor and scoped recipe
+check now run on the current source. This fixture compiles but stops at the
+obsolete adjustable-pitch assertion (0.18 versus 0); later checks have not
+run. Production now uses fixed per-family pitch/rearward values. Update the
+fixture expectations and rerun before relying on its layout, native pin/rod,
+LOD and restoration checks. See CURRENT_HANDOVER.md for observed results.

@@ -14,11 +14,27 @@ while($depth -gt 0 -and $end -lt $source.Length){if($source[$end] -eq '{'){$dept
 if($depth -ne 0){throw 'Unbalanced Franklin lease'}
 $lease=$source.Substring($start,$end-$start)
 ('using System; using System.Collections.Generic; using System.Linq; using UnityEngine; using Object=UnityEngine.Object; namespace RearrangedS282 { internal static class FranklinPinPresentation {'+$lease+'}}') | Set-Content -LiteralPath (Join-Path $out 'ActualLease.cs') -Encoding utf8
+function ExtractMethod([string]$text,[string]$marker) {
+    $start=$text.IndexOf($marker,[StringComparison]::Ordinal); if($start -lt 0){throw "Missing production method: $marker"}
+    $open=$text.IndexOf('{',$start);$depth=1;$end=$open+1
+    while($depth -gt 0 -and $end -lt $text.Length){if($text[$end] -eq '{'){$depth++};if($text[$end] -eq '}'){$depth--};$end++}
+    if($depth -ne 0){throw "Unbalanced production method: $marker"};return $text.Substring($start,$end-$start)
+}
+$conventional=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.Conventional.cs'))
+$pins=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.FranklinPins.cs'))
+$articulated=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'RearrangedS282\WheelRearranger.Articulated.cs'))
+$switch=ExtractMethod $conventional 'private bool TrySwitchConventional(int id)'
+$stockBranch=ExtractMethod $switch 'if (id == 10)'
+if(-not $stockBranch.Contains('RestoreConventionalStock(quarteringCycle);')){throw 'Stock selection no longer invokes native stock restoration'}
+$suspend=ExtractMethod $articulated 'private void SuspendArticulatedGeometry()'
+if(-not $suspend.Contains('SuspendFranklinDriverPins();')){throw 'Articulated suspension no longer retires Franklin leases'}
+$routes=@((ExtractMethod $conventional 'private void RestoreConventionalStock('),(ExtractMethod $conventional 'internal bool ResetConventionalForPool()'),(ExtractMethod $pins 'private void SuspendFranklinDriverPins()'))
+('using System; using System.Collections.Generic; using UnityEngine; namespace RearrangedS282 { internal partial class RouteFixture {'+($routes -join "`n")+'}}') | Set-Content -LiteralPath (Join-Path $out 'ActualRoutes.cs') -Encoding utf8
 $fixture=Join-Path $PSScriptRoot 'evidence\renderer-lifetime-tests'
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup><ItemGroup>
-<Compile Include="$PSScriptRoot\RearrangedS282\B99ExplosionMaterials.cs"/><Compile Include="$fixture\*.cs"/><Compile Include="$out\NativeExplosion.cs"/><Compile Include="$out\ActualLease.cs"/>
+<Compile Include="$PSScriptRoot\RearrangedS282\B99ExplosionMaterials.cs"/><Compile Include="$fixture\*.cs"/><Compile Include="$out\NativeExplosion.cs"/><Compile Include="$out\ActualLease.cs"/><Compile Include="$out\ActualRoutes.cs"/>
 </ItemGroup></Project>
 "@
 $path=Join-Path $out 'RendererLifetime.csproj';$project|Set-Content -LiteralPath $path -Encoding utf8
-foreach($case in @('native','sameframe')){& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $case;if($LASTEXITCODE -ne 0){throw "Renderer lifetime case failed: $case"}}
+foreach($case in @('native','sameframe','pool')){& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $case;if($LASTEXITCODE -ne 0){throw "Renderer lifetime case failed: $case"}}
