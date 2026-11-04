@@ -1,3 +1,61 @@
+## Hidden linkage repair committed as 2.0.9.4 — 4 November 2026
+
+James requested committing the completed repair as exactly 2.0.9.4, without a
+beta suffix. Info.json, both project version defaults and build/package/checker
+defaults now agree. The multiplayer builder accepts the numeric version.
+The local commit includes the repair, focused fixture sources and documentation.
+
+The 2 November build and offline evidence below remain the validation provenance;
+those private DLLs are still 2.0.9.3-beta and have not been relabelled or rebuilt.
+This commit changes version metadata after that validation. Version metadata,
+script parsing and the final diff were checked. No installation, packaging,
+push, publication or gameplay testing is authorized by this commit request.
+Installed version remains 2.0.9.3-beta; James's gameplay acceptance is pending.
+
+## Hidden native linkages repaired offline — 2 November 2026
+
+James requested agents and a bounded repair, excluding the 2-2-2. Read this
+handover from line 1 first. Clean baseline 6f850b2 and installed 2.0.9.3-beta DLL
+hashes matched the 3540e61 installation receipt. At this validation the repair was uncommitted,
+uninstalled source plus private DLLs, still version 2.0.9.3-beta. No packaging,
+push/publication or DV launch/gameplay automation. James performs game testing.
+
+See HIDDEN_LINKAGE_REPAIR_2026_11_02.md for measurements, affected IDs, limits
+and James's checks. Native tip trajectories prove simply enabling 4-14-4 rods
+would miss the cab by 2.45–2.58 m and oiler by .53–.55 m. Extended DriveRetarget
+with captured cab/oiler endpoint frames and shaft-only presentation; native
+animated transforms/scale, crank clocks, simulation and ratchet source retained.
+Per-LOD measured datums, native visibility policies, dynamic LOD bounds and
+reverse teardown preserved; existing main/radius retarget shares the owner.
+
+Applied to 18 affected conventional layouts using their own source-derived frames
+and original front drives of Walschaerts IDs 37/41/42/43/45/46 using provenance-
+checked native maps/hinges. Rear/tender copies have no demonstrated cab/oiler
+anchors and stay hidden. Franklin 31/32/38/40/47 replacement gear is untouched.
+Native rear reach tips enter the cab; no modeled rear bearing is invented.
+Incompatible fixed mid-shaft guide remains hidden; no new pedestal fabricated.
+
+Baseline lubrication fixture passed; old fourteen-spacing HEAD comparison and
+Pacific/Hudson missing-importer stub failed before repair. New fixture corrected
+its own ID39 native-wheel datum before acceptance; no production geometry changed
+for these fixture defects. Final managed check passes 1,220,391 assertions,
+576 direct + 1,728 integration poses, 72 visibility/yaw cases, 25 excluded IDs;
+endpoint error ≤7.731 µm, retained native lubricator contact bound 2.600 mm.
+These are scoped geometry results, not live Animator/ratchet/TrainCar or
+gameplay acceptance.
+
+Actual exporter smoke exposed reflected-X OBJ geometry missed by mocked fallback.
+Normalize only six new linkage imports, including per-submesh winding; old paths
+unchanged. This authoring correction justified second integrated build; final
+core + adapter: 0 warnings/errors. Actual compiled importer in isolated Unity 2019.4
+player matches all six native meshes/oriented triangles, error ≤.477 µm. No game used.
+Evidence/code: evidence/hidden-linkages; private receipts under build/hidden-linkages.
+Final core SHA256: 79FEDF9F34EDCD1E193BE84DDDDE23168974258F0D2898F185E7E69850DD58FA.
+No rebuild is needed for subsequent documentation/fixture-only changes.
+All 38 installed package members still match the installation receipt.
+Installation/packaging/push/publication require
+separate authorization. Visual/camera/switch/gameplay acceptance awaits James.
+
 ## Tender and Walschaerts Mallet repair validated - 31 October 2026
 
 James authorised repair, agents, proper native wheelslip/gear tests, then a new

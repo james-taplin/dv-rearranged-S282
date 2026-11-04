@@ -110,6 +110,7 @@ namespace RearrangedS282
                 else
                 {
                     cylinderCalibration.Restore();
+                    SuspendHiddenNativeLinkages();
                     SuspendSteamConnections();
                     SuspendConnectingRodSpacing();
                     RestoreCylinderCasings();
@@ -206,6 +207,7 @@ namespace RearrangedS282
                 ConfigureIndependentDrive(quarteringCycle);
                 UpdateExternalControlPositions();
                 RestoreNativeLubricatorAnimation();
+                ApplyHiddenNativeLinkages(id);
                 ApplyOilCupMounts();
                 B99Oilcups.Bind(loco, loco.loadedExternalInteractables);
                 RefreshBigEndOiling(loco.loadedExternalInteractables);
@@ -242,6 +244,7 @@ namespace RearrangedS282
             poweredTenderSelected = false;
             cylinderCalibration?.Restore();
             preliminaryDriverShare = float.NaN;
+            SuspendHiddenNativeLinkages();
             SuspendSteamConnections();
             SuspendConnectingRodSpacing();
             RestoreCylinderCasings();
@@ -288,6 +291,7 @@ namespace RearrangedS282
             ReleaseIndependentDrive();
             cylinderCalibration?.Restore();
             ClearBigEndCups();
+            SuspendHiddenNativeLinkages();
             SuspendSteamConnections();
             DisposeConnectingRodSpacing();
             DisposeDriverLayouts();

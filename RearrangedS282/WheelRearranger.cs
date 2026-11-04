@@ -493,6 +493,9 @@ namespace RearrangedS282
 #endif
 			leftReachRod = driveL.Find("s282_mech_cutoff_rod");
 			rightReachRod = driveR.Find("s282_mech_cutoff_rod");
+#if B99_ALL_STANDARD
+			CacheHiddenLinkageFrames();
+#endif
 
 			firstLeftDriveWheel = driveL.Find("s282_wheels_driving_1");
 			firstRightDriveWheel = driveR.Find("s282_wheels_driving_1");
@@ -2501,8 +2504,8 @@ namespace RearrangedS282
 			spark6L.gameObject.SetActive(true);
 			spark6R.gameObject.SetActive(true);
 
-			leftReachRod.localScale = new Vector3(1, 1, 1.2f);
-			rightReachRod.localScale = new Vector3(1, 1, 1.2f);
+			// Native clips own reach-rod scale. The endpoint presentation handles
+			// its cab span without the old approximate 1.2 stretch.
 
 			//hide mechanical lubricator linkage
 			driveR.Find("s282_mech_cutoff_rail/s282_mech_lubricator_rod").gameObject.SetActive(false);

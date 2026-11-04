@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.9.1-beta',
+    [string]$Version = '2.0.9.4',
     [string]$PackagePath,
     [string]$SeedPackage = 'B:\GitHub repo\rearranged-s282-independent-slip\build\independent-integration\RearrangedS282-2.0.8-slip-test.zip',
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'build\multiplayer-2.0.9-validation\package')

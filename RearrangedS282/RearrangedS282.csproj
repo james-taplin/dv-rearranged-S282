@@ -13,7 +13,7 @@
     <DefineConstants Condition="'$(EnableDiagnostics)' == 'true'">$(DefineConstants);B99_DIAGNOSTICS</DefineConstants>
     <DefineConstants Condition="'$(EnableStructuralDiagnostics)' == 'true'">$(DefineConstants);B99_STRUCTURAL_DIAGNOSTICS</DefineConstants>
     <Stage Condition="'$(Stage)' == ''">1</Stage>
-    <Version Condition="'$(Stage)' == '3'">2.0.9.3-beta</Version>
+    <Version Condition="'$(Stage)' == '3'">2.0.9.4</Version>
     <IncludeSourceRevisionInInformationalVersion Condition="'$(Stage)' == '3'">false</IncludeSourceRevisionInInformationalVersion>
     <DefineConstants Condition="'$(Stage)' == '1'">$(DefineConstants);B99_STAGE1</DefineConstants>
     <DefineConstants Condition="'$(Stage)' == '2'">$(DefineConstants);B99_STAGE2</DefineConstants>

@@ -697,3 +697,10 @@ evidence/franklin-runtime/*
 !evidence/franklin-runtime/*.py
 !evidence/franklin-runtime/*.md
 !evidence/franklin-runtime/Directory.Build.props
+
+!evidence/hidden-linkages/
+evidence/hidden-linkages/*
+!evidence/hidden-linkages/*.cs
+!evidence/hidden-linkages/*.py
+!evidence/hidden-linkages/*.ps1
+!evidence/hidden-linkages/*.md

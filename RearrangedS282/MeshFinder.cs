@@ -71,6 +71,9 @@ namespace RearrangedS282
 			string name = mesh.name.Replace(" Instance", "").Replace("(Clone)", "").Trim();
 			if (name != "s282_mech_push_rod_to_connect" && name != "s282_mech_push_rod_to_connect_LOD1" &&
 				name != "s282_mech_cutoff_to_cylinder_rod" && name != "s282_mech_cutoff_to_cylinder_rod_LOD1" &&
+				name != "s282_mech_cutoff_rod" && name != "s282_mech_cutoff_rod_LOD1" &&
+				name != "s282_mech_lubricator_rod" && name != "s282_mech_lubricator_rod_LOD1" &&
+				name != "s282_mech_lubricator_part_1" && name != "s282_mech_lubricator_part_1_LOD1" &&
 				name != "bogie2_LOD0" && name != "bogie2_LOD1")
 				throw new InvalidOperationException("Unsupported native retarget mesh: " + name);
 			// Tender cradle LODs are static native assets. Reuse the local cache
@@ -83,7 +86,30 @@ namespace RearrangedS282
 				if (readable != null) UnityEngine.Object.Destroy(readable);
 				throw new InvalidOperationException("Native retarget mesh export was not readable: " + name);
 			}
+			if (name == "s282_mech_cutoff_rod" || name == "s282_mech_cutoff_rod_LOD1" ||
+				name == "s282_mech_lubricator_rod" || name == "s282_mech_lubricator_rod_LOD1" ||
+				name == "s282_mech_lubricator_part_1" || name == "s282_mech_lubricator_part_1_LOD1")
+				NormalizeLinkageImport(readable);
 			return readable;
+		}
+
+		// AssetStudio's OBJ conversion reflects X and reverses triangle winding.
+		// Unlike the mostly symmetric existing rods, these new linkages include
+		// asymmetric native ends. Restore their native coordinates on this owned
+		// import only; keep older retarget/cache behavior outside this repair.
+		internal static void NormalizeLinkageImport(Mesh mesh)
+		{
+			var vertices = mesh.vertices;
+			for (int i = 0; i < vertices.Length; i++) vertices[i].x = -vertices[i].x;
+			mesh.vertices = vertices;
+			for (int section = 0; section < mesh.subMeshCount; section++)
+			{
+				var triangles = mesh.GetTriangles(section);
+				for (int i = 0; i < triangles.Length; i += 3)
+				{ int first = triangles[i]; triangles[i] = triangles[i + 2]; triangles[i + 2] = first; }
+				mesh.SetTriangles(triangles, section);
+			}
+			mesh.RecalculateNormals(); mesh.RecalculateTangents(); mesh.RecalculateBounds();
 		}
 
 		readonly struct Range

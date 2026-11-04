@@ -39,6 +39,12 @@ namespace RearrangedS282
             internal Vector3[] NativeVertices, WorkVertices;
             internal float[] NativePins, PresentedPins;
             internal bool PreserveBosses, HasUv;
+            internal bool FixedEndpoint, AnchoredPart;
+            internal Transform Anchor;
+            internal Matrix4x4 NativeDriveInAnchor;
+            internal Vector3 FarPin;
+            internal Quaternion PinBasis;
+            internal float BossWidth;
         }
 
         private readonly List<Entry> entries = new List<Entry>();
@@ -48,6 +54,7 @@ namespace RearrangedS282
         private float shift;
         private bool precisionRods;
         private Func<Mesh, Mesh> readableSource;
+        private bool endpointBounds;
 
         internal float Shift => shift;
 
@@ -60,6 +67,71 @@ namespace RearrangedS282
         internal static DriveRetarget BindNativePrecision(Transform drive, float shift, Transform lodSearchRoot,
             Func<Mesh, Mesh> readableSource = null)
             => BindCore(drive, shift, NativeWalschaertsRole, lodSearchRoot, true, readableSource);
+
+        // These spans end on the cab/oiler rather than the cylinder frame. Add
+        // presentation entries to the existing owner: rebinding would discard
+        // its main/radius rods. The native animated transforms remain untouched.
+        internal static DriveRetarget AddFixedEndpoint(Transform drive, Transform anchor, Matrix4x4 nativeDriveInAnchor,
+            string path, float farPinZ, Transform lodSearchRoot, Func<Mesh, Mesh> readableSource = null)
+            => AddFixedEndpoint(drive, anchor, nativeDriveInAnchor, path, new Vector3(0f, 0f, farPinZ), lodSearchRoot, readableSource);
+
+        internal static DriveRetarget AddFixedEndpoint(Transform drive, Transform anchor, Matrix4x4 nativeDriveInAnchor,
+            string path, Vector3 farPin, Transform lodSearchRoot, Func<Mesh, Mesh> readableSource = null)
+            => AddEndpointPart(drive, anchor, nativeDriveInAnchor, path, farPin, false, lodSearchRoot, readableSource);
+
+        internal static DriveRetarget AddAnchoredPart(Transform drive, Transform anchor, Matrix4x4 nativeDriveInAnchor,
+            string path, Transform lodSearchRoot, Func<Mesh, Mesh> readableSource = null)
+            => AddEndpointPart(drive, anchor, nativeDriveInAnchor, path, Vector3.zero, true, lodSearchRoot, readableSource);
+
+        private static DriveRetarget AddEndpointPart(Transform drive, Transform anchor, Matrix4x4 nativeDriveInAnchor,
+            string path, Vector3 farPin, bool anchored, Transform lodSearchRoot, Func<Mesh, Mesh> readableSource)
+        {
+            var owner = drive.GetComponent<DriveRetarget>();
+            if (owner == null)
+            {
+                owner = drive.gameObject.AddComponent<DriveRetarget>();
+                owner.drive = drive;
+            }
+            owner.endpointBounds = true;
+            var part = drive.Find(path);
+            if (part == null) throw new InvalidOperationException("Missing native linkage: " + path);
+            var renderers = anchored ? part.GetComponentsInChildren<MeshRenderer>(true) : part.GetComponents<MeshRenderer>();
+            foreach (var renderer in renderers)
+            {
+                if (renderer.name.StartsWith("[Rearranged retarget]", StringComparison.Ordinal) || owner.entries.Any(e => e.Renderer == renderer)) continue;
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null) continue;
+                var entry = new Entry { Role = Role.Stretch, Source = renderer.transform, Filter = filter, Renderer = renderer,
+                    OriginalMesh = filter.sharedMesh, FixedEndpoint = !anchored, AnchoredPart = anchored,
+                    Anchor = anchor, NativeDriveInAnchor = nativeDriveInAnchor, FarPin = farPin,
+                    BossWidth = .05f };
+                owner.entries.Add(entry);
+                // The exporter uses OBJ's reflected-X coordinates. The endpoint
+                // provider normalizes that import to native coordinates; a raw
+                // cached OBJ through the older retarget path would bypass it.
+                entry.EditedMesh = entry.OriginalMesh.isReadable ? Object.Instantiate(entry.OriginalMesh)
+                    : readableSource?.Invoke(entry.OriginalMesh);
+                if (entry.EditedMesh == null || !entry.EditedMesh.isReadable || entry.EditedMesh.vertexCount == 0)
+                    throw new InvalidOperationException("Linkage retarget needs readable native mesh: " + entry.OriginalMesh.name);
+                entry.NativeVertices = entry.EditedMesh.vertices;
+                entry.WorkVertices = new Vector3[entry.NativeVertices.Length];
+                entry.HasUv = entry.EditedMesh.uv.Length == entry.NativeVertices.Length;
+                if (!anchored)
+                {
+                    entry.PinLength = farPin.magnitude;
+                    entry.PinBasis = Quaternion.FromToRotation(Vector3.forward, farPin.normalized);
+                    var inverse = Quaternion.Inverse(entry.PinBasis);
+                    for (int i = 0; i < entry.NativeVertices.Length; i++) entry.NativeVertices[i] = inverse * entry.NativeVertices[i];
+                    entry.NativePins = new[] { 0f, entry.PinLength };
+                    entry.PresentedPins = new[] { 0f, entry.PinLength };
+                }
+                owner.CreateProxy(entry, entry.EditedMesh);
+            }
+            owner.RepointLods(lodSearchRoot);
+            owner.LateUpdate();
+            owner.ExpandPrecisionLodBounds();
+            return owner;
+        }
 
         private static DriveRetarget BindCore(Transform drive, float shift, Func<string, Role?> classify,
             Transform lodSearchRoot, bool precisionRods, Func<Mesh, Mesh> readableSource)
@@ -160,10 +232,16 @@ namespace RearrangedS282
                     }
                 }
             }
+            CreateProxy(entry, entry.EditedMesh != null ? entry.EditedMesh : mesh);
+        }
+
+        private void CreateProxy(Entry entry, Mesh mesh)
+        {
+            var renderer = entry.Renderer;
             var proxy = new GameObject("[Rearranged retarget] " + renderer.name).transform;
             proxy.SetParent(renderer.transform, false);
             proxy.gameObject.layer = renderer.gameObject.layer;
-            proxy.gameObject.AddComponent<MeshFilter>().sharedMesh = entry.EditedMesh != null ? entry.EditedMesh : mesh;
+            proxy.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
             var proxyRenderer = proxy.gameObject.AddComponent<MeshRenderer>();
             proxyRenderer.sharedMaterials = renderer.sharedMaterials;
             proxyRenderer.shadowCastingMode = renderer.shadowCastingMode;
@@ -171,7 +249,7 @@ namespace RearrangedS282
             proxyRenderer.lightProbeUsage = renderer.lightProbeUsage;
             proxyRenderer.reflectionProbeUsage = renderer.reflectionProbeUsage;
             entry.Proxy = proxy; entry.ProxyRenderer = proxyRenderer;
-            filter.sharedMesh = null;   // the original draws nothing, whatever enables it
+            entry.Filter.sharedMesh = null;   // the original draws nothing, whatever enables it
         }
 
         // Owned readable copy, or an earlier local AssetStudio export. Null if
@@ -210,7 +288,8 @@ namespace RearrangedS282
                     return r;
                 }).ToArray()) { fadeTransitionWidth = l.fadeTransitionWidth }).ToArray();
                 if (!changed) continue;
-                lodBackups.Add((group, lods, group.localReferencePoint, group.size));
+                if (!lodBackups.Any(state => state.group == group))
+                    lodBackups.Add((group, lods, group.localReferencePoint, group.size));
                 group.SetLODs(copy);
             }
         }
@@ -247,6 +326,35 @@ namespace RearrangedS282
             {
                 if (e.Source == null || e.Proxy == null) continue;
                 e.ProxyRenderer.enabled = e.Renderer.enabled;
+                if (e.FixedEndpoint || e.AnchoredPart)
+                {
+                    // Recover the current native animation pose in the captured
+                    // cab/oiler frame, independent of drive scale, offset or yaw.
+                    var nativePose = drive.worldToLocalMatrix * e.Source.localToWorldMatrix;
+                    var anchoredInSource = e.Source.worldToLocalMatrix * e.Anchor.localToWorldMatrix * e.NativeDriveInAnchor * nativePose;
+                    if (e.AnchoredPart)
+                    {
+                        e.Proxy.localPosition = Vector3.zero; e.Proxy.localRotation = Quaternion.identity; e.Proxy.localScale = Vector3.one;
+                        for (int i = 0; i < e.NativeVertices.Length; i++)
+                            e.WorkVertices[i] = anchoredInSource.MultiplyPoint3x4(e.NativeVertices[i]);
+                    }
+                    else
+                    {
+                        var targetPin = anchoredInSource.MultiplyPoint3x4(e.FarPin);
+                        float span = targetPin.magnitude;
+                        e.PresentedPins[1] = span;
+                        RodRemesher.RemeshInto(e.NativeVertices, e.NativePins, e.PresentedPins, e.WorkVertices, e.BossWidth);
+                        e.Proxy.localPosition = Vector3.zero;
+                        // Apply the native basis first, keeping its roll when the
+                        // span swings under cutoff or articulated front-engine yaw.
+                        e.Proxy.localRotation = Quaternion.FromToRotation(e.FarPin.normalized, targetPin.normalized) * e.PinBasis;
+                        e.Proxy.localScale = Vector3.one;
+                    }
+                    e.EditedMesh.vertices = e.WorkVertices;
+                    e.EditedMesh.RecalculateBounds(); e.EditedMesh.RecalculateNormals();
+                    if (e.HasUv) e.EditedMesh.RecalculateTangents();
+                    continue;
+                }
                 var local = e.Source.InverseTransformVector(worldShift);
                 if (e.Role == Role.Shift)
                 {
@@ -281,6 +389,42 @@ namespace RearrangedS282
                 // its idempotent position sync here prevents a rendered-frame lag.
                 if (point.Consumer != null) point.Consumer.Sync();
             }
+            if (endpointBounds) ExpandEndpointLodBounds();
+        }
+
+        private void ExpandEndpointLodBounds()
+        {
+            // Include the fixed cab/oiler even as an articulated group yaws.
+            // Union with the captured animation envelope; inspect only our few
+            // proxy bounds rather than recalculate every renderer in the car.
+            foreach (var state in lodBackups)
+            {
+                if (state.group == null) continue;
+                var half = Vector3.one * (state.size * .5f);
+                var min = state.reference - half;
+                var max = state.reference + half;
+                // A body LOD can be shared by left/right owners. Retain the
+                // other owner's envelope too, without adding padding every frame.
+                var currentHalf = Vector3.one * (state.group.size * .5f);
+                min = Vector3.Min(min, state.group.localReferencePoint - currentHalf);
+                max = Vector3.Max(max, state.group.localReferencePoint + currentHalf);
+                foreach (var entry in entries)
+                {
+                    if (entry.Proxy == null) continue;
+                    var bounds = (entry.EditedMesh != null ? entry.EditedMesh : entry.OriginalMesh).bounds;
+                    var map = state.group.transform.worldToLocalMatrix * entry.Proxy.localToWorldMatrix;
+                    for (int corner = 0; corner < 8; corner++)
+                    {
+                        var p = map.MultiplyPoint3x4(new Vector3((corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                            (corner & 2) == 0 ? bounds.min.y : bounds.max.y, (corner & 4) == 0 ? bounds.min.z : bounds.max.z));
+                        min = Vector3.Min(min, p - Vector3.one * .01f);
+                        max = Vector3.Max(max, p + Vector3.one * .01f);
+                    }
+                }
+                var size = max - min;
+                state.group.localReferencePoint = (min + max) * .5f;
+                state.group.size = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+            }
         }
 
         private void Restore()
@@ -292,7 +436,7 @@ namespace RearrangedS282
                 if (state.group != null)
                 {
                     state.group.SetLODs(state.lods);
-                    if (precisionRods) { state.group.localReferencePoint = state.reference; state.group.size = state.size; }
+                    if (precisionRods || endpointBounds) { state.group.localReferencePoint = state.reference; state.group.size = state.size; }
                 }
             lodBackups.Clear();
             foreach (var e in entries)

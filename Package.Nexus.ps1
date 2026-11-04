@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.9.3-beta',
+    [string]$Version = '2.0.9.4',
     [string]$ReleaseName = '',
     [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods',
     [string]$CandidateDirectory
