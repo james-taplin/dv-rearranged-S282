@@ -1,0 +1,155 @@
+REARRANGED S282 2.0.9.8 FINAL BETA
+Full changes since 2.0.9.3-beta - 5 November 2026
+
+This is the final planned beta before 2.1 stable. The sections below cover the
+development builds 2.0.9.4 through 2.0.9.8; they were not all public Nexus releases.
+The runtime version is 2.0.9.8. Existing arrangement IDs 0-48 are preserved.
+
+NEW ARRANGEMENTS - 2.0.9.5
+
+- Added ID 49, 4-6-2 Scotch Glider: a large-driver express Pacific, with a
+  nominal driver radius of 0.95052 m. It supports the optional powered tender.
+- Added ID 50, 4-6-6-4 Little Boy: two three-axle native Mallet engine groups,
+  with four-wheel leading and trailing trucks and an ordinary unpowered tender.
+  It retains the Mallet's nominal 0.534 m driver radius.
+- The catalogue now has 51 selectable arrangements and 45 compatible optional
+  powered-tender choices. Little Boy is excluded from powered-tender selection.
+- Both new random-spawn options default off, including when loading older
+  settings. Existing saved arrangement names/IDs and tender policies are retained.
+- Integrated the new layouts into radio selection, per-car settings, geometry
+  dispatch, axle registration, casing and steam presentation. Little Boy uses
+  the existing rear-engine simulation and independent-drive route.
+- Scotch keeps its brake/caliper/spark fittings aligned with its enlarged drive
+  frame. Little Boy retains the existing Mallet engine setup and changes its
+  carrying trucks without introducing a third locomotive engine.
+
+RESTORED REACH AND LUBRICATOR LINKAGES - 2.0.9.4
+
+- Restored previously hidden reach/cutoff and mechanical-lubricator presentation
+  on the supported resized conventional layouts and front Walschaerts engines
+  of the supported Mallet/Erie families. Scotch and Little Boy also use this path.
+- Rods now meet their original cab/oiler endpoint trajectories while retaining
+  their animated gear-side pivots. Moving oiler levers follow the existing oiler
+  frame, and the native lubricator animation is retained.
+- Extended the existing retarget owner with fixed-endpoint and anchored-part
+  presentation, preserving native controllers, quartering and simulation ports.
+- Retained native materials, submeshes, protected rod-end shapes and LOD
+  membership. Proxy bounds include the changed spans and shared LOD owners
+  unwind in reverse order on arrangement changes.
+- Corrected reflected-X OBJ import/winding for the restored linkage meshes and
+  retained the existing exporter/cache approach. Reapply reuses cached mesh data.
+- Existing valve-gear visibility choices still govern the restored parts.
+  Replaced Franklin mechanisms, unsupported rear/tender cab-oiler links and the
+  unfinished giant 2-2-2 are not given invented attachments.
+
+FRANKLIN PINS AND TRIPLEX CLEARANCE - 2.0.9.4
+
+- Corrected the Franklin pin/bearing presentation on IDs 31, 32, 38, 40 and 47.
+  Owned copies of native wheel/pin geometry now seat the moving rod bearings,
+  rather than relying on enabling the old unseated pin renderers.
+- The main driver uses the native long pin; other coupled drivers retain the
+  native short-pin arrangement. Native position/rotation constraints preserve
+  the existing rod orbit and wheel rotation without changing rim geometry,
+  animator clocks, wheel transforms or traction/simulation ports.
+- Added explicit ownership/restoration of generated pin meshes, objects, LOD
+  arrays and bounds, including teardown on stock return and destruction.
+- Corrected the middle Franklin cylinder noses on the 2-8-8-8-0 and 2-4-4-4-0
+  locomotive triplexes (IDs 38 and 47), shortening the relevant native nose zone
+  by 0.20 m. Front caps move rigidly; bore axes, rear faces and shaft mounts stay
+  fixed. Steam inlet and particle presentation follow the corrected casting.
+- Retained existing engine spacing, articulation and the earlier ID 32 repair.
+
+EXPLOSION / REPAIR AND PRESENTATION LIFETIME - 2.0.9.4 AND 2.0.9.6
+
+- Retire generated Franklin pin renderers from native explosion/material-swap
+  caches before Unity destroys them. Include-inactive scans cannot register
+  those retired objects again during the same frame.
+- Extended the same retirement mechanism to retargeted linkage proxies in
+  2.0.9.6, covering arrangement switches, reapply, stock restoration, owner
+  teardown and pool return. This fixes the stale renderer reference that could
+  interrupt a later explosion/repair material change.
+- Retirement preserves unrelated renderers and new replacement presentation.
+  Regressions cover unpopulated/populated native caches, same-frame refresh,
+  restoration and subsequent burn/repair of replacement renderers.
+
+MULTIPLAYER STATE CORRECTIONS - 2.0.9.4
+
+- A guest joining an already-exploded rearranged locomotive keeps the latest
+  requested state pending until both native explosion flags/model are repaired.
+  Time spent exploded no longer consumes that car's normal readiness timeout.
+  Other locomotives continue to synchronize while the wreck waits.
+- Initial host discovery of a stock locomotive publishes the tender actually
+  applied to that car, rather than an unapplied powered-tender preference.
+  Changing the preference alone therefore does not give a late-joining guest
+  different tender geometry. Explicit reapply still applies the new preference.
+- Preserved host validation, guest radio requests/locks, revision handling,
+  effective per-car profiles and genuine replica-failure safeguards. The native
+  multiplayer mod continues to own transport and train movement.
+
+OBJ IMPORTER CORRECTIONS - 2.0.9.4
+
+- Mesh-only OBJ loading no longer creates temporary scene GameObjects or
+  materials, removing the reproduced lifetime leak in that import path.
+- Face parsing terminates correctly at end-of-file without a trailing newline.
+- Relative/negative vertex, UV and normal indices resolve correctly; invalid
+  face tokens are rejected explicitly.
+- Geometry, UVs, normals, submeshes and winding retain parity with the earlier
+  importer for the existing positive-index model inputs checked offline.
+
+STRUCTURAL DIAGNOSTICS AND OPTIONS - 2.0.9.5 THROUGH 2.0.9.8
+
+- Expanded the structural matrix to 51 ordinary-tender and 45 supported
+  powered-tender cases, plus the six existing return-sequence checks.
+- The options header now derives the arrangement count from the catalogue,
+  replacing the stale 49-arrangement label in 2.0.9.6.
+- Corrected Little Boy's structural frame lookup in 2.0.9.7: its selected ID
+  remains 50, while the diagnostic recognizes its reused ID 37 Mallet frame
+  geometry. Required active/nonempty frame counts remain enforced.
+- Structural selection in 2.0.9.8 requires loaded exterior interactions on both
+  test and control locomotives. An unavailable prerequisite is rejected before
+  starting, and status identifies the selected locomotive IDs.
+- If either car unloads during the sweep, it stops with an explicit readiness
+  reason, retains completed results, skips remaining return cases and still
+  attempts final stock restoration. An aborted run cannot count as a pass.
+- Kept strict oilcup coverage, control-isolation, ownership, restoration and
+  preference checks. Native guide, crosshead and main-rod cups are retained;
+  no oilcups were removed in response to the guide-cup review.
+
+OFFLINE TOOLS AND COVERAGE - 2.0.9.4 ONWARD
+
+- Repaired the connecting-rod, driver-layout, additional-arrangement,
+  fourteen-coupled spacing, Pacific/Hudson gear, Prairie casing/motion and
+  preliminary-physics fixtures to match the current production methods and
+  casing/reservoir classifications.
+- Retired the stale standalone MultiplayerOiling script; current oiling/authority
+  coverage uses the maintained ownership and multiplayer fixtures.
+- Added catalogue-continuity, new-layout dispatch/geometry/linkage, renderer
+  retirement, mesh-import and structural-readiness regressions. Structural
+  fixtures now cover the actual frame-prefix lookup and readiness selector,
+  not only synthetic presentation rows.
+- Preliminary physics requires source-hash-checked geometry receipts for the
+  two new IDs. Existing unchanged IDs retain their earlier captured radii;
+  offline calculations are not relabelled as new gameplay measurements.
+
+VALIDATION OF THIS FINAL BETA
+
+- James's installed 2.0.9.8 completed all 96 stationary structural cases and
+  all six return-sequence cases. Stock was restored and tender preferences
+  remained unchanged. Both new layouts are included in that result.
+- Integrated core/bridge build: zero warnings/errors. Maintained affected
+  offline regressions and package validation passed; source/binary identity
+  and retained runtime hashes were checked.
+- Structural success does not establish moving rod/cylinder clearance,
+  sustained driving performance, audio/visual acceptance or live multiplayer.
+  Multiplayer was not loaded for the successful structural session.
+- This is the final planned beta before 2.1 stable, not a universal clipping,
+  error-free or performance guarantee. Beta feedback and gameplay testing
+  remain part of the path to stable.
+
+ALREADY INCLUDED IN 2.0.9.3-beta AND RETAINED
+
+The tender clone/mirror configuration and signed-RPM direction repair, the
+2-6-6-2 Mallet engine-spacing repair, earlier independent-slip startup/RPM-lease
+fixes, optional multiplayer radio/host controls and the existing 49 arrangements
+remain included. They are the baseline for this changelog, not new 2.0.9.8 fixes.
+Independent powered-tender slip and true compound expansion remain unimplemented.

@@ -1,29 +1,26 @@
-# Rearranged S282 - 2.0.9.1-beta multiplayer development
+# Rearranged S282 for Derail Valley B99
 
-Current hotfix: **2.0.9.1-beta** corrects the independent-slip ECS late-loading
-failure behind multi-engine arrangement rollback, and the connect-once RPM
-API misuse. See [the investigation](BUGS_2026_10_31.md). The original 2.0.9-beta
-archive and historical validation records are retained. Owned-locomotive
-restrictions are unchanged; repair presentation remains a separate open report.
-Multiplayer startup diagnostics and retry corrections are covered in
-[the startup report](MULTIPLAYER_STARTUP_REPORT_2026_10_31.md).
+The installed test candidate is **2.0.9.8**. It retains all prior fixes and makes the structural test select locomotives with loaded exterior interactions and stop explicitly if that prerequisite becomes unavailable. James's latest in-game sweep passed **all 96 structural cases and six return checks**, with stock restored and tender preferences preserved. Visual/driving and live multiplayer acceptance remain pending before publication or 2.1 stable. Current evidence, package hashes and the reviewed native guide-oilcup concern are in the [handover](CURRENT_HANDOVER.md); the [2.0.9.5 audit](VERSION_AUDIT_2_0_9_5.md) and [2.0.9.4 audit](VERSION_AUDIT_2_0_9_4.md) remain historical.
 
+The earlier 2.0.9.1-beta corrected independent-slip startup and RPM binding. [Drivetrain investigation](BUGS_2026_10_31.md) · [Multiplayer startup investigation](MULTIPLAYER_STARTUP_REPORT_2026_10_31.md)
 
-This separate `codex/s282-multiplayer` branch uses the complete **2.0.8-slip-test** source (checkpoint `31389e811d0b99fb68b238174fd59b9264f389ef`), including experimental independent wheelslip. It replaces the earlier multiplayer alpha baseline and carries its latest fixes and 49-layout catalogue.
+This separate `codex/s282-multiplayer` branch uses the complete **2.0.8-slip-test** source (checkpoint `31389e811d0b99fb68b238174fd59b9264f389ef`), including experimental independent wheelslip. It replaces the earlier multiplayer alpha baseline and carries its later fixes and expanded catalogue.
 
 Every player uses their own Wheel Rearranger radio. The host validates changes and shares the layout and relevant settings. Host UMM controls allow all guests or block individuals for the session. Locked guests still see updates. The native multiplayer mod owns transport, train movement and port replication; independent traction runs on the host and guest presentation follows native outputs.
 
 Multiplayer is optional. Absent/inactive Multiplayer and its internal single-player mode retain normal single-player controls with no multiplayer status or permission UI. Online peers need the same complete S282 package and **DV Multiplayer 0.1.16.0-beta**. LocoMeshSplitter remains required. Leave Realistic Firing off.
 
-Run `Build.Multiplayer.ps1`, then `Package.Nexus.ps1` from a clean source commit. Nexus copy is in `release-copy/2.0.9-beta`. The builder verifies the selected seed ZIP and preserves every runtime asset, exporter file and licence; the optional API is build-only. The packager checks both DLLs and emits a UMM-installable ZIP, checksums and source receipts. Install one Rearranged S282 build at a time.
+The source review covers the Stage 3 core and optional bridge. The Nexus final-beta release copy is under [release-copy/2.0.9.8-beta](release-copy/2.0.9.8-beta/README.txt), including the [full changelog since 2.0.9.3-beta](release-copy/2.0.9.8-beta/CHANGELOG.txt) and paste-ready Nexus text. Package hashes and preparation status are recorded in the handover. Older release-copy directories are historical.
 
-See [current handover](CURRENT_HANDOVER.md), [release README](release-copy/2.0.9-beta/README.txt) and [optional tester checklist](MULTIPLAYER_TESTING.txt). Code and native fixtures do not establish live multiplayer acceptance. Powered-tender independent slip, actual peer audio/visual/driving behavior and live save/reconnect tests remain outside local validation.
+See [current handover](CURRENT_HANDOVER.md) and [optional tester checklist](MULTIPLAYER_TESTING.txt). Code and native fixtures do not establish live multiplayer acceptance. Powered-tender independent slip, actual peer audio/visual/driving behavior and live save/reconnect tests remain outside local validation.
 
 The retained base's gameplay reference follows; its version-specific paragraphs describe earlier changes.
 
 Turn the S282 into a small Mogul, a large-wheeled Pacific, a long rigid freight engine or an articulated Mallet. This is JimTaplin's B99 continuation of SatiricRug's Rearranged S282, continued with the original author's permission.
 
-There are **49 selectable arrangements**. The original layouts are retained alongside the Prairie, larger Mallets and triplexes. The new **2-4-4-4-0** puts three two-axle driver groups under the locomotive, with an ordinary unpowered tender.
+The development catalogue has **51 selectable arrangements**. The original layouts are retained alongside the Prairie, larger Mallets and triplexes. The **2-4-4-4-0** puts three two-axle driver groups under the locomotive, with an ordinary unpowered tender.
+
+The **4-6-2 Scotch Glider** is an express Pacific with enlarged drivers. The **4-6-6-4 Little Boy** has two three-axle powered engines and an ordinary unpowered tender. Both new random-spawn options are off by default; their new geometry still needs James's gameplay testing.
 
 The **4-8-2 Express** uses the existing large-driver express running gear with a four-wheel leading truck. The original Mountain remains available. Its random-spawn option is off by default, and it supports the optional powered tender.
 
@@ -45,7 +42,7 @@ Optional automatic oilcup filling and lid closing is available in UMM, off by de
 
 ## Powered tenders
 
-You can now use the Erie powered tender with **44 compatible arrangements**, including rigid locomotives. Open the powered-tender section in UMM and tick the arrangements you want. Erie is the only one enabled by default, and you can untick it to use its locomotive with an ordinary tender.
+You can use the Erie powered tender with **45 compatible arrangements**, including Scotch Glider and other rigid locomotives. Open the powered-tender section in UMM and tick the arrangements you want. Erie is the only one enabled by default, and you can untick it to use its locomotive with an ordinary tender. Little Boy uses its ordinary unpowered tender.
 
 For a locomotive already in the world, stop, close the regulator, highlight it with Wheel Rearranger and press **REAPPLY CURRENT ARRANGEMENT** in UMM. The checkboxes also apply when locomotives spawn or their arrangements are restored on loading. They do not change every loaded locomotive immediately.
 
@@ -56,11 +53,11 @@ The powered tender adds pull and draws steam from the same S282 boiler. It needs
 | Family | Arrangements |
 |---|---|
 | Four driving wheels | 4-4-0 American, 4-4-2 Atlantic, 4-4-4 Reading, 2-4-0 |
-| Six driving wheels | 4-6-0 Ten-wheeler, 4-6-2 Pacific, 4-6-4 Hudson, 2-6-0 Mogul, 2-6-2 Prairie |
+| Six driving wheels | 4-6-0 Ten-wheeler, 4-6-2 Pacific, 4-6-2 Scotch Glider, 4-6-4 Hudson, 2-6-0 Mogul, 2-6-2 Prairie |
 | Eight driving wheels | 0-8-0, 0-8-2, 0-8-4, 2-8-0, 2-8-2, 2-8-4, 4-8-0, 4-8-2, 4-8-4, plus high-speed 2-8-0, 2-8-2 and 2-8-4 variants and the 4-8-2 Express |
 | Ten driving wheels | 0-10-0, 0-10-2, 0-10-4, 2-10-0, 2-10-2, 2-10-4, 4-10-0, 4-10-2, 4-10-4 |
 | Larger rigid layouts | 0-12-0, 2-12-0, 2-12-2, 4-12-2, 4-14-4 |
-| Articulated two-engine layouts | 2-4-4-2, 4-4-4-4, 2-6-6-2 Mallet, 0-8-8-0 Angus, 2-6-8-0 Great Northern, 2-6-6-0 Mallet, 2-10-10-2 Mallet |
+| Articulated two-engine layouts | 2-4-4-2, 4-4-4-4, 2-6-6-2 Mallet, 4-6-6-4 Little Boy, 0-8-8-0 Angus, 2-6-8-0 Great Northern, 2-6-6-0 Mallet, 2-10-10-2 Mallet |
 | Triplexes | 2-2-2-2-2, 0-2-2-2-0, 2-8-8-8-2 Erie with its tender engine, 2-4-4-4-0 |
 | Novelty and prototype | Unpowered 4-0-4 Drivers not found; unfinished giant-driver 2-2-2 |
 
@@ -134,12 +131,8 @@ B99 fork: https://github.com/james-taplin/dv-rearranged-S282
 
 ## Building the B99 fork
 
-The runtime project targets .NET Framework 4.8 and references the assemblies in your own Derail Valley installation. `Build.RuntimeTrial.ps1` builds and packages a development version; pass `-GamePath` if your game is installed elsewhere. Installation only happens when `-Install` is supplied and the game is closed.
+The runtime targets .NET Framework 4.8 against the installed B99 game and Mesh Splitter assemblies. Select Stage 3 to compile the full arrangement catalogue. The optional bridge references DV Multiplayer API 1.1. The reviewed 2.0.9.5 core, package and offline evidence are identified in the [version audit](VERSION_AUDIT_2_0_9_5.md).
 
-```powershell
-.\Build.RuntimeTrial.ps1 -Version 2.0.7-beta
-```
+For a release, `Build.Multiplayer.ps1` stages the matching pair of assemblies and `Package.Nexus.ps1` consumes the source receipt and version-specific player copy. The 2.0.9.8 Nexus final beta reuses the installed/tested DLLs, with full changes since 2.0.9.3-beta and current player documentation. A verified source-checkpoint receipt preserves the original build's provenance without rebuilding unchanged runtime code. Uploading remains James's action; live multiplayer and gameplay feedback remain part of the beta before 2.1 stable.
 
-The existing custom drivetrain bundle is reused. Rebuilding its authored models is a separate asset workflow, documented in the original upstream project's README. Game assemblies and locally extracted game meshes are not included in the public package.
-
-See [the current options guide](release-copy/2.0.7-beta/UMM_OPTIONS.md), [changes since 2.0.6](release-copy/2.0.7-beta/CHANGES_SINCE_2.0.6.txt) and [the full changelog](release-copy/2.0.7-beta/CHANGELOG.txt). Development evidence and outstanding work are recorded in `CURRENT_HANDOVER.md` and `TODO.md`.
+The current [options guide](release-copy/2.0.9.8-beta/UMM_OPTIONS.md) and [changelog](release-copy/2.0.9.8-beta/CHANGELOG.txt) describe the final beta. Current development work is tracked in the [handover](CURRENT_HANDOVER.md) and [to-do ledger](TODO.md).

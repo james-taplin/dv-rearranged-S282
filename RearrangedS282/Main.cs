@@ -83,7 +83,7 @@ namespace RearrangedS282
                     GUILayout.Label("Running Rearranged S282 " + RunningVersion);
 #if B99_ALL_STANDARD
 					MultiplayerSync.Draw();
-					GUILayout.Label("49 ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
+					GUILayout.Label(WheelArrangement.SupportedCount + " ARRANGEMENTS — ARTICULATED TRIPLEX AND OPTIONAL POWERED TENDER\n" +
 						"Use Wheel Rearranger on the comms radio. Stop and close the regulator first.\n" +
 						"Selections are saved with each locomotive. Loaded arrangements wait until switching is safe.\n" +
 						"First conversion may take a few seconds to prepare rods.");

@@ -31,10 +31,14 @@ if(-not $suspend.Contains('SuspendFranklinDriverPins();')){throw 'Articulated su
 $routes=@((ExtractMethod $conventional 'private void RestoreConventionalStock('),(ExtractMethod $conventional 'internal bool ResetConventionalForPool()'),(ExtractMethod $pins 'private void SuspendFranklinDriverPins()'))
 ('using System; using System.Collections.Generic; using UnityEngine; namespace RearrangedS282 { internal partial class RouteFixture {'+($routes -join "`n")+'}}') | Set-Content -LiteralPath (Join-Path $out 'ActualRoutes.cs') -Encoding utf8
 $fixture=Join-Path $PSScriptRoot 'evidence\renderer-lifetime-tests'
+$retarget=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'RearrangedS282\DriveRetarget.cs'))
+$restore=ExtractMethod $retarget 'private void Restore()'
+('using System;using System.Linq;using UnityEngine;using Object=UnityEngine.Object;namespace RearrangedS282 { internal partial class RetargetFixture {'+$restore+'}}') | Set-Content -LiteralPath (Join-Path $out 'ActualRetargetRestore.cs') -Encoding utf8
+if(-not $switch.Contains('retarget.Retire = renderers => explosionMaterials?.Forget(renderers);')){throw 'Retarget registration must bind explosion retirement'}
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup><ItemGroup>
-<Compile Include="$PSScriptRoot\RearrangedS282\B99ExplosionMaterials.cs"/><Compile Include="$fixture\*.cs"/><Compile Include="$out\NativeExplosion.cs"/><Compile Include="$out\ActualLease.cs"/><Compile Include="$out\ActualRoutes.cs"/>
+<Compile Include="$PSScriptRoot\RearrangedS282\B99ExplosionMaterials.cs"/><Compile Include="$fixture\*.cs"/><Compile Include="$out\NativeExplosion.cs"/><Compile Include="$out\ActualLease.cs"/><Compile Include="$out\ActualRoutes.cs"/><Compile Include="$out\ActualRetargetRestore.cs"/>
 </ItemGroup></Project>
 "@
 $path=Join-Path $out 'RendererLifetime.csproj';$project|Set-Content -LiteralPath $path -Encoding utf8
-foreach($case in @('native','sameframe','pool')){& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $case;if($LASTEXITCODE -ne 0){throw "Renderer lifetime case failed: $case"}}
+foreach($case in @('native','sameframe','pool','retargetfresh','retargetcached','retargetpool','retargetreapply')){& 'C:\Program Files\dotnet\dotnet.exe' run --project $path -c Release -- $case;if($LASTEXITCODE -ne 0){throw "Renderer lifetime case failed: $case"}}

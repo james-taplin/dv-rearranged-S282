@@ -725,3 +725,7 @@ evidence/scotch-glider-tests/*
 !evidence/scotch-glider-tests/Program.cs
 !evidence/scotch-glider-tests/RodMain.cs
 !evidence/scotch-glider-tests/geometry.py
+
+!evidence/structural-readiness-tests/
+evidence/structural-readiness-tests/*
+!evidence/structural-readiness-tests/Program.cs

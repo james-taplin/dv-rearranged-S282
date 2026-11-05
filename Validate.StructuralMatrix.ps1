@@ -14,7 +14,12 @@ $a=$source.IndexOf('        internal static void ValidateOilCupPresentation(')
 $b=$source.IndexOf('{',$a);$depth=0
 for($i=$b;$i -lt $source.Length;$i++){if($source[$i] -eq '{'){$depth++};if($source[$i] -eq '}'){$depth--;if($depth -eq 0){break}}}
 $oilValidator=$source.Substring($a,$i-$a+1)
-$actual="using System;using System.Linq;using Newtonsoft.Json.Linq;namespace RearrangedS282 { internal static class Stage2RuntimeChecks {`n$cases`n$validator`n$oilValidator`n} internal static class ArticulatedSimulation {internal static bool IsTriplexId(int id)=>WheelArrangement.LocomotiveWheels(id).Length==5;} }"
+$a=$source.IndexOf('        internal static string FramePiecePrefix(')
+$b=$source.IndexOf('{',$a);$depth=0
+for($i=$b;$i -lt $source.Length;$i++){if($source[$i] -eq '{'){$depth++};if($source[$i] -eq '}'){$depth--;if($depth -eq 0){break}}}
+$framePrefix=$source.Substring($a,$i-$a+1)
+if(-not $source.Contains('f.name.StartsWith(FramePiecePrefix(id, label), StringComparison.Ordinal)')){throw 'Presentation capture no longer uses the tested frame prefix'}
+$actual="using System;using System.Linq;using Newtonsoft.Json.Linq;namespace RearrangedS282 { internal static class Stage2RuntimeChecks {`n$cases`n$validator`n$oilValidator`n$framePrefix`n} internal static class ArticulatedSimulation {internal static bool IsTriplexId(int id)=>WheelArrangement.LocomotiveWheels(id).Length==5;} }"
 Set-Content -LiteralPath (Join-Path $OutputDirectory 'ActualStructuralMatrix.cs') -Value $actual -Encoding utf8
 $project=@"
 <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DefineConstants>B99_ALL_STANDARD</DefineConstants><NuGetAudit>false</NuGetAudit><RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources></PropertyGroup><ItemGroup><Compile Include="$OutputDirectory/ActualStructuralMatrix.cs"/><Compile Include="$PSScriptRoot/RearrangedS282/WheelArrangement.cs"/><Compile Include="$PSScriptRoot/RearrangedS282/PoweredTenderPolicy.cs"/><Compile Include="$PSScriptRoot/evidence/structural-matrix-tests/Program.cs"/><Reference Include="Newtonsoft.Json"><HintPath>B:/SteamLibrary/steamapps/common/Derail Valley/DerailValley_Data/Managed/Newtonsoft.Json.dll</HintPath></Reference></ItemGroup></Project>

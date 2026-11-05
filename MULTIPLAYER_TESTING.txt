@@ -1,13 +1,37 @@
-Rearranged S282 B99 2.0.9.1-beta
-Multiplayer and independent-wheelslip beta
-29 October 2026
+Rearranged S282 B99 multiplayer and independent-wheelslip checks
+Development checklist updated 4 November 2026
 
 Status
 
-This is an initial test package. The Multiplayer mod is not installed on the
-development PC. Offline checks and compilation cannot confirm live multiplayer
-physics, visuals, audio, native train ownership or save behaviour. The checks
-below must be run by external testers before multiplayer support is accepted.
+The new test candidate is 2.0.9.8. It retains the previous renderer and Little
+Boy diagnostic fixes and corrects structural-test selection/readiness. Both
+subject and control must have loaded exterior interactions; the sweep stops
+explicitly if either unloads. Strict oilcup assertions remain enabled.
+CURRENT_HANDOVER.md records the package hashes and affected offline checks.
+The installed version is 2.0.9.8; the previous installation is backed up and
+James's settings are preserved, as recorded in CURRENT_HANDOVER.md.
+James performs gameplay and live multiplayer acceptance before publication.
+The 2.0.9.8 single-player structural run passed all 96 main cases and six return
+checks, with stock restored and tender preferences unchanged. Multiplayer was
+absent in that session; this does not establish live peer acceptance.
+Record the actual build and logs from each peer for every test session.
+
+After the audit repair, include these regression cases:
+- Spawn ordinary stock with its powered tender off. Enable the option without
+  reapplying, start hosting and have a guest join. Both should still see an
+  ordinary tender. Reapply once and confirm both then see the powered tender.
+- Join a world containing an already-exploded, rearranged S282. The guest
+  should remain connected, other locomotives should sync and the intended
+  arrangement should recover on repair. Also switch Franklin to stock before
+  exploding and repairing, checking both peers for renderer errors.
+- Apply/reapply Scotch Glider, Little Boy and an existing retargeted layout;
+  switch back to stock, then explode and repair. Repeat after a previous
+  explosion/repair has populated native material caches. Check both peers for
+  renderer errors and correct restored materials.
+- Compare Scotch with Pacific and Little Boy with 2-6-6-2. Check new layouts in
+  motion, reverse, curves and near/far LODs, then save/reload and reconnect.
+  Inspect rods, brakes, cylinders and trucks and both Little Boy engines.
+  Scotch supports the optional powered tender; Little Boy must remain unpowered.
 
 The host chooses and validates the final arrangement. Guests use their own
 Wheel Rearranger radios to request a change. The accepted arrangement and its
@@ -17,7 +41,14 @@ create a second train-motion network protocol.
 
 Preparation
 
-Use a disposable sandbox save. Every participant must install this exact ZIP,
+For the manual structural sweep, keep two stationary stock S282s close together,
+one with a regular tender coupled behind it. Stay near both so exterior controls
+load. Note the selected IDs in status and close UMM once the test starts. Remain
+nearby throughout. A readiness refusal or abort is not a completed run; resolve
+the stated loading prerequisite and rerun. Full coverage is 96 main cases plus
+six return-sequence cases.
+
+Use a disposable sandbox save. Every participant must install the same complete S282 ZIP,
 including both RearrangedS282 DLLs, and DV Multiplayer 0.1.16.0-beta. The build
 reference was Multiplayer 0.1.16.0, API 1.1. Start with that version and record
 the actual version from each log. Multiplayer supplies MultiplayerAPI.dll;

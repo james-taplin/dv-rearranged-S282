@@ -1,5 +1,5 @@
 param(
-    [string]$Version = '2.0.9.5',
+    [string]$Version = '2.0.9.8',
     [string]$ReleaseName = '',
     [string]$DesktopDirectory = 'C:\Users\james\Desktop\Derail Valley Mods',
     [string]$CandidateDirectory
@@ -87,6 +87,9 @@ try { $files = @($archive.Entries | Where-Object Name -NE '' | ForEach-Object Fu
 if ($files | Where-Object { $_ -match '\\' -or -not $_.StartsWith('RearrangedS282/') }) { throw 'Archive entries must be RearrangedS282/... with forward slashes.' }
 $manifest = [ordered]@{
     version=$Version; sourceCommit=$receipt.sourceCommit; sourceHasUncommittedChanges=$receipt.sourceHasUncommittedChanges
+    receiptKind=$receipt.receiptKind; originalBuildReceipt=$receipt.originalBuildReceipt
+    originalBuildSourceCommit=$receipt.originalBuildSourceCommit; originalBuildSourceHasUncommittedChanges=$receipt.originalBuildSourceHasUncommittedChanges
+    sourceCheckpointVerifiedUtc=$receipt.sourceCheckpointVerifiedUtc
     branch='codex/s282-multiplayer'; multiplayer=$multiplayer; optionalDownload=$true; baseCommit='31389e811d0b99fb68b238174fd59b9264f389ef'
     zip=$zip; desktop=(Join-Path $desk $zipName); zipSHA256=$zipHash
     dllSHA256=$receipt.dllSHA256; bridgeSHA256=$receipt.bridgeSHA256; files=$files

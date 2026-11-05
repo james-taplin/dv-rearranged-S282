@@ -20,7 +20,7 @@ namespace UnityEngine {
   public T[] GetComponentsInChildren<T>(bool inactive=false)where T:Component {IEnumerable<T> Walk(Transform root){if(!inactive&&!root.gameObject.activeInHierarchy)yield break;foreach(var item in root.gameObject.components.OfType<T>())yield return item;foreach(var child in root.children)foreach(var item in Walk(child))yield return item;}return Walk(transform).ToArray();}
   public void SetActive(bool value){activeSelf=value;}
  }
- public sealed class Transform:Component {internal readonly List<Transform> children=new List<Transform>();private Transform owner;public Transform parent{get=>owner;set{owner?.children.Remove(this);owner=value;owner?.children.Add(this);}}public Vector3 position;public Quaternion rotation;public bool IsChildOf(Transform root){for(var t=this;t!=null;t=t.parent)if(ReferenceEquals(root,t))return true;return false;}}
+ public sealed class Transform:Component {internal readonly List<Transform> children=new List<Transform>();private Transform owner;public Transform parent{get=>owner;set{owner?.children.Remove(this);owner=value;owner?.children.Add(this);}}public Vector3 position,localPosition;public Quaternion rotation;public bool IsChildOf(Transform root){for(var t=this;t!=null;t=t.parent)if(ReferenceEquals(root,t))return true;return false;}}
  public class Renderer:Component {private Material material;public Material sharedMaterial{get{if(destroyed)throw new InvalidOperationException("Destroyed renderer read");return material;}set{if(destroyed)throw new InvalidOperationException("Destroyed renderer write");material=value;}}}
  public sealed class MeshRenderer:Renderer {}
  public sealed class Material:Object {}

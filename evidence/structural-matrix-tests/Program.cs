@@ -16,8 +16,14 @@ internal static class Program {
   ["compactTriplexCrankPins"]=id==47?new JArray(Enumerable.Range(0,6).Select(i=>new JObject{["drive"]="drive"+i,["enabled"]=true,["mesh"]=true,["detailLod"]=true})):null,
   ["tender"]=tender?new JObject{["attached"]=true,["sourceReady"]=true,["sourceStaticCount"]=16,["undercarriagePresentationReady"]=true,["underframeSteamConnection"]=new JObject{["trailingSupportRegistered"]=true},["unexpectedFranklinAssemblies"]=0,["exhaustOutlet"]=true,["visualEffects"]=true,["audioEffects"]=true}:null};}
  static void Main(string[] args){
-  var matrix=Stage2RuntimeChecks.StructuralCases();Check(matrix.Length==93,"93 matrix cases");Check(matrix.Count(c=>!c.Tender)==49,"All49 ordinary-tender cases");Check(matrix.Count(c=>c.Tender)==44,"All44 supported powered cases");Check(matrix.Distinct().Count()==93,"No duplicate modes");
-  foreach(int id in Enumerable.Range(0,49)){Check(matrix.Count(c=>c.Id==id&&!c.Tender)==1,"Every arrangement tested ordinary");Check(matrix.Count(c=>c.Id==id&&c.Tender)==(PoweredTenderPolicy.Supports(id)?1:0),"Powered exclusions match runtime policy");}
+  foreach(int id in Enumerable.Range(0,51))foreach(string label in new[]{"front","middle","rear"}){
+   int geometryId=id==50?37:id;
+   Check(Stage2RuntimeChecks.FramePiecePrefix(id,label)=="[Rearranged "+label+" frame "+geometryId+"] ","Frame tags match the actual shared geometry cache");
+  }
+  Check("[Rearranged front frame 37] frame_LOD0".StartsWith(Stage2RuntimeChecks.FramePiecePrefix(50,"front"),StringComparison.Ordinal),"Little Boy discovers its reused Mallet frame");
+  Check(!"[Rearranged front frame 50] frame_LOD0".StartsWith(Stage2RuntimeChecks.FramePiecePrefix(50,"front"),StringComparison.Ordinal),"Unrelated frame cache cannot hide the shared-geometry contract");
+  var matrix=Stage2RuntimeChecks.StructuralCases();Check(matrix.Length==96,"96 matrix cases");Check(matrix.Count(c=>!c.Tender)==51,"All51 ordinary-tender cases");Check(matrix.Count(c=>c.Tender)==45,"All45 supported powered cases");Check(matrix.Distinct().Count()==96,"No duplicate modes");
+  foreach(int id in Enumerable.Range(0,51)){Check(matrix.Count(c=>c.Id==id&&!c.Tender)==1,"Every arrangement tested ordinary");Check(matrix.Count(c=>c.Id==id&&c.Tender)==(PoweredTenderPolicy.Supports(id)?1:0),"Powered exclusions match runtime policy");}
   foreach(var c in matrix){
    Check(Accept(c.Id,c.Tender,Good(c.Id,c.Tender)),"Valid matrix presentation accepted");
    var animationBad=Good(c.Id,c.Tender);animationBad.Remove("animationOwnership");Check(!Accept(c.Id,c.Tender,animationBad),"Missing ownership cannot pass");
@@ -68,7 +74,7 @@ internal static class Program {
    var cups=GoodOil();cups[gap.Item1]=gap.Item2;Check(AcceptOil(cups),"Oilcup tolerance boundary accepted");
    cups[gap.Item1]=gap.Item2+.0001f;Check(!AcceptOil(cups),"Oilcup beyond tolerance rejected");
   }
-  var report=new JObject{["passed"]=true,["checks"]=checks,["matrixCases"]=matrix.Length,["poweredTenderCases"]=44,["ordinaryTenderCases"]=49,["scope"]="Actual production matrix and pass/fail validators with current catalogue and powered policy. No game coroutine, effects or full-world execution."};
+  var report=new JObject{["passed"]=true,["checks"]=checks,["matrixCases"]=matrix.Length,["poweredTenderCases"]=matrix.Count(c=>c.Tender),["ordinaryTenderCases"]=matrix.Count(c=>!c.Tender),["scope"]="Actual production matrix and pass/fail validators with current catalogue and powered policy. No game coroutine, effects or full-world execution."};
   File.WriteAllText(args[0],report.ToString());Console.WriteLine(report.ToString());
  }
 }

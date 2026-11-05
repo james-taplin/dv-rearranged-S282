@@ -1,3 +1,562 @@
+## 5 November 2026 — Nexus final beta preparation authorized
+
+James confirmed retaining the native cups and requested a Nexus-ready 2.0.9.8
+final beta ZIP, current release notes/docs and the complete changelog since
+2.0.9.3-beta. Player copy is under `release-copy/2.0.9.8-beta/`, including plain
+README/changelog, options, preserved credits, file information and full Nexus
+BBCode description with changelog and credits. Runtime version stays 2.0.9.8;
+release archive naming is 2.0.9.8-beta to distinguish the player-facing final beta
+from the earlier Multiplayer-Test ZIP. No native cups or gameplay code changed.
+
+Preserve the installed/tested core and bridge byte-for-byte; do not rebuild for
+these documentation changes. The existing build was made from checkpoint
+47e8ac7 plus uncommitted changes. For release packaging, save a clean local source
+checkpoint, verify its entire runtime source inventory against the original
+build receipt, and create a separate verified-source-repackage receipt carrying
+both the new checkpoint and original dirty-build provenance. The original build
+receipt remains untouched. Package.Nexus.ps1 retains its clean-source checks and
+now carries those provenance fields into the release manifest. No push/upload
+is authorized or performed by this preparation task.
+
+The successful stationary structural run is 96/96 plus all six return cases,
+with stock/preferences restored. Current gameplay/clearance and real host/guest
+acceptance remain beta feedback; Multiplayer was absent in that run. Full
+changelog distinguishes new changes from retained 2.0.9.3-beta tender/Mallet fixes
+and does not claim universal clearance, zero errors or profiled performance.
+
+## 5 November 2026 — 2.0.9.8 live structural sweep PASSED; guide cup reviewed
+
+James completed the installed 2.0.9.8 sweep: **96/96 main cases and all six
+return-sequence cases passed**, with finalStockRestored=true and
+tenderPreferencesUnchanged=true. Subject L-033, control L-093. The report timestamp
+is 22:39 and the matching log confirms all 96 stationary cases passed. Preserved
+report, log, summary and supplied screenshot under
+`build/structural-results-2.0.9.8-20261105/`. This supersedes the earlier failed
+readiness run as current structural evidence. Motion/clearance remain explicitly
+unverified by the test, and Multiplayer was absent in this session.
+
+James reported too many/front misplaced cups on Little Boy and other layouts.
+He clarified: **preserve native cups; fix only extra/misplaced cups**, then
+identified the cup on top of the crosshead guide as the suspect. Native baseline
+and current binding source distinguish three native providers per side:
+Oiling0 on the fixed guide, Oiling1 on the moving crosshead, Oiling2 on the main
+rod big end. See native provider paths in
+`evidence/pacific-hudson-valve-gear/native-animation.json`, B99Oilcups.cs and
+WheelRearranger.OilCupMounts.cs; this agrees with prior on-disk native inspection.
+The original guide cup is retained, not a newly added crosshead cup. Do not delete
+it as a duplicate or remove legitimate crank-pin coverage to reduce the count.
+
+Little Boy and Mallet both report 16 active cups: 12 crank-pin cups (two native,
+ten added), plus the four native guide/crosshead cups. Prairie and Scotch each
+report ten (six crank-pin plus those four); stock retains six native cups. Little
+Boy has no duplicated refill ports, no mount pairs within the diagnostic's 10 mm
+overlap threshold, complete coverage, and micron-scale provider/seat gaps.
+These counts and checks are against the current allocation plan; they do not
+independently establish that every visible cup is physically correct. The saved
+report does not include per-cup positions/paths for exact screenshot matching.
+No new duplicate or misplaced added cup was demonstrated by this review. A cup
+visibly floating off its legitimate guide would still warrant a targeted mount
+correction; the user's reported visual concern must not be dismissed merely
+because the structural test passes.
+
+No S282 exception stack or failed cup-creation message found in the preserved
+log. It records optional Multiplayer absent and later native shop/Bolt and
+DoubleTrack shutdown exceptions; those inspected stacks do not identify an S282
+failure. No performance or multiplayer acceptance inferred. No runtime edits,
+build, installation or game control was performed during this results review.
+Installed version/package remain 2.0.9.8. Visual/driving and live multiplayer
+checks remain the next acceptance work before Nexus or 2.1 stable.
+
+## 5 November 2026 — 2.0.9.8 readiness repair built and installed
+
+At James's request, fixed structural test readiness, reran affected offline
+checks, built a fresh beta ZIP and installed it with a complete verified backup
+and settings preserved. Installed version is now **2.0.9.8**. All earlier runtime
+fixes and both new arrangements are retained; the behavioral change from 2.0.9.7
+is confined to the structural diagnostic. No geometry, simulation or network
+policy changed. No DV launch or Nexus publication was performed.
+
+Begin now selects subject and control only from eligible stationary stock S282s
+whose native loadedExternalInteractables is present. It refuses before starting
+if two suitable loaded cars (including the subject's regular tender) are not
+available, reports loadedEligibleCars, and identifies both selected IDs in status.
+Baseline and both sweep loops check readiness before conversion and after waits.
+If either car unloads, progress is preserved, the sweep stops explicitly with
+aborted=true / abortReason=exterior-interactions-unloaded, remaining return cases
+are skipped and the final stock-restoration attempt remains. Aborted runs cannot
+pass. Strict oilcup assertions and the existing 96-case matrix are unchanged.
+
+New Validate.StructuralReadiness.ps1 executes extracted production Begin,
+HasTestTender, StructuralReadinessError and AbortForReadiness using narrow managed
+car/coroutine boundaries: **21 checks pass**. Covers the lower-ID unloaded subject
+regression, missing loaded subject/control or regular tender, concurrent start,
+existing moving/wreck/powered-control exclusions, selected IDs and mid-run
+subject/control unavailability with retained progress. Source routing guards
+check both loops, baseline protection, skip-on-abort and final restoration order.
+It does not execute the complete Unity sweep coroutine or native loading system.
+An initial fixture-only name-resolution compile error was corrected; final run
+passes. StructuralMatrix passes **2,529 assertions / 96 cases**; all **seven
+RendererLifetime modes** pass. Logs/receipts: `build/readiness-2.0.9.8/`.
+Use `Validate.<Name>.ps1 -OutputDirectory <absolute output path>`.
+
+One integrated Release build via Build.Multiplayer.ps1 passed for core and bridge
+with **zero warnings/errors**. All 109 core and two bridge PDB source documents
+match current production sources; both assembly versions are 2.0.9.8. Runtime
+source hashes also match the build receipt. Source provenance remains checkpoint
+47e8ac7 plus current uncommitted fixes/version changes, not a new clean commit.
+
+Final test ZIP:
+`C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.8-Multiplayer-Test.zip`.
+ZIP SHA-256: `945A2FBD87850B6E83A9044B8AFA7162A77CB822D8455998BFBFE33691E2F570`.
+Core SHA-256: `F5AF66BC78111AA35B402B23BCFDCD162E3D8A0A21AD11486B923AEF9E20C400`.
+Bridge SHA-256: `C1D5BB2AF7F0EC4E0AE3DCA244AB0969A123A9B535730B5D8F1A3970C99E0DA4`.
+Final package uses the verified 2.0.9.7 asset/licence base, fresh DLLs/manifest and
+updated plain-text tester copy. Package validator passes **80 checks**. Final
+receipt: `build/readiness-2.0.9.8/test-package-receipt.json`; original build
+receipt is in `candidate/` (its raw-package ZIP is an intermediate artifact).
+
+Backed up all 100 files of the previous 2.0.9.7 installation, verified every
+backup hash before installation:
+`build/install-backups/2.0.9.7-before-2.0.9.8-20261105-220225/RearrangedS282/`.
+Adjacent file-manifest.json records all backed-up hashes. All 38 final package
+files match their installed copies. Settings.xml is byte-for-byte preserved,
+SHA-256 `9645E3727F1E176709345887C609235A2CD6C7D26F2ED5B7A755FA3E33D516C2`.
+Existing non-package files/captures/caches were preserved and hash-checked.
+Install receipt: `build/readiness-2.0.9.8/install-receipt.json`.
+
+James's next check: place two stationary stock S282s close together, one with a
+regular tender coupled behind it; keep the control unpowered, close regulators
+and stay near both until exterior interactions load. Start the structural test,
+note selected IDs and close UMM so simulation ticks. Remain nearby. A readiness
+refusal/abort now explains what to load before rerunning. A valid full run still
+requires 96 main cases plus six return cases. The last actual game result remains
+the preserved 2.0.9.7 readiness failure below; no passing game result is inferred
+from this repair. Visual/driving and live multiplayer acceptance remain pending
+before Nexus publication or 2.1 stable.
+
+## 5 November 2026 — 2.0.9.7 game structural result: unloaded test subject
+
+James completed the next sweep. Preserved the report (21:37) and matching
+Player.log under `build/structural-results-2.0.9.7-20261105/`, with summary.json.
+**The run failed: 0/96 main cases passed.** Every case has the same oilcup
+initialization error and `oilcupPresentation: { externalLoaded: false }`.
+The selected subject L-033 already had external interactables unloaded in the
+before snapshot; control L-093 had them loaded. Do not treat these as 96 distinct
+arrangement failures or count the run as structural acceptance.
+
+Source explains the common failure: Begin chooses eligible world cars sorted by
+ID without requiring loadedExternalInteractables. CaptureOilCupPresentation
+returns only externalLoaded=false when that object is absent; the validator then
+rejects missing ready=true. The sweep continued through all configurations even
+though the shared oilcup prerequisite never became available. Why L-033's
+interactables were unloaded is not established by these files; player distance
+is a possibility, not an observed fact.
+
+Little Boy's ID37 frame lookup correction is confirmed by the new report:
+ID50 now has two front and two rear pieces and two active engines. All six
+return-sequence cases passed; final stock restored and tender preferences
+unchanged. Those returns do not establish oilcup acceptance.
+
+The log contains AI Traffic startup registration errors, repeated DVSignals
+reservation warnings and later native/DoubleTrack shutdown exceptions. Inspected
+exception stacks do not identify an S282 runtime exception; the S282 log records
+the failed structural result. No profiler/performance or live multiplayer
+conclusion follows from this check.
+
+Next correction should remain in diagnostic selection/readiness: select an
+eligible subject with loaded exterior interactables and reject an unavailable
+prerequisite before a full sweep; handle unloading explicitly. Retain strict
+oilcup assertions, then James reruns with exterior interactions available. No
+production code, package or installation was changed during this results review.
+Nexus/stable acceptance remains pending a valid structural run and James's
+remaining gameplay/multiplayer tests.
+
+## 5 November 2026 — 2.0.9.7 installed for James
+
+At James's request, installed the verified 2.0.9.7 desktop test ZIP. All 38
+package files match the installed copies, including the core/bridge hashes below.
+The complete previous 2.0.9.6 installation (100 files) was backed up and every
+backup hash verified before installation:
+`build/install-backups/2.0.9.6-before-2.0.9.7-20261105-210229/RearrangedS282/`.
+The adjacent file-manifest.json records all backed-up file hashes.
+
+Current Settings.xml was preserved byte-for-byte, SHA-256
+`9645E3727F1E176709345887C609235A2CD6C7D26F2ED5B7A755FA3E33D516C2`.
+Every existing file outside the package, including captures/caches, was preserved
+and hash-checked. Receipt:
+`build/structural-failure-20261105/install-2.0.9.7-receipt.json`.
+No game launch or publication. James should rerun the structural sweep; current
+game evidence remains the 2.0.9.6 95/96 result until he supplies the new run.
+Earlier installed-version statements below are historical.
+
+## 5 November 2026 — Little Boy structural diagnostic corrected in 2.0.9.7
+
+James reported the structural sweep failed. Preserved his 2.0.9.6 report and
+Player.log under `build/structural-failure-20261105/` before changing anything.
+Actual game result: **95/96 main cases passed**, all six return-to-Erie sequence
+cases passed, final stock restored and tender preferences unchanged. Scotch
+passed both tender modes. Only ID50 Little Boy failed, with zero counted front/
+rear frame pieces; its selected ID, two engines, independent-drive readiness,
+animation ownership and all four driver-pitch entries were recorded correctly.
+
+Cause: Little Boy calls the unchanged ApplyMalletGeometry, which configures and
+caches frames under ID37. CapturePresentation looked for frame names containing
+selected ID50. This is a shared-geometry tag lookup mismatch; the source and
+successful ID37 cases explain the missing diagnostic counts. No change to layout
+geometry or simulation was warranted. Added FramePiecePrefix to map only ID50's
+frame tag to ID37. Selected arrangement validation still requires ID50, and
+active/nonempty meshes and the required frame-piece counts remain enforced.
+
+The earlier offline matrix used synthetic presentation rows and missed this
+capture lookup. Its fixture now extracts the production prefix helper and guards
+its use by the real capture method. Checks cover all 51 IDs/three labels and the
+specific Little Boy shared cache. StructuralMatrix passes 2,529 assertions across
+96 cases, and LittleBoy's native wrapper/spacing fixture passes. These offline
+checks do not convert the failed game result into a live pass; James must rerun.
+
+One integrated 2.0.9.7 Release core/bridge build passed with zero warnings/errors.
+Runtime source hashes match the build receipt; the only behavioral change since
+2.0.9.6 is the diagnostic lookup. Version identifiers changed to distinguish the
+new build. Final test package uses the verified 2.0.9.6 asset/licence base and
+fresh DLLs, manifest and tester documents:
+`C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.7-Multiplayer-Test.zip`.
+ZIP SHA-256: `73E6B759BFCBAC50D4CC4AA9C593D6B815758E5B8F9C59F239869D6447DEE69F`.
+Core: `F56CD293B0FA330198D25F303FA2ADFC1A5DAB6DE16B75BC06AFEE12BE97BDF3`.
+Bridge: `54FF831187E93F3BAF59F61DDFAF3C34462482F6314224028491759BA3FC8BFC`.
+Final package receipt: `build/structural-failure-20261105/test-package-2.0.9.7-receipt.json`.
+Validate.MultiplayerPackage.ps1 passed all 80 checks against this desktop ZIP;
+receipt/logs are in `build/structural-failure-20261105/PackageValidation/` and
+`PackageValidation.log`.
+Source is checkpoint 47e8ac7 plus current uncommitted changes. No clean commit
+or gameplay acceptance is claimed. Original 2.0.9.6 failure evidence is preserved.
+
+Installed version remains 2.0.9.6; no game launch, installation or publication
+was performed during this investigation. Install the corrected candidate when
+authorized, then James reruns the structural sweep (expect 96/96 plus six return
+cases). Visual/motion/clearance and live multiplayer acceptance remain separate.
+
+## 4 November 2026 — 2.0.9.6 installed for James
+
+At James's request, installed the verified 2.0.9.6 test ZIP into the existing
+RearrangedS282 mod folder. All 38 packaged files match their installed copies,
+including core/bridge hashes recorded below. A complete verified 78-file backup
+of the previous 2.0.9.5 installation is under
+`build/install-backups/2.0.9.5-before-2.0.9.6-20261104-235503/RearrangedS282/`;
+the adjacent file-manifest.json records every backed-up file hash.
+
+Settings.xml is byte-for-byte preserved (SHA-256
+`930A5B0B02EE50DD28DCF0E7A74832F2C1071E0C7A9DC42654783D48D8D678F4`).
+Existing files outside the package, including captures/caches, were preserved
+and hash-checked. Install receipt: `build/repair-2.0.9.6/install-receipt.json`.
+No game launch or publication; gameplay acceptance awaits James. Earlier
+statements that 2.0.9.5 remains installed are historical.
+
+## 4 November 2026 — 2.0.9.6 renderer repair beta ready for James
+
+At James's request, repaired the two 2.0.9.5 audit findings and built a new
+multiplayer beta ZIP for his testing:
+`C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.6-Multiplayer-Test.zip`.
+Final ZIP SHA-256:
+`598DEA11E65E04E931A9B01A4D8D17610E0D62A5B99960AA624F46E91DC1533D`.
+This supersedes the defective 2.0.9.5 test ZIP. James's gameplay and live
+multiplayer acceptance remain pending before Nexus publication or 2.1 stable.
+
+Each DriveRetarget owner now receives the existing explosion-cache retirement
+callback before its proxies are registered. Its actual Restore body invokes
+retirement before deferred proxy destruction. B99ExplosionMaterials removes
+them from all native material-swap caches and excludes them from same-frame
+include-inactive refresh. This covers already-registered owners retired through
+stock restoration, reapply, hidden linkage/rod/articulated suspension and pool
+return. The options header now derives its count from SupportedCount (51).
+No geometry, catalogue identities, driving physics or networking policy changed.
+
+The existing RendererLifetime fixture now also extracts actual retarget Restore.
+All seven modes pass: three Franklin modes plus retarget fresh cache, populated
+cache, pool return and reapply. The retarget modes check one retirement before
+deferred destruction, same-frame inactive refresh, successful later native
+explosion/repair and replacement-renderer burn/repair. Stock and pool use the
+extracted production outer routes with a narrow retarget suspension adapter;
+the full Unity switch transaction remains James's gameplay check.
+
+Fresh affected checks under `build/repair-2.0.9.6/`: ConnectingRods 905,299;
+FourteenSpacing 1,452; PrairieMotion 92,237; PacificHudsonValveGear 15,717;
+RestoredFeatures 286 assertions/28 transitions/11 explosions; multiplayer
+bridge/core 219/170; IndependentMultiplayer 32 native-port/27 authority checks;
+StructuralMatrix 2,374 assertions/96 cases; RadioSettings 468; ScotchDispatch 22.
+RestoredFeatures requires an absolute OutputDirectory; the initial relative-path
+invocation failed fixture compilation and the absolute-path rerun passed.
+Commands otherwise use `Validate.<Name>.ps1 -OutputDirectory <absolute output>`.
+Older unchanged-layout, physics and native geometry evidence remains applicable
+with the coverage limits in the 2.0.9.5 audit; no new gameplay acceptance inferred.
+
+One integrated Release build via Build.Multiplayer.ps1 succeeded for core and
+bridge with zero warnings/errors. Outputs and original build receipt:
+`build/repair-2.0.9.6/candidate/`. Final package receipt:
+`build/repair-2.0.9.6/test-package-receipt.json` (use this receipt's desktop ZIP,
+not the intermediate raw-package ZIP). Core SHA-256:
+`8AB70048875D5FFFC27704F40FFE8D95AD74ED373C30E68F1D43CB86A2D03E11`;
+bridge SHA-256:
+`BFB18490FCACB59752D52F7ED6942B7AD8C8B660E10763FAA31C2C46D0F75940`.
+Both assembly versions are 2.0.9.6. All 109 core and two bridge PDB source
+documents match current production sources; compiled options IL uses 51.
+Source provenance is checkpoint 47e8ac7 plus the current uncommitted repair and
+version changes, not a new clean source commit. Earlier local doc edits preserved.
+
+Final ZIP uses the verified complete 2.0.9.5 asset/licence base with fresh DLLs,
+2.0.9.6 manifest and current plain-text tester README/checklist/changelog.
+Validate.MultiplayerPackage.ps1 passed 80 checks against the desktop ZIP: safe
+UMM root, expected identities/dependencies, preserved assets/licences, optional
+Multiplayer and no bundled API/personal settings/logs. Package version distinguishes
+the repair from 2.0.9.5; all peers need the exact same new package.
+
+James should install the new ZIP, repeat retargeted-layout -> stock ->
+explosion/repair both before and after an earlier explosion/repair, then check
+Scotch/Little Boy motion, brakes/trucks/rods/curves/LODs and save/reload. Repeat
+host/guest selection, wreck late join/repair and stock tender preference without
+reapply; Scotch optional powered tender and Little Boy ordinary tender. The full
+checklist is MULTIPLAYER_TESTING.txt. The existing manual structural sweep has
+51 ordinary +45 powered cases if James chooses to run it. No DV launch,
+installation or publication was performed; the last installed DLLs remain 2.0.9.5.
+
+## 4 November 2026 — pre-publication audit: repair required (2.0.9.5 historical)
+
+Audited source `47e8ac7`, integrated/installed 2.0.9.5 DLLs and desktop test ZIP.
+**Hold Nexus publication:** `DriveRetarget.Restore` destroys proxy renderers
+without retiring them from explosion material lists. Switching/reapplying a
+retargeted layout before a later explosion can throw on a destroyed renderer.
+Reproduced offline with the actual production cleanup and native B99 explosion
+handler, both before and after native cache population. The earlier Franklin
+retirement fix passes but does not cover this owner. Repair using the existing
+`B99ExplosionMaterials.Forget` lifecycle before deferred destruction; test both
+cache states and same-frame refresh. Also correct the stale 49-arrangement UI
+header during that integrated repair build. No production fix was made here.
+
+See [2.0.9.5 audit](VERSION_AUDIT_2_0_9_5.md) for exact evidence, hashes, commands,
+coverage limits and James's final beta checks. Build/install/archive DLLs match;
+all 111 PDB source documents match current runtime sources. Package validation
+passed 80 checks. Multiplayer, ownership, new-layout, all eight repaired fixture
+families, articulated and oiling checks passed freshly. StructuralMatrix initially
+failed stale 49-ID counts; its fixture is now corrected and passes 2,374 assertions
+across 51 ordinary and 45 supported powered-tender cases. No runtime rebuild was
+needed for that test-only change. Receipts: `build/audit-2.0.9.5/`.
+
+Updated current README/checklist/TODO status, preserving earlier local edits and
+historical records. No game launch, install, production rebuild or publication.
+The installed/test ZIP candidate still contains the reported defect. After its
+repair and bounded offline/package checks, James performs final gameplay and
+live multiplayer acceptance before Nexus or 2.1 stable.
+
+## 4 November 2026 — 2.0.9.5 multiplayer test ZIP
+
+At James's request, packaged the previously built 2.0.9.5 candidate for UMM
+multiplayer testing at `C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.5-Multiplayer-Test.zip`.
+SHA-256 `3B966115536A471215066930002963CA9A9AD0B13D4943DDB8D7301693AFF2E8`.
+The 38-file archive uses the complete 2.0.9.3-beta package as its asset/licence
+base with the verified 2.0.9.5 DLLs, manifest and updated tester instructions.
+Archive integrity, UMM root layout, required assets, optional Multiplayer
+manifest and candidate DLL hashes were checked. It contains no user settings,
+game captures or MultiplayerAPI.dll. No build, game launch or publication;
+gameplay and multiplayer acceptance remain outstanding.
+
+## 4 November 2026 — 2.0.9.5 installed for James
+
+At James's request, installed the 2.0.9.5 candidate core, optional bridge and
+manifest into the existing RearrangedS282 mod folder. Both installed DLL hashes
+match the candidate hashes below; Settings.xml and the remaining mod files were
+preserved. Previous 2.0.9.3 binaries and manifest are backed up under
+`build/install-backups/2.0.9.3-before-2.0.9.5-20261104-231458/`.
+No game launch, package, push or publication. The new layouts still await
+James's gameplay testing; older installation statements below are historical.
+
+## 4 November 2026 — 2.0.9.5 candidate: Scotch Glider and Little Boy
+
+James confirmed acceptance of the post-fix baseline (individual prior gameplay
+results were not supplied) and chose a large-driver express Pacific and a
+two-engine Little Boy with an ordinary unpowered tender. Both arrangements are
+implemented as appended IDs: **49** `4-6-2 Scotch Glider` and **50** `4-6-6-4
+Little Boy`; IDs 0–48 retain their values. Both new random-spawn options default
+off. Scotch can use the normal optional powered tender; Little Boy cannot.
+
+One integrated Release build succeeded with zero warnings/errors:
+`build/candidate-2.0.9.5/integrated/` contains the core and optional bridge,
+version 2.0.9.5. Source/test checkpoint `47e8ac7` contains the candidate;
+the separately pre-existing local documentation edits remain uncommitted.
+Core SHA-256
+`CEFA5185C91C084ABA5574573F46CFA4ACC1DC506DD1B9660727D0CC83F330D1`;
+bridge SHA-256
+`2E59C916427C64AF908689FEC5F08F2FBC5293AB97F02BC1F834663A5A286F86`.
+These are build outputs, not an installable package or a gameplay acceptance.
+
+Post-change checks: radio/catalogue 468; direct source comparison against the
+previous committed catalogue 399, including existing tender policies
+(`pwsh -File .\Validate.CatalogueContinuity.ps1`);
+save/spawn ownership 75; random spawn defaults, opt-in and settings serialization
+1,514; multiplayer
+bridge/core 219/170; native-engine physics 9,602 checks, 3,400 ticks; compiled
+physics wiring 11; Express Mountain dispatch 28. Repaired rod, driver,
+remeshing, additional-family, Pacific/Hudson, Prairie, stock restoration,
+articulated simulation and independent multiplayer checks passed; logs and
+receipts are under `build/candidate-integration-20261104/`,
+`build/candidate-affected-20261104/` and `build/candidate-2.0.9.5/`. Relevant
+pre-change evidence is under `build/preimplementation-baselines-20261104/`.
+The old ArticulatedIntegration script could not run: its historical comparison
+DLL is missing and it assumes 47 IDs; it is not counted as a pass.
+An independent compiled IL/metadata review confirms the new dispatch hooks,
+ID50 rear-engine route and core/bridge API identities; its report is
+`build/candidate-2.0.9.5/integrated/independent-cecil-review.md`.
+
+Scotch: source-measured nominal radius 0.95052 m, native reservoir-LOD gap
+137.43 mm and conservative sampled truck envelope at least 207.76 mm. Its
+extracted dispatcher passed 22 checks with leaf stand-ins; native sampled rod
+and pin checks passed 960/96 poses, with maximum 5.84 mm absolute legacy-related
+bore/pin mismatch and 0.0132 mm added normalized error versus Pacific. Hidden
+linkage replay passed 188,836 checks. Receipts: `build/scotch-glider-20261104/final/`,
+`build/scotch-dispatch-20261104/run1/`, `build/scotch-rods-20261104/final/`,
+and `build/scotch-linkages-20261104/run3/`. Native brake/caliper/shoe seating,
+cylinder/body/main-rod collisions, complete switch transaction and live
+suspension are not established by these fixtures.
+
+Little Boy reuses ID37's native Mallet engines and has six driven plus four
+carrying axles, radius 0.534 m. Extracted actual dispatcher/wrapper and native
+straight-track tyre-spacing checks passed; native engine setup and simulation
+owner are stand-ins there. A source-guarded replay of the unchanged ID37 front
+engine map passed 247,782 hidden-linkage checks; historical ID37 rod/cylinder
+phase evidence applies by measured method reuse, not a new full ID50 sweep.
+Receipts: `build/little-boy-20261104/dispatch-01/` and `linkage-03/`; shared
+hidden-linkage rerun `hidden-standalone-02/`. Full TrainCar transaction, both
+engines under live articulation, track/coupler clearance and gameplay remain
+unverified.
+
+Physics uses retained 2.0.9.3 gameplay-captured radii for unchanged IDs 0–48;
+IDs 49/50 use separately recorded source-hash-checked offline geometry receipts,
+not gameplay captures. Run `Validate.PreliminaryPhysics.ps1` with explicit
+`-ScotchGeometryReceipt` and `-LittleBoyGeometryReceipt` paths; it rejects
+missing or stale inputs. Refresh measurements when affected geometry changes.
+
+James performs DV testing: check both new layouts and their existing Pacific
+and 2-6-6-2 relatives; switch each to the other and stock; save/reload; check
+host/guest selection and late join; inspect gears, pin/rod/brake/cylinder
+clearance, trucks, curves and tender. The earlier Franklin-to-stock
+explosion/repair, exploded guest late join/repair and stock tender reapply
+remain useful regression checks. Installation and publication require separate
+instructions. No game was launched, no mod installed and no package published.
+
+## 4 November 2026 — new arrangement work in progress (historical)
+
+James confirmed that the post-fix baseline is accepted and requested a large-driver
+express 4-6-2 Scotch Glider and a 4-6-6-4 Little Boy with two powered driver
+groups and a normal unpowered tender. His acceptance is recorded as stated;
+individual gameplay-check results were not supplied. The previous three priority
+scenarios remain useful regression checks. Installation and publication are
+separate decisions, and James performs gameplay testing.
+
+Pre-implementation offline baselines are preserved under
+`build/preimplementation-baselines-20261104/`. The runnable physics, rod,
+geometry, articulated, multiplayer, oiling and renderer checks passed. The
+old `Validate.ArticulatedIntegration.ps1` could not run: its hardcoded historical
+comparison DLL is missing, and it expects the obsolete 47-ID catalogue. Its
+failure is retained, not counted as a pass. See individual receipts for scope.
+
+At that point implementation was in progress; see the candidate status above.
+
+## 4 November 2026 — remaining offline fixtures repaired
+
+The eight fixtures reported failing below now pass on the existing post-fix
+source. Run the commands from the repository root. They execute production
+methods against captured native data and managed stand-ins; these are offline
+results, not Unity rendering, driving or multiplayer gameplay acceptance.
+Default outputs now go under `build/offline-validation/`; specify a fresh
+`-OutputDirectory` to preserve each new run's receipt.
+
+| Command | Observed result | Scope / when to run |
+| --- | --- | --- |
+| `.\Validate.ConnectingRods.ps1` | PASS 905,299 checks; 16 cases. | Fixed-pitch rod motion, oil, LOD and rollback; run after those systems change. |
+| `.\Validate.DriverLayouts.ps1` | PASS 26,181 checks; 16 cases. | Fixed-pitch driver geometry, switching, native sampled poses and rollback. A wrong-pitch negative control failed as expected. Run after driver geometry changes. |
+| `.\Validate.AdditionalArrangements.ps1` | PASS 1,954 checks. | Giant-wheel presentation, axle mapping and ownership; run after additional-family changes. |
+| `.\Validate.FourteenSpacing.ps1` | PASS 1,452 checks; 96 poses. | 4-14-4 spacing and native sampled motion; requires historical reference commit `f31e01f59bfdd8eab179a00c03111269eb59e04f`. Run after ID 39 spacing or linkage changes. |
+| `.\Validate.PacificHudsonValveGear.ps1` | PASS 15,717 checks; 48 unique poses. | Shared valve-gear method, sampled native pipe vertices and stand-in mesh channels. Does **not** test IDs 4/5 dispatch or a nonzero retarget; run after shared gear or pipe changes. |
+| `.\Validate.PrairieCylinders.ps1` | PASS 369,143 checks; 1,536 poses. | Rigid casing geometry, fittings, stock bypass and 49-ID full-casing classification. ID 48's distinct geometry and articulated assembly are not exercised. Run after casing/fitting changes. |
+| `.\Validate.PrairieMotion.ps1` | PASS 92,235 checks; 768 poses and 2,304 cup samples. | Prairie motion, retarget, oil and 49-ID reservoir-clearance classification, with ID 48 exercised in the shared eight-driver rig. Its bogies/full layout and articulated assembly are not covered. Run after Prairie motion or clearance changes. |
+| `.\Validate.PreliminaryPhysics.ps1` | PASS 8,334 checks; 267 layout-mass cases and 2,800 native ticks. | Native engine calibration and restoration, not measured driving performance. The measured radii come from a historical **2.0.9.3-beta** capture, not 2.0.9.4 gameplay; refresh the capture when layout geometry or catalogue changes. The native definition is hash-pinned, but its original extraction provenance remains unverified. |
+
+Results: rod receipts `build/tooling-repair-20261104/`; Additional, Fourteen
+and Physics receipts `build/fixture-repair-20261104/`; Pacific and Prairie
+receipts `build/tool-tidy-20261104/`. Physics rejects incomplete captures;
+the relevant radius-producing source was compared between 2.0.9.3 checkpoint
+`6f850b2` and post-fix HEAD. The independent family review confirmed the
+Pacific/Hudson caller-dispatch and stand-in boundaries above. No production
+defect was established. Historic failing receipts and classifications below
+are retained as historical evidence.
+
+No production source, DLL, installed mod or save was changed; no game was
+launched. James performs gameplay acceptance on a separately authorized build.
+
+## 4 November 2026 — offline validation tool dispositions
+
+Tooling-only pass on post-fix HEAD `46a9a72`; the existing integrated core DLL
+remains SHA-256 `40DD503FFC9409CFF9E608EDB3C8165BD8F884B7F6160B9ACB66277666F47CE2`.
+No production source or DLL was rebuilt or changed. Run the commands below from
+`B:\GitHub repo\rearranged-s282-multiplayer`. Passing fixture checks use native
+algorithms and/or managed stand-ins as documented; they are not gameplay acceptance.
+
+| Tool or command | Disposition / replacement | Observed result and when to run |
+| --- | --- | --- |
+| `.\Validate.RestoredFeatures.ps1` | Retained; updated stale multiplayer boundary. | **PASS 286**, 28 stock/traction transitions and 11 explosion cycles. Run for stock physics, brake/axle restoration, no-driver and material changes. |
+| `.\Validate.RendererLifetime.ps1` | Retained and extended; complements RestoredFeatures. | **PASS 27**. Actual extracted stock restoration/pool-return methods and Franklin lease plus installed native explosion/repair methods; articulated suspension is a checked source link with a stand-in. Run for pin ownership, switching/pooling or material-cache changes. |
+| `.\Validate.RodRemesher.ps1` | Retained; shared extractor now guards the rod recipe, ranges and importer dependencies. | **PASS 452,776**, 180 native topology cases. Run for rod recipe, pin/boss mapping or remeshing changes. Guard mutation checks pass; original source/importer LOD0/LOD1 topology matches installed native assets. |
+| `.\Validate.ConnectingRods.ps1` | Retained; no fully equivalent replacement. | **FAIL after extraction/compile**: obsolete adjustable-pitch expectation, `0.18 vs 0.01`; later checks did not run. Repair fixture for current fixed per-family pitch/rearward values, then run for rod motion, LOD, oil and switch isolation. |
+| `.\Validate.DriverLayouts.ps1` | Retained; no fully equivalent replacement. | **FAIL after extraction/compile**: obsolete adjustable-pitch expectation, `0.18 vs 0`; later checks did not run. Repair fixed-pitch/rearward expectations, then run for driver spacing, native pin/rod, LOD and stock restoration. |
+| `.\Validate.BigEndOilingOwnership.ps1` | Retained and expanded; replaces MultiplayerOiling. | **PASS 655** on native oiling/save code. Guest oil/lids/refill and refill-flow stay unchanged before and after mask assignment, assistance off/on; host/migration checks pass. Run for oil ownership, masks, save migration or authority. |
+| `Validate.MultiplayerOiling.ps1` | **Removed**; use `.\Validate.BigEndOilingOwnership.ps1`. | Old extracted fixture failed compilation on stale stubs; the replacement's missing-guest-gate negative control fails as expected. Historical audit references remain historical. |
+| `.\Validate.AdditionalArrangements.ps1` | Retain; ExpressMountain is partial, not equivalent. | **FAIL compile**: stale `s440` enum; update stubs and obsolete adjustable giant diameter to fixed 2.8 m. Run after giant/additional wheel, axle or clone-lifetime changes. |
+| `.\Validate.FourteenSpacing.ps1` | Retain; hidden-linkage checks are historical and partial. | **FAIL compile**: stale quaternion/math stubs; replace false HEAD-as-pre-0.25-m baseline with verified historical datum. Run after 4-14-4 spacing, linkage, LOD or cup changes. |
+| `.\Validate.PacificHudsonValveGear.ps1` | Retain; cylinder shape/hidden-linkage checks are partial. | **FAIL compile**: missing current Dummiesman dependency. Restore importer boundary and native clip/restoration assertions; run after Pacific/Hudson gear, motion or dry-pipe changes. |
+| `.\Validate.PrairieCylinders.ps1` | Retain; cylinder shape tests are partial. | **FAIL compile**: missing Dummiesman dependency. Repair importer/owner stubs and catalogue mapping; run after Prairie casings, fittings, particles or LOD changes. |
+| `.\Validate.PrairieMotion.ps1` | Retain; hidden-linkage checks are historical and partial. | **FAIL compile**: stale math, enum and owner fields. Repair stubs and extend obsolete 47-ID clearance sweep to current 49 IDs; run after Prairie motion, retarget, oil sync or large-driver clearance changes. |
+| `.\Validate.PreliminaryPhysics.ps1` | Retain; articulated-engine tests are partial. | **FAIL compile**: missing multiplayer authority stub. Repair boundary and verify captured calibration-input provenance; run after cylinder, mass, adhesion, radius or tender-physics changes. |
+
+Detailed family behavior, partial historical receipts, exact repair notes and run
+triggers: `FAMILY_VALIDATION_GUIDE_2026_11_04.md`. Family baselines and logs:
+`build/tooling-classification-20261104/`; rod before/after/failure logs:
+`build/tooling-tidy-rods/`; native oiling evidence and negative control:
+`build/tool-tidy-20261104/`; restored/renderer results:
+`build/offline-tools-20261104/` and `build/offline-tools-renderer-routes.log`.
+The two rod runtime assertion failures reflect obsolete fixture assumptions;
+no production defect was established, and unexecuted assertions are not passes.
+
+Gameplay remains James's responsibility on a separately authorized build.
+Installed mod and saves were not changed; no production build, package, push or
+publication was performed. The pre-existing audit/document edits are preserved.
+
+## 4 November 2026 — audited baseline corrections, awaiting James's testing
+
+The 2.0.9.4 audit's renderer-lifetime, exploded guest late-join, stock tender
+snapshot and mesh-only importer findings were reproduced and corrected. No new
+arrangements were added and the 49 existing IDs remain stable. See
+BASELINE_FIXES_2026_11_04.md for exact before/after evidence and limits; it
+supersedes the hold-for-corrections status immediately below but not the
+requirement for James's gameplay acceptance before requesting new layouts.
+
+One integrated Stage 3 Release build compiled core and optional adapter with
+zero warnings/errors. Core SHA256 is
+40DD503FFC9409CFF9E608EDB3C8165BD8F884B7F6160B9ACB66277666F47CE2;
+bridge SHA256 is A0F5F75D471D4E95D8C5A60F7228D2D4C521CB3866A77CAFB0E301E20DD30EF1.
+Focused renderer, importer, multiplayer, radio and independent-drive checks
+pass. Historical Franklin geometry sweeps used the earlier core hash; their
+provenance and the remaining audit fixture gaps are preserved in the report.
+
+No DV launch, save change, installation, release package, push or publication.
+Installed remains 2.0.9.3-beta. Gameplay acceptance is James's responsibility
+on a separately authorized build: Franklin -> stock -> explosion/repair;
+exploded non-stock late join -> repair; stock tender before/after reapply.
+Only after acceptance, ask James for the exact arrangement list and append IDs.
+
+## 4 November 2026 — whole-version audit of 2.0.9.4 at `7a6aa1d`
+
+Hold new arrangement implementation pending the explosion-renderer and multiplayer corrections in [the audit and next-session brief](VERSION_AUDIT_2_0_9_4.md). The exact Franklin core hash below was verified. The optional bridge compiled against that DLL and API 1.1. The regular managed handshake, authority, settings and independent-drive tests passed. A separate focused probe reproduced an untouched stock host advertising a powered tender to its guest. The audit also traces a guest disconnect on joining an exploded, modified S282 and identifies importer and per-frame costs.
+
+Installed version verified from the game manifest: 2.0.9.3-beta. The audit changed project documentation only. James owns the gameplay checks, including a two-peer check after the fixes. Historical test receipts below retain their original scope.
+
 ## Franklin pin and triplex repair for 2.0.9.4 — 4 November 2026
 
 James subsequently authorised the smallest native production repair, agents and

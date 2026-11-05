@@ -24,14 +24,15 @@ namespace RearrangedS282 {
   private Physics stage2Physics=new Physics();
   private Transform[] generatedRoots=Array.Empty<Transform>();
   private WheelArrangementType currentWA;
-  internal RouteFixture(TrainCar car,IDisposable lease){this.car=car;franklinPinLeases.Add(lease);}
+  private Action retireRetarget;
+  internal RouteFixture(TrainCar car,IDisposable lease,Action retireRetarget=null){this.car=car;if(lease!=null)franklinPinLeases.Add(lease);this.retireRetarget=retireRetarget;}
   internal void SwitchToStock()=>RestoreConventionalStock();
   internal bool PoolReturn()=>ResetConventionalForPool();
   internal bool Stock=>currentWA==WheelArrangementType.s282;
   private T GetComponent<T>() where T:class => car as T;
   private float CaptureQuarteringCycle()=>0;
   private void SuspendArticulatedGeometry()=>SuspendFranklinDriverPins();
-  private void ReleaseIndependentDrive(){} private void DetachTenderEngine(){} private void SuspendHiddenNativeLinkages(){}
+  private void ReleaseIndependentDrive(){} private void DetachTenderEngine(){} private void SuspendHiddenNativeLinkages(){retireRetarget?.Invoke();}
   private void SuspendSteamConnections(){} private void SuspendConnectingRodSpacing(){} private void RestoreCylinderCasings(){}
   private void SuspendAdditionalGeometry(){} private void Suspend4144Geometry(){} private void SuspendDriverLayout(){}
   private void ApplyDriverQuartering(float cycle,bool restore){} private void RefreshConventionalRollingAudio(){}

@@ -1,0 +1,13 @@
+File title: Rearranged S282 2.0.9.8 - Final Beta
+Version: 2.0.9.8
+Suggested category: Optional file / final beta before 2.1 stable
+Archive: RearrangedS282-B99-2.0.9.8-beta.zip
+
+51 arrangements, including Scotch Glider and Little Boy; 45 compatible powered-tender choices. Restored linkages, Franklin pin/triplex clearance repairs, renderer explosion cleanup, multiplayer state fixes, OBJ importer repairs and structural readiness/identity corrections. Full changes since 2.0.9.3-beta are included.
+
+Requires DV B99 on Windows, UMM 0.27.3+ and Locomotive Mesh Splitter.
+Online: all peers need DV Multiplayer 0.1.16.0-beta and this exact complete package. Multiplayer is optional offline and its API is not bundled. Leave Realistic Firing off initially.
+
+Close the game. Back up the previous mod folder and personal Settings.xml outside Mods, install one complete package and restore your settings if needed. Keep all bundled assets, exporter and licence files.
+
+The installed runtime passed 96/96 stationary structural cases plus six return checks, restoring stock and preferences. Gameplay/moving clearances and live multiplayer remain separate beta acceptance. Native guide/crosshead/main-rod cups are preserved.

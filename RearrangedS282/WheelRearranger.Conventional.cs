@@ -217,6 +217,10 @@ namespace RearrangedS282
                 ArticulatedEffects.Refresh(loco, WheelArrangement.IsArticulatedId(id) || poweredTenderSelected);
                 // Includes inactive conventional LODs and lazily created rear
                 // engines. Exclude other integrations' separately owned effects.
+                // Any proxy registered below must unregister before its owner
+                // destroys it, including stock, reapply and pool-return paths.
+                foreach (var retarget in GetComponentsInChildren<DriveRetarget>(true))
+                    retarget.Retire = renderers => explosionMaterials?.Forget(renderers);
                 explosionMaterials?.Refresh(GetComponentsInChildren<MeshRenderer>(true)
                     .Where(r => !DeltaTrailingTruckCompatibility.IsPresentation(r.transform) &&
                         !ArticulatedEffects.IsOwnedPresentation(r.transform)));

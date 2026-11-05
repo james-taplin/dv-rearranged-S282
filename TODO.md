@@ -1,6 +1,44 @@
 # B99 to-do ledger
 
-Updated23October2026. Installed1.23.2 TEST after game-closed check. Exact audited ZIP installed; all36 packaged files verified. Settings and previous diagnostic captures retained; obsolete shipped diagnostic tools/instructions removed. Latest structural capture is1.23.1(85/91main pass); subsequent runtime acceptance remains unrecorded. Public release corrected to2.0-beta at James's request; current full README/Nexus copy and ZIP use that version. Version-only rebuild verified; existing gameplay unchanged. Not installed/pushed/uploaded/published. CURRENT_HANDOVER.md records evidence/limits. No full backups/rollbacks.
+## 2.0.9.8 Nexus final beta preparation — 5 November 2026
+
+James authorized the Nexus final-beta ZIP, release notes/docs and full changelog
+since 2.0.9.3-beta. Keep all native cups. Release copy is under
+release-copy/2.0.9.8-beta; preserve the installed/tested DLL hashes during repack.
+Structural acceptance is 96/96 plus six returns. Prepare/validate locally;
+James owns uploading and remaining visual/driving/live multiplayer feedback
+before 2.1 stable. Exact final artifact and provenance are in CURRENT_HANDOVER.md.
+
+## 2.0.9.8 readiness repair — 5 November 2026
+
+Built, validated and installed with the complete previous version backed up and
+settings preserved. Structural selection now requires loaded exterior interactions
+on both cars and stops the sweep on readiness loss. Offline readiness 21 checks,
+matrix 2,529 assertions and seven renderer-lifetime modes pass; build is clean and
+package passes 80 checks. James's 2.0.9.8 in-game structural sweep now passes all
+96 main cases and six return checks, with stock/preferences restored. Visual/
+driving and live multiplayer acceptance remain pending. His suspect guide-top
+cup corresponds to a retained native guide oiling point; preserve native cups
+and investigate only demonstrated extra/misplaced presentation. See CURRENT_HANDOVER.md.
+
+## 2.0.9.7 diagnostic correction — 5 November 2026 (historical)
+
+James's 2.0.9.6 sweep passed 95/96 main cases and all six return-sequence cases.
+Little Boy's frame diagnostic used selected ID50 instead of its reused ID37
+geometry tag. Corrected the lookup and added production-prefix coverage (2,529
+offline assertions). Fresh 2.0.9.7 beta ZIP prepared and installed with the previous
+version backed up and settings preserved. James's corrected in-game sweep and gameplay/multiplayer acceptance
+remain open. Exact evidence and hashes are in CURRENT_HANDOVER.md.
+
+## 2.0.9.6 renderer repair — 4 November 2026
+
+Retarget proxy retirement now uses the existing explosion-cache owner before deferred destruction, and the options header derives its count from the catalogue. The lifetime fixture covers actual retarget cleanup, populated/unpopulated caches, same-frame refresh, stock/reapply and pool routes. Exact 2.0.9.6 build/package evidence is in CURRENT_HANDOVER.md. James's gameplay and live multiplayer checks remain open before Nexus publication and 2.1 stable. [Historical defect report](VERSION_AUDIT_2_0_9_5.md)
+
+The earlier Franklin-pin retirement, exploded-locomotive replica, stock tender snapshot and OBJ fixes are present and their focused checks pass. The StructuralMatrix fixture's stale catalogue counts were corrected in this audit (2,374 checks, 96 cases). Existing geometry/physics coverage limits remain recorded in the handover; no gameplay acceptance is inferred from fixture passes.
+
+## Historical ledger from 23 October 2026
+
+Installed1.23.2 TEST after game-closed check. Exact audited ZIP installed; all36 packaged files verified. Settings and previous diagnostic captures retained; obsolete shipped diagnostic tools/instructions removed. Latest structural capture is1.23.1(85/91main pass); subsequent runtime acceptance remains unrecorded. Public release corrected to2.0-beta at James's request; current full README/Nexus copy and ZIP use that version. Version-only rebuild verified; existing gameplay unchanged. Not installed/pushed/uploaded/published. CURRENT_HANDOVER.md records evidence/limits. No full backups/rollbacks.
 Deferred entries do not authorize publication or unrelated implementation.
 
 | ID | Priority / state | Work and acceptance |

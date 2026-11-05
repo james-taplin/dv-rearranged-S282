@@ -1,0 +1,225 @@
+[size=5][b]Rearranged S282 - 2.0.9.8 Final Beta[/b][/size]
+
+51 selectable S282 arrangements, optional powered tenders and optional multiplayer. This is the final planned beta before 2.1 stable, with 4-6-2 Scotch Glider, 4-6-6-4 Little Boy and the repairs developed since 2.0.9.3-beta.
+
+[b]NEW IN THIS BETA[/b]
+Scotch Glider is a large-driver express Pacific and supports the optional powered tender. Little Boy uses two three-axle Mallet locomotive engines, four-wheel leading/trailing trucks and an ordinary unpowered tender. Both new random-spawn options are off by default. Existing arrangement IDs remain unchanged; the catalogue now has 51 arrangements and 45 compatible powered-tender choices.
+
+Supported reach and lubricator linkages are restored, Franklin pin seating and middle triplex cylinder clearance are corrected, and generated renderers leave native explosion caches before destruction. Multiplayer corrections cover already-exploded late joins and initial stock-tender state. OBJ imports avoid the reproduced temporary-object/material leak and handle EOF and relative indices correctly. The structural test now recognizes Little Boy's shared frame geometry and checks loaded exterior interactions before and during its sweep.
+
+[b]NATIVE OILING[/b]
+Original guide, moving-crosshead and main-rod oilcups remain intact. Optional big-end oiling adds dedicated crank-pin cups; automatic filling/lid closing is off by default. The guide-top cup is native, not an unwanted extra crosshead cup.
+
+[b]RADIO AND MULTIPLAYER[/b]
+Every player uses their own Wheel Rearranger radio. Stop and close the regulator before selecting a layout. The host validates changes and shares the accepted arrangement and effective per-car preferences. Ctrl+F10 > Rearranged S282 provides host permissions and reapply controls. Blocked guests still receive updates; locks reset when they leave. Native Multiplayer owns transport and train movement. Ordinary single-player use does not require Multiplayer.
+
+[b]INSTALLATION[/b]
+Requires Derail Valley B99 on Windows, Unity Mod Manager 0.27.3+ and Locomotive Mesh Splitter. Online, everyone needs DV Multiplayer 0.1.16.0-beta and this exact complete package. Multiplayer and its API are not bundled. Leave Realistic Firing off for initial testing.
+
+Close the game and back up the previous RearrangedS282 folder and Settings.xml outside Mods. Install through UMM, or manually extract the single RearrangedS282 folder into Mods. Restore personal settings if needed. Keep one complete version installed; do not mix DLLs/assets.
+
+[b]TEST STATUS[/b]
+James's installed 2.0.9.8 passed all 96 stationary structural cases and six return checks, with stock restored and tender preferences unchanged. Core and bridge compiled with zero warnings/errors, affected offline regressions passed and package contents were verified. A stationary sweep does not prove moving clearances, sustained performance or live multiplayer; Multiplayer was absent in the successful session. This remains a beta for gameplay and peer feedback before 2.1 stable.
+
+Independent locomotive-group slip is included. Powered tenders retain pooled/manual force with their own movement-linked animation clock; independent tender slip and true compound expansion remain unimplemented. The giant 2-2-2 remains an unfinished clearance prototype.
+
+[b]REPORTING[/b]
+Include the exact version, arrangement, gear/tender choices, role, steps and Player.log; a short video helps with motion/placement issues. Retain Settings.xml. Include the structural JSON if used, and host/affected-guest logs for multiplayer. README.txt and UMM_OPTIONS.md explain controls and the diagnostic prerequisites.
+
+Full changes since 2.0.9.3-beta are in CHANGELOG.txt below/included with the download. Original mod by SatiricRug / Peter Schinske; B99 continuation by JimTaplin. Full credits and third-party licences are included.
+
+
+[size=4][b]Full changelog since 2.0.9.3-beta[/b][/size]
+
+REARRANGED S282 2.0.9.8 FINAL BETA
+Full changes since 2.0.9.3-beta - 5 November 2026
+
+This is the final planned beta before 2.1 stable. The sections below cover the
+development builds 2.0.9.4 through 2.0.9.8; they were not all public Nexus releases.
+The runtime version is 2.0.9.8. Existing arrangement IDs 0-48 are preserved.
+
+NEW ARRANGEMENTS - 2.0.9.5
+
+- Added ID 49, 4-6-2 Scotch Glider: a large-driver express Pacific, with a
+  nominal driver radius of 0.95052 m. It supports the optional powered tender.
+- Added ID 50, 4-6-6-4 Little Boy: two three-axle native Mallet engine groups,
+  with four-wheel leading and trailing trucks and an ordinary unpowered tender.
+  It retains the Mallet's nominal 0.534 m driver radius.
+- The catalogue now has 51 selectable arrangements and 45 compatible optional
+  powered-tender choices. Little Boy is excluded from powered-tender selection.
+- Both new random-spawn options default off, including when loading older
+  settings. Existing saved arrangement names/IDs and tender policies are retained.
+- Integrated the new layouts into radio selection, per-car settings, geometry
+  dispatch, axle registration, casing and steam presentation. Little Boy uses
+  the existing rear-engine simulation and independent-drive route.
+- Scotch keeps its brake/caliper/spark fittings aligned with its enlarged drive
+  frame. Little Boy retains the existing Mallet engine setup and changes its
+  carrying trucks without introducing a third locomotive engine.
+
+RESTORED REACH AND LUBRICATOR LINKAGES - 2.0.9.4
+
+- Restored previously hidden reach/cutoff and mechanical-lubricator presentation
+  on the supported resized conventional layouts and front Walschaerts engines
+  of the supported Mallet/Erie families. Scotch and Little Boy also use this path.
+- Rods now meet their original cab/oiler endpoint trajectories while retaining
+  their animated gear-side pivots. Moving oiler levers follow the existing oiler
+  frame, and the native lubricator animation is retained.
+- Extended the existing retarget owner with fixed-endpoint and anchored-part
+  presentation, preserving native controllers, quartering and simulation ports.
+- Retained native materials, submeshes, protected rod-end shapes and LOD
+  membership. Proxy bounds include the changed spans and shared LOD owners
+  unwind in reverse order on arrangement changes.
+- Corrected reflected-X OBJ import/winding for the restored linkage meshes and
+  retained the existing exporter/cache approach. Reapply reuses cached mesh data.
+- Existing valve-gear visibility choices still govern the restored parts.
+  Replaced Franklin mechanisms, unsupported rear/tender cab-oiler links and the
+  unfinished giant 2-2-2 are not given invented attachments.
+
+FRANKLIN PINS AND TRIPLEX CLEARANCE - 2.0.9.4
+
+- Corrected the Franklin pin/bearing presentation on IDs 31, 32, 38, 40 and 47.
+  Owned copies of native wheel/pin geometry now seat the moving rod bearings,
+  rather than relying on enabling the old unseated pin renderers.
+- The main driver uses the native long pin; other coupled drivers retain the
+  native short-pin arrangement. Native position/rotation constraints preserve
+  the existing rod orbit and wheel rotation without changing rim geometry,
+  animator clocks, wheel transforms or traction/simulation ports.
+- Added explicit ownership/restoration of generated pin meshes, objects, LOD
+  arrays and bounds, including teardown on stock return and destruction.
+- Corrected the middle Franklin cylinder noses on the 2-8-8-8-0 and 2-4-4-4-0
+  locomotive triplexes (IDs 38 and 47), shortening the relevant native nose zone
+  by 0.20 m. Front caps move rigidly; bore axes, rear faces and shaft mounts stay
+  fixed. Steam inlet and particle presentation follow the corrected casting.
+- Retained existing engine spacing, articulation and the earlier ID 32 repair.
+
+EXPLOSION / REPAIR AND PRESENTATION LIFETIME - 2.0.9.4 AND 2.0.9.6
+
+- Retire generated Franklin pin renderers from native explosion/material-swap
+  caches before Unity destroys them. Include-inactive scans cannot register
+  those retired objects again during the same frame.
+- Extended the same retirement mechanism to retargeted linkage proxies in
+  2.0.9.6, covering arrangement switches, reapply, stock restoration, owner
+  teardown and pool return. This fixes the stale renderer reference that could
+  interrupt a later explosion/repair material change.
+- Retirement preserves unrelated renderers and new replacement presentation.
+  Regressions cover unpopulated/populated native caches, same-frame refresh,
+  restoration and subsequent burn/repair of replacement renderers.
+
+MULTIPLAYER STATE CORRECTIONS - 2.0.9.4
+
+- A guest joining an already-exploded rearranged locomotive keeps the latest
+  requested state pending until both native explosion flags/model are repaired.
+  Time spent exploded no longer consumes that car's normal readiness timeout.
+  Other locomotives continue to synchronize while the wreck waits.
+- Initial host discovery of a stock locomotive publishes the tender actually
+  applied to that car, rather than an unapplied powered-tender preference.
+  Changing the preference alone therefore does not give a late-joining guest
+  different tender geometry. Explicit reapply still applies the new preference.
+- Preserved host validation, guest radio requests/locks, revision handling,
+  effective per-car profiles and genuine replica-failure safeguards. The native
+  multiplayer mod continues to own transport and train movement.
+
+OBJ IMPORTER CORRECTIONS - 2.0.9.4
+
+- Mesh-only OBJ loading no longer creates temporary scene GameObjects or
+  materials, removing the reproduced lifetime leak in that import path.
+- Face parsing terminates correctly at end-of-file without a trailing newline.
+- Relative/negative vertex, UV and normal indices resolve correctly; invalid
+  face tokens are rejected explicitly.
+- Geometry, UVs, normals, submeshes and winding retain parity with the earlier
+  importer for the existing positive-index model inputs checked offline.
+
+STRUCTURAL DIAGNOSTICS AND OPTIONS - 2.0.9.5 THROUGH 2.0.9.8
+
+- Expanded the structural matrix to 51 ordinary-tender and 45 supported
+  powered-tender cases, plus the six existing return-sequence checks.
+- The options header now derives the arrangement count from the catalogue,
+  replacing the stale 49-arrangement label in 2.0.9.6.
+- Corrected Little Boy's structural frame lookup in 2.0.9.7: its selected ID
+  remains 50, while the diagnostic recognizes its reused ID 37 Mallet frame
+  geometry. Required active/nonempty frame counts remain enforced.
+- Structural selection in 2.0.9.8 requires loaded exterior interactions on both
+  test and control locomotives. An unavailable prerequisite is rejected before
+  starting, and status identifies the selected locomotive IDs.
+- If either car unloads during the sweep, it stops with an explicit readiness
+  reason, retains completed results, skips remaining return cases and still
+  attempts final stock restoration. An aborted run cannot count as a pass.
+- Kept strict oilcup coverage, control-isolation, ownership, restoration and
+  preference checks. Native guide, crosshead and main-rod cups are retained;
+  no oilcups were removed in response to the guide-cup review.
+
+OFFLINE TOOLS AND COVERAGE - 2.0.9.4 ONWARD
+
+- Repaired the connecting-rod, driver-layout, additional-arrangement,
+  fourteen-coupled spacing, Pacific/Hudson gear, Prairie casing/motion and
+  preliminary-physics fixtures to match the current production methods and
+  casing/reservoir classifications.
+- Retired the stale standalone MultiplayerOiling script; current oiling/authority
+  coverage uses the maintained ownership and multiplayer fixtures.
+- Added catalogue-continuity, new-layout dispatch/geometry/linkage, renderer
+  retirement, mesh-import and structural-readiness regressions. Structural
+  fixtures now cover the actual frame-prefix lookup and readiness selector,
+  not only synthetic presentation rows.
+- Preliminary physics requires source-hash-checked geometry receipts for the
+  two new IDs. Existing unchanged IDs retain their earlier captured radii;
+  offline calculations are not relabelled as new gameplay measurements.
+
+VALIDATION OF THIS FINAL BETA
+
+- James's installed 2.0.9.8 completed all 96 stationary structural cases and
+  all six return-sequence cases. Stock was restored and tender preferences
+  remained unchanged. Both new layouts are included in that result.
+- Integrated core/bridge build: zero warnings/errors. Maintained affected
+  offline regressions and package validation passed; source/binary identity
+  and retained runtime hashes were checked.
+- Structural success does not establish moving rod/cylinder clearance,
+  sustained driving performance, audio/visual acceptance or live multiplayer.
+  Multiplayer was not loaded for the successful structural session.
+- This is the final planned beta before 2.1 stable, not a universal clipping,
+  error-free or performance guarantee. Beta feedback and gameplay testing
+  remain part of the path to stable.
+
+ALREADY INCLUDED IN 2.0.9.3-beta AND RETAINED
+
+The tender clone/mirror configuration and signed-RPM direction repair, the
+2-6-6-2 Mallet engine-spacing repair, earlier independent-slip startup/RPM-lease
+fixes, optional multiplayer radio/host controls and the existing 49 arrangements
+remain included. They are the baseline for this changelog, not new 2.0.9.8 fixes.
+Independent powered-tender slip and true compound expansion remain unimplemented.
+
+
+[size=4][b]Credits[/b][/size]
+
+REARRANGED S282 B99 - 2.0.9.8 FINAL BETA CREDITS
+
+Altfuture / Derail Valley;
+SatiricRug / Peter Schinske / the original Rearranged S282, its custom running gear and assets, and Locomotive Mesh Splitter;
+discorddraconequus / the Verde stage-specific chuff reference that informed the Mallet and Erie sound tuning;
+Dad's Derailroader / reference tooling for the B99 driver, wheel-radius and adhesion conversion approach;
+thomas404dk / detailed testing, videos, logs and bug reports;
+SPRINTEREX / the independently selectable powered-tender request;
+the Nexus testers and bug reporters / feedback and help improving the mod;
+Derail Valley Modding / the original mod template;
+Dummiesman / Runtime OBJ Importer;
+Radu, Perfare, aelurum and contributors / AssetStudio and AssetStudioMod;
+Milosz Krajewski and Yann Collet / K4os.Compression.LZ4 and LZ4;
+Jb Evain, Novell and contributors / Mono.Cecil;
+James Newton-King and contributors / Json.NET;
+.NET Foundation, Microsoft and contributors / the bundled .NET compatibility libraries;
+Brotli Authors / Google / embedded Brotli decompression;
+Matthaus G. Chajdas / embedded CSspv shader conversion;
+Igor Pavlov / the embedded public-domain LZMA SDK;
+
+AND:
+JimTaplin / B99 continuation, arrangement development, physics calibration, integration, testing and releases;
+Claude and Codex / coding, investigation, geometry tooling and implementation assistance;
+
+The original mod is by SatiricRug / Peter Schinske and is distributed under the MIT licence. Its original copyright and licence text are retained in LICENSE. Bundled libraries keep their own licences; the complete notices are included in THIRD_PARTY_NOTICES.txt and licenses/.
+
+The Verde contribution is a reference for the sound-tuning technique; no Verde code, meshes or audio assets are bundled. Derailroader and MultiCylinderChuffFix are not bundled or required at runtime.
+
+Original source: https://github.com/pjschinske/dv-rearranged-S282
+Original Nexus mod: https://www.nexusmods.com/derailvalley/mods/752
+B99 fork: https://github.com/james-taplin/dv-rearranged-S282
+
+AMacro and DV Multiplayer contributors / the optional native multiplayer mod and public packet API. Multiplayer and its API are not bundled.

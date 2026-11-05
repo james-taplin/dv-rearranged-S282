@@ -7,6 +7,7 @@ internal static class Program {
  static void Check(bool value,string label){if(!value)throw new Exception(label);Console.WriteLine("PASS "+label);}
  static MeshRenderer Add(Transform parent,Material material){var go=new GameObject();go.transform.parent=parent;var r=go.Add<MeshRenderer>();r.sharedMaterial=material;return r;}
  static int Main(string[] args){try{
+  if(args.Length>0&&args[0].StartsWith("retarget"))return RetargetTests.Run(args[0]);
   var carGo=new GameObject();var car=carGo.Add<TrainCar>();var handler=carGo.Add<ExplosionModelHandler>();
   var body=new GameObject();body.transform.parent=carGo.transform;var normal=new Material();var burn=new Material();var native=Add(body.transform,normal);
   var stock=new ExplosionModelHandler.MaterialSwapData{swapMaterial=burn,affectedGameObjects=new[]{body}};

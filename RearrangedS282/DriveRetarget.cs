@@ -55,6 +55,7 @@ namespace RearrangedS282
         private bool precisionRods;
         private Func<Mesh, Mesh> readableSource;
         private bool endpointBounds;
+        internal Action<IEnumerable<Renderer>> Retire;
 
         internal float Shift => shift;
 
@@ -429,6 +430,10 @@ namespace RearrangedS282
 
         private void Restore()
         {
+            // Retire while Unity objects are still alive. Include-inactive scans
+            // can otherwise re-register proxies awaiting end-of-frame destruction.
+            if (entries.Count != 0)
+                Retire?.Invoke(entries.Where(e => e.ProxyRenderer != null).Select(e => (Renderer)e.ProxyRenderer).ToArray());
             foreach (var point in oilPoints)
                 if (point.Provider != null) point.Provider.localPosition = point.NativeLocal;
             oilPoints.Clear();

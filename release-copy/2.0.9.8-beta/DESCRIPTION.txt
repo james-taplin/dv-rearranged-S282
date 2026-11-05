@@ -1,0 +1,29 @@
+Rearranged S282 - 2.0.9.8 Final Beta
+
+51 selectable S282 arrangements, optional powered tenders and optional multiplayer. This is the final planned beta before 2.1 stable, with 4-6-2 Scotch Glider, 4-6-6-4 Little Boy and the repairs developed since 2.0.9.3-beta.
+
+NEW IN THIS BETA
+Scotch Glider is a large-driver express Pacific and supports the optional powered tender. Little Boy uses two three-axle Mallet locomotive engines, four-wheel leading/trailing trucks and an ordinary unpowered tender. Both new random-spawn options are off by default. Existing arrangement IDs remain unchanged; the catalogue now has 51 arrangements and 45 compatible powered-tender choices.
+
+Supported reach and lubricator linkages are restored, Franklin pin seating and middle triplex cylinder clearance are corrected, and generated renderers leave native explosion caches before destruction. Multiplayer corrections cover already-exploded late joins and initial stock-tender state. OBJ imports avoid the reproduced temporary-object/material leak and handle EOF and relative indices correctly. The structural test now recognizes Little Boy's shared frame geometry and checks loaded exterior interactions before and during its sweep.
+
+NATIVE OILING
+Original guide, moving-crosshead and main-rod oilcups remain intact. Optional big-end oiling adds dedicated crank-pin cups; automatic filling/lid closing is off by default. The guide-top cup is native, not an unwanted extra crosshead cup.
+
+RADIO AND MULTIPLAYER
+Every player uses their own Wheel Rearranger radio. Stop and close the regulator before selecting a layout. The host validates changes and shares the accepted arrangement and effective per-car preferences. Ctrl+F10 > Rearranged S282 provides host permissions and reapply controls. Blocked guests still receive updates; locks reset when they leave. Native Multiplayer owns transport and train movement. Ordinary single-player use does not require Multiplayer.
+
+INSTALLATION
+Requires Derail Valley B99 on Windows, Unity Mod Manager 0.27.3+ and Locomotive Mesh Splitter. Online, everyone needs DV Multiplayer 0.1.16.0-beta and this exact complete package. Multiplayer and its API are not bundled. Leave Realistic Firing off for initial testing.
+
+Close the game and back up the previous RearrangedS282 folder and Settings.xml outside Mods. Install through UMM, or manually extract the single RearrangedS282 folder into Mods. Restore personal settings if needed. Keep one complete version installed; do not mix DLLs/assets.
+
+TEST STATUS
+James's installed 2.0.9.8 passed all 96 stationary structural cases and six return checks, with stock restored and tender preferences unchanged. Core and bridge compiled with zero warnings/errors, affected offline regressions passed and package contents were verified. A stationary sweep does not prove moving clearances, sustained performance or live multiplayer; Multiplayer was absent in the successful session. This remains a beta for gameplay and peer feedback before 2.1 stable.
+
+Independent locomotive-group slip is included. Powered tenders retain pooled/manual force with their own movement-linked animation clock; independent tender slip and true compound expansion remain unimplemented. The giant 2-2-2 remains an unfinished clearance prototype.
+
+REPORTING
+Include the exact version, arrangement, gear/tender choices, role, steps and Player.log; a short video helps with motion/placement issues. Retain Settings.xml. Include the structural JSON if used, and host/affected-guest logs for multiplayer. README.txt and UMM_OPTIONS.md explain controls and the diagnostic prerequisites.
+
+Full changes since 2.0.9.3-beta are in CHANGELOG.txt below/included with the download. Original mod by SatiricRug / Peter Schinske; B99 continuation by JimTaplin. Full credits and third-party licences are included.

@@ -1,0 +1,17 @@
+REARRANGED S282 2.0.9.8 - FINAL BETA
+Nexus version field: 2.0.9.8
+Upload archive: RearrangedS282-B99-2.0.9.8-beta.zip
+File title: Rearranged S282 2.0.9.8 - Final Beta
+Suggested category: Optional file / beta
+
+NEXUS_DESCRIPTION_BBCODE.txt is the complete paste-ready page copy, including the full changelog since 2.0.9.3-beta and credits.
+DESCRIPTION_BBCODE.txt is the description alone.
+CHANGELOG.txt is the complete plain-text changelog since 2.0.9.3-beta.
+README.txt is the packaged plain-text player guide.
+UMM_OPTIONS.md is the current options guide.
+FILE_INFO.txt is file-specific upload copy.
+CHECKSUMS.txt and release-manifest.json identify the finished ZIP and runtime DLLs.
+
+Use the same complete build on all peers. Multiplayer is optional for single player. Preserve personal settings on update. This final beta precedes 2.1 stable; the passing structural run is stationary single-player evidence, not live multiplayer or moving-clearance acceptance.
+
+Native cups are retained at James's request. No runtime rebuild was needed for release documentation; the ZIP reuses the installed/tested 2.0.9.8 DLLs. Nothing is uploaded automatically.

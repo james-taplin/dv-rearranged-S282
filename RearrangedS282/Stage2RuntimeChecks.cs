@@ -32,23 +32,24 @@ namespace RearrangedS282
                     c.entity != null && c.entity.IsConverted && Mathf.Abs(c.GetForwardSpeed()) <= .01f &&
                     (c.GetComponent<WheelRearranger>() == null || c.GetComponent<WheelRearranger>().currentWA == WheelArrangementType.s282))
                 .OrderBy(c => c.ID, StringComparer.Ordinal).ToArray();
-            var subject = cars.FirstOrDefault(c => HasTestTender(c));
-            var control = cars.FirstOrDefault(c => c != subject
+            var readyCars = cars.Where(c => c.loadedExternalInteractables != null).ToArray();
+            var subject = readyCars.FirstOrDefault(c => HasTestTender(c));
+            var control = readyCars.FirstOrDefault(c => c != subject
 #if B99_ALL_STANDARD
                 && c.GetComponent<WheelRearranger>()?.PoweredTenderSelected != true
 #endif
             );
             if (subject == null || control == null)
             {
-                Status = "Need two stationary stock S282s, one with its regular S282 tender coupled behind it; the control loco must have an ordinary unpowered tender. Close both regulators and use a disposable sandbox.";
+                Status = "Need two stationary stock S282s with exterior interactions loaded. Stay near both locomotives; couple a regular S282 tender behind the test loco and keep the control unpowered. Close both regulators and use a disposable sandbox.";
                 Main.Logger.Warning(Status);
                 System.IO.File.WriteAllText(System.IO.Path.Combine(Main.ModPath,"stage2-runtime-checks.json"),
-                    new JObject { ["passed"] = false, ["started"] = false, ["error"] = Status, ["eligibleCars"] = cars.Length }.ToString());
+                    new JObject { ["passed"] = false, ["started"] = false, ["error"] = Status, ["eligibleCars"] = cars.Length, ["loadedEligibleCars"] = readyCars.Length }.ToString());
                 return;
             }
             var runner = subject.GetComponent<WheelRearranger>() ?? subject.gameObject.AddComponent<WheelRearranger>();
             Running = true;
-            Status = "Test running. Close the mod manager so the native simulation can tick.";
+            Status = "Test running on " + subject.ID + " (control " + control.ID + "). Stay near both; close the mod manager so the native simulation can tick.";
 #if B99_ALL_STANDARD
             runner.StartCoroutine(RunAll(runner, subject, control));
 #else
@@ -63,6 +64,25 @@ namespace RearrangedS282
         }
 
 #if B99_ALL_STANDARD
+        internal static string StructuralReadinessError(TrainCar subject, TrainCar control)
+        {
+            if (subject == null || subject.loadedExternalInteractables == null)
+                return "Test locomotive " + (subject != null ? subject.ID : "(missing)") + " exterior interactions are not loaded. Stay near both locomotives and rerun the structural test.";
+            if (control == null || control.loadedExternalInteractables == null)
+                return "Control locomotive " + (control != null ? control.ID : "(missing)") + " exterior interactions are not loaded. Stay near both locomotives and rerun the structural test.";
+            return null;
+        }
+
+        internal static bool AbortForReadiness(JObject report, TrainCar subject, TrainCar control)
+        {
+            string error = StructuralReadinessError(subject, control);
+            if (error == null) return false;
+            report["aborted"] = true;
+            report["abortReason"] = "exterior-interactions-unloaded";
+            report["error"] = error;
+            return true;
+        }
+
         internal static (int Id, bool Tender)[] StructuralCases() => Enumerable.Range(0, WheelArrangement.SupportedCount)
             .SelectMany(id => PoweredTenderPolicy.Supports(id) ? new[] { (id, false), (id, true) } : new[] { (id, false) }).ToArray();
 
@@ -76,10 +96,19 @@ namespace RearrangedS282
             };
         }
 
+        internal static string FramePiecePrefix(int id, string label)
+        {
+            // Little Boy reuses ApplyMalletGeometry, including its ID37 frame
+            // cache. Its selected arrangement remains ID50; only this mesh tag
+            // identifies the shared geometry rather than the selected layout.
+            int geometryId = id == (int)WheelArrangementType.s4664LittleBoy ? (int)WheelArrangementType.s2662 : id;
+            return "[Rearranged " + label + " frame " + geometryId + "] ";
+        }
+
         private static JObject CapturePresentation(TrainCar car, WheelRearranger owner, int id)
         {
             int Pieces(string label) => car.GetComponentsInChildren<MeshFilter>(true)
-                .Count(f => f.gameObject.activeInHierarchy && f.name.StartsWith("[Rearranged " + label + " frame " + id + "] ", StringComparison.Ordinal) &&
+                .Count(f => f.gameObject.activeInHierarchy && f.name.StartsWith(FramePiecePrefix(id, label), StringComparison.Ordinal) &&
                     f.sharedMesh != null && f.sharedMesh.triangles.Length != 0);
             return new JObject {
                 ["arrangementId"] = (int)owner.currentWA,
@@ -198,19 +227,26 @@ namespace RearrangedS282
             report["tractiveReference"] = TractiveDiagnostics.ReferenceInfo();
             // This override is local to the subject and never writes settings or saves.
             bool prepared = false;
-            try { prepared = runner.TrySwitchStructural(10, false); }
+            try { if (!AbortForReadiness(report, subject, control)) prepared = runner.TrySwitchStructural(10, false); }
             catch (Exception ex) { report["error"] = ex.ToString(); }
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
-            var tenderBaseline = CaptureTenderBogies(subject);
+            JObject tenderBaseline = null;
             JObject before = null, controlBefore = null;
-            try { if (!prepared) throw new InvalidOperationException("Could not prepare unpowered stock reference."); before = Capture(subject); controlBefore = Capture(control); }
+            try
+            {
+                if (AbortForReadiness(report, subject, control)) throw new InvalidOperationException((string)report["error"]);
+                if (!prepared) throw new InvalidOperationException("Could not prepare unpowered stock reference.");
+                tenderBaseline = CaptureTenderBogies(subject);
+                before = Capture(subject); controlBefore = Capture(control);
+            }
             catch (Exception ex) { report["error"] = ex.ToString(); }
             if (before != null && controlBefore != null)
             {
                 report["before"] = before; report["controlBefore"] = controlBefore;
                 foreach (var test in cases)
                 {
+                    if (AbortForReadiness(report, subject, control)) break;
                     int id = test.Id;
                     Status = "Structural test " + (results.Count + 1) + "/" + cases.Length + ": " + WheelArrangement.WheelArrangementNames[id] + (test.Tender ? " + powered tender" : " + ordinary tender");
                     var result = new JObject { ["id"] = id, ["name"] = WheelArrangement.WheelArrangementNames[id], ["poweredTender"] = test.Tender, ["passed"] = false };
@@ -226,8 +262,14 @@ namespace RearrangedS282
                     catch (Exception ex) { result["error"] = ex.ToString(); }
                     yield return new WaitForFixedUpdate();
                     yield return new WaitForFixedUpdate();
-                    for (int frame = 0; frame < 120 && (!runner.BigEndCupsReady || test.Tender && runner.TenderEffectsRoot == null); frame++) yield return null;
+                    for (int frame = 0; frame < 120 && StructuralReadinessError(subject, control) == null && (!runner.BigEndCupsReady || test.Tender && runner.TenderEffectsRoot == null); frame++) yield return null;
                     yield return new WaitForEndOfFrame();
+                    if (AbortForReadiness(report, subject, control))
+                    {
+                        result["status"] = "aborted-readiness";
+                        result["error"] = (string)report["error"];
+                        break; // Final stock restoration below still runs.
+                    }
                     try
                     {
                         if (!switched) throw new InvalidOperationException(runner.LastConventionalError ?? "Conversion refused; check the game log.");
@@ -320,16 +362,18 @@ namespace RearrangedS282
                     System.IO.File.WriteAllText(System.IO.Path.Combine(Main.ModPath, "stage2-runtime-checks.json"), report.ToString());
                 }
                 var returns = new JArray(); report["returnToErie"] = returns;
-                foreach (int id in new[] { 43, 46, 47, 43, 0, 43 })
+                foreach (int id in (bool?)report["aborted"] == true ? Array.Empty<int>() : new[] { 43, 46, 47, 43, 0, 43 })
                 {
+                    if (AbortForReadiness(report, subject, control)) break;
                     Status = "Structural return-to-Erie check: " + WheelArrangement.WheelArrangementNames[id];
                     bool tender = id == 43, switched = false;
                     var row = new JObject { ["id"] = id, ["poweredTender"] = tender, ["passed"] = false }; returns.Add(row);
                     try { switched = runner.TrySwitchStructural(id, tender); }
                     catch (Exception ex) { row["error"] = ex.ToString(); }
                     yield return new WaitForFixedUpdate(); yield return new WaitForFixedUpdate();
-                    for (int frame = 0; frame < 120 && (!runner.BigEndCupsReady || tender && runner.TenderEffectsRoot == null); frame++) yield return null;
+                    for (int frame = 0; frame < 120 && StructuralReadinessError(subject, control) == null && (!runner.BigEndCupsReady || tender && runner.TenderEffectsRoot == null); frame++) yield return null;
                     yield return new WaitForEndOfFrame();
+                    if (AbortForReadiness(report, subject, control)) { row["error"] = (string)report["error"]; break; }
                     try
                     {
                         if (!switched) throw new InvalidOperationException(runner.LastConventionalError ?? "Repeated conversion refused.");
@@ -344,17 +388,19 @@ namespace RearrangedS282
                 try { if (!runner.TrySwitchStructural(10, false)) throw new InvalidOperationException("Final stock restoration refused."); }
                 catch (Exception ex) { report["restoreError"] = ex.ToString(); }
                 yield return new WaitForFixedUpdate(); yield return new WaitForFixedUpdate();
-                bool restored = JToken.DeepEquals(before, Capture(subject)) && JToken.DeepEquals(controlBefore, Capture(control)) && JToken.DeepEquals(tenderBaseline, CaptureTenderBogies(subject));
+                bool restored = false;
+                try { restored = JToken.DeepEquals(before, Capture(subject)) && JToken.DeepEquals(controlBefore, Capture(control)) && JToken.DeepEquals(tenderBaseline, CaptureTenderBogies(subject)); }
+                catch (Exception ex) { report["restoreError"] = ex.ToString(); }
                 report["finalStockRestored"] = restored;
                 bool preferencesUnchanged = tenderPreferences.SequenceEqual(Main.settings?.poweredTenderArrangements ?? Array.Empty<int>());
                 report["tenderPreferencesUnchanged"] = preferencesUnchanged;
-                report["passed"] = results.Count == cases.Length && results.All(r => (bool)r["passed"]) && returns.All(r => (bool)r["passed"]) && restored && preferencesUnchanged && report["restoreError"] == null;
+                report["passed"] = (bool?)report["aborted"] != true && results.Count == cases.Length && results.All(r => (bool)r["passed"]) && returns.All(r => (bool)r["passed"]) && restored && preferencesUnchanged && report["restoreError"] == null;
             }
             report["limitations"] = "Stationary structural checks only. Driving, loaded pull, slip onset, rods, audio, particles and distant/unload behaviour need manual testing.";
             System.IO.File.WriteAllText(System.IO.Path.Combine(Main.ModPath, "stage2-runtime-checks.json"), report.ToString());
             Running = false;
             Status = (bool)report["passed"] ? "All " + cases.Length + " stationary structural cases and repeated Erie checks passed. Motion and crank clearance remain untested. See stage2-runtime-checks.json."
-                : "Structural checks failed. See stage2-runtime-checks.json and the game log.";
+                : (bool?)report["aborted"] == true ? "Structural test stopped: " + (string)report["error"] : "Structural checks failed. See stage2-runtime-checks.json and the game log.";
             Main.Logger.Log(Status);
         }
 #endif
