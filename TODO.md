@@ -2,12 +2,12 @@
 
 ## 2.0.9.8 Nexus final beta preparation — 5 November 2026
 
-James authorized the Nexus final-beta ZIP, release notes/docs and full changelog
-since 2.0.9.3-beta. Keep all native cups. Release copy is under
-release-copy/2.0.9.8-beta; preserve the installed/tested DLL hashes during repack.
-Structural acceptance is 96/96 plus six returns. Prepare/validate locally;
-James owns uploading and remaining visual/driving/live multiplayer feedback
-before 2.1 stable. Exact final artifact and provenance are in CURRENT_HANDOVER.md.
+Nexus final-beta ZIP and current release copy are complete, including the full
+changelog since 2.0.9.3-beta. Native cups retained. Package passes 80 checks;
+all runtime/asset/licence/manifest entries match the tested 2.0.9.8 package.
+Structural acceptance is 96/96 plus six returns. James owns uploading and
+remaining visual/driving/live multiplayer feedback before 2.1 stable. Exact
+desktop artifact, hashes and source provenance are in CURRENT_HANDOVER.md.
 
 ## 2.0.9.8 readiness repair — 5 November 2026
 

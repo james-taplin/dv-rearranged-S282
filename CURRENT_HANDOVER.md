@@ -1,3 +1,53 @@
+## 5 November 2026 — 2.0.9.8 Nexus final beta READY, not uploaded
+
+Completed James's requested final-beta packaging, full changelog since
+2.0.9.3-beta and release docs. Native cups are retained as James confirmed.
+Upload this archive (not the earlier Multiplayer-Test ZIP):
+`C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.8-beta-Nexus\RearrangedS282-B99-2.0.9.8-beta.zip`.
+Repository copy: `release/2.0.9.8-beta/RearrangedS282-B99-2.0.9.8-beta.zip`.
+ZIP SHA-256: `4D6286CEE5FD7A72EA8D607AC7F233D9ACD136084407B54999C3009DE570664C`.
+Runtime/manifest version remains 2.0.9.8; archive/file copy labels it final beta
+before 2.1 stable. The installed mod is unchanged.
+
+Package validator: **80 checks passed**. Archive has 38 files. A complete entry
+comparison against the tested 2.0.9.8 ZIP confirms **33 byte-identical entries**;
+only README, CHANGELOG, CREDITS, MULTIPLAYER_TESTING and UMM_OPTIONS changed.
+Core remains `F5AF66BC78111AA35B402B23BCFDCD162E3D8A0A21AD11486B923AEF9E20C400`;
+bridge remains `C1D5BB2AF7F0EC4E0AE3DCA244AB0969A123A9B535730B5D8F1A3970C99E0DA4`.
+Both match the installed DLLs. Assets/exporter/licences and manifest are unchanged.
+No settings, API, PDB, captures, caches or logs are bundled in the upload ZIP.
+No runtime rebuild was performed for release copy.
+
+All release text is in `release-copy/2.0.9.8-beta/` and copied beside the desktop
+archive. CHANGELOG.txt covers the complete development sequence since 2.0.9.3-beta,
+including restored linkages, Franklin pins/triplex clearance, both renderer
+retirement fixes, multiplayer wreck/tender state, OBJ import, new layouts,
+offline fixture repairs, arrangement count and structural identity/readiness.
+README.txt is plain text; UMM_OPTIONS.md is current; credits/attributions retained.
+NEXUS_DESCRIPTION_BBCODE.txt contains description + full changelog + credits;
+DESCRIPTION_BBCODE.txt is description alone. BBCode balance and plain README
+format were checked. FILE_INFO.txt and NEXUS_RELEASE_COPY.txt provide upload copy.
+
+Clean local source checkpoint: `defddeb22021884b1024197a81e9e63a2116832d`.
+All 120 runtime source files/inventory match the original build receipt. Separate
+`build/nexus-2.0.9.8-verified-source/build-receipt.json` explicitly records
+receiptKind=verified-source-repackage, the later clean checkpoint and the
+original build's 47e8ac7/dirty provenance; original build receipt is preserved.
+It does not claim that the original build was made from a clean tree. The normal
+packager's clean-source checks passed against this verified checkpoint receipt.
+Release manifest carries both provenance records. CHECKSUMS.txt, receipts,
+package-validation.json (80 checks) and package-identity-check.json are beside the
+desktop ZIP. Evidence is also in `build/nexus-2.0.9.8-validation/` and
+`build/nexus-2.0.9.8-identity.json`.
+
+Gameplay evidence remains James's **96/96 stationary structural cases + six
+return checks**, with stock/preferences restored. The successful session had
+Multiplayer absent; moving clearances, sustained driving/performance and live
+host/guest acceptance are not certified by that result. Release wording retains
+these beta limits and does not promise error-free/perfect performance.
+No game launch, installation, push or upload during preparation. James owns
+Nexus uploading and final beta feedback before 2.1 stable.
+
 ## 5 November 2026 — Nexus final beta preparation authorized
 
 James confirmed retaining the native cups and requested a Nexus-ready 2.0.9.8
