@@ -6,6 +6,11 @@ GitHub fork, and specified no BBCode. Source target is remote `james`,
 `codex/s282-multiplayer`. This source publication does not upload a Nexus file
 or create a GitHub binary release.
 
+The source/docs push completed successfully through commit
+`ed094c293e45c175b91cd7246429127b29cc0632`, advancing the remote branch from
+163d081. This handover confirmation is committed and pushed afterwards. No force
+push, upstream/origin update, GitHub binary release or Nexus upload was performed.
+
 Authoritative final Nexus upload ZIP:
 `C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.8-beta-Nexus\RearrangedS282-B99-2.0.9.8-beta.zip`.
 Repository artifact copy: `release/2.0.9.8-beta/RearrangedS282-B99-2.0.9.8-beta.zip`.
