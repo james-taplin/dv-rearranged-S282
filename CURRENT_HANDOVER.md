@@ -1,3 +1,35 @@
+## 5 November 2026 — final package record and GitHub source push
+
+James requested pushing the 2.0.9.8 final-beta source and updated docs to his
+GitHub fork, and specified no BBCode. Source target is remote `james`,
+`https://github.com/james-taplin/dv-rearranged-S282.git`, branch
+`codex/s282-multiplayer`. This source publication does not upload a Nexus file
+or create a GitHub binary release.
+
+Authoritative final Nexus upload ZIP:
+`C:\Users\james\Desktop\Derail Valley Mods\RearrangedS282-B99-2.0.9.8-beta-Nexus\RearrangedS282-B99-2.0.9.8-beta.zip`.
+Repository artifact copy: `release/2.0.9.8-beta/RearrangedS282-B99-2.0.9.8-beta.zip`.
+SHA-256: `4D6286CEE5FD7A72EA8D607AC7F233D9ACD136084407B54999C3009DE570664C`.
+38 files, 80 package checks passed; tested/installed DLLs and native cups remain
+unchanged. Do not substitute the older Multiplayer-Test ZIP for this final copy.
+
+Current release text uses **plain text**, with Markdown for repository guides.
+`release-copy/2.0.9.8-beta/NEXUS_DESCRIPTION.txt` contains the complete description,
+full changelog since 2.0.9.3-beta and credits. DESCRIPTION.txt is description only;
+CHANGELOG.txt is the complete standalone changelog. Updated NEXUS_RELEASE_COPY.txt
+points to the plain-text files. Removed this release's three BBCode companion
+files from source and both artifact folders; historical release directories are
+unchanged. The upload ZIP was already free of BBCode, so no repack/rebuild was
+needed and its hash is unchanged. The packager now exports the plain complete
+description when present. Earlier BBCode preparation notes below are historical.
+
+Source checkpoint defddeb and the following handover/package record remain in
+the branch history; this push includes all later plain-text documentation changes.
+Original build provenance and verified-source checkpoint are still distinguished
+in the release manifest/receipts. Runtime source inventory still matches the
+tested 2.0.9.8 build. Structural acceptance remains 96/96 plus six return cases;
+remaining visual/driving and live multiplayer feedback is for the final beta.
+
 ## 5 November 2026 — 2.0.9.8 Nexus final beta READY, not uploaded
 
 Completed James's requested final-beta packaging, full changelog since

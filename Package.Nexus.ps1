@@ -74,7 +74,7 @@ $zipHash = (Get-FileHash -LiteralPath $zip).Hash
 "$zipHash  $zipName`r`n$($receipt.dllSHA256)  RearrangedS282/RearrangedS282.dll" | Set-Content -LiteralPath (Join-Path $out 'CHECKSUMS.txt') -Encoding ascii
 if ($multiplayer) { "$($receipt.bridgeSHA256)  RearrangedS282/RearrangedS282.Multiplayer.dll" | Add-Content -LiteralPath (Join-Path $out 'CHECKSUMS.txt') -Encoding ascii }
 $publicDocs = @('NEXUS_RELEASE_COPY.txt','DESCRIPTION.md','CREDITS.md','CREDITS.txt','CHANGELOG.txt','FILE_INFO.txt','UMM_OPTIONS.md','README.txt')
-$publicDocs += @('DESCRIPTION.txt') | Where-Object { Test-Path -LiteralPath (Join-Path $copy $_) }
+$publicDocs += @('DESCRIPTION.txt','NEXUS_DESCRIPTION.txt') | Where-Object { Test-Path -LiteralPath (Join-Path $copy $_) }
 $publicDocs += @('DESCRIPTION_BBCODE.txt','CREDITS_BBCODE.txt','NEXUS_DESCRIPTION_BBCODE.txt') | Where-Object { Test-Path -LiteralPath (Join-Path $copy $_) }
 foreach ($doc in $publicDocs) { Copy-Item -LiteralPath (Join-Path $copy $doc) -Destination $out -Force }
 $desk = Join-Path $DesktopDirectory "RearrangedS282-B99-$ReleaseName-Nexus"

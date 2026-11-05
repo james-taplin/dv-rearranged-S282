@@ -4,8 +4,8 @@ Upload archive: RearrangedS282-B99-2.0.9.8-beta.zip
 File title: Rearranged S282 2.0.9.8 - Final Beta
 Suggested category: Optional file / beta
 
-NEXUS_DESCRIPTION_BBCODE.txt is the complete paste-ready page copy, including the full changelog since 2.0.9.3-beta and credits.
-DESCRIPTION_BBCODE.txt is the description alone.
+NEXUS_DESCRIPTION.txt is the complete plain-text page copy, including the full changelog since 2.0.9.3-beta and credits.
+DESCRIPTION.txt is the plain-text description alone.
 CHANGELOG.txt is the complete plain-text changelog since 2.0.9.3-beta.
 README.txt is the packaged plain-text player guide.
 UMM_OPTIONS.md is the current options guide.
